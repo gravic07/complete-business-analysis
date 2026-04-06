@@ -1,0 +1,1612 @@
+[
+  {
+    "section": "Strategy",
+    "questions": [
+      {
+        "prompt": "How well-documented and effective is our strategic plan in driving our vision, mission, and goals?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "It is exceptionally well-documented, regularly updated, and seamlessly drives all our strategic initiatives."
+          },
+          {
+            "points": 4,
+            "text": "It is well-documented and generally effective but could benefit from more frequent updates."
+          },
+          {
+            "points": 3,
+            "text": "It is documented and effective to an extent but not always timely updated."
+          },
+          {
+            "points": 2,
+            "text": "It exists but is infrequently updated, leading to occasional misalignments with our goals."
+          },
+          {
+            "points": 1,
+            "text": "It is poorly documented and rarely drives our strategic decisions effectively."
+          }
+        ]
+      },
+      {
+        "prompt": "Does our current business plan accurately forecast finances and guide decision-making?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "It provides precise forecasts and is a critical tool in our decision-making process."
+          },
+          {
+            "points": 4,
+            "text": "It generally forecasts well and guides most decisions effectively."
+          },
+          {
+            "points": 3,
+            "text": "It is somewhat accurate but could be more reflective of our real-time financial situation."
+          },
+          {
+            "points": 2,
+            "text": "It lacks accuracy, leading to occasional poor decision-making."
+          },
+          {
+            "points": 1,
+            "text": "It does not provide reliable forecasts, rarely aiding in effective decision-making."
+          }
+        ]
+      },
+      {
+        "prompt": "Are our strategic business goals and financial strategies aligned with our market positioning?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "They are perfectly aligned and consistently reinforce our market positioning."
+          },
+          {
+            "points": 4,
+            "text": "They are mostly aligned with occasional misalignments that are quickly corrected."
+          },
+          {
+            "points": 3,
+            "text": "They are aligned to an extent but not consistently monitored or adjusted."
+          },
+          {
+            "points": 2,
+            "text": "There is frequent misalignment, and adjustments are reactive rather than proactive."
+          },
+          {
+            "points": 1,
+            "text": "They are rarely aligned, often leading to strategic conflicts and inefficiencies."
+          }
+        ]
+      },
+      {
+        "prompt": "How frequently do we review and update our strategic business plan?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We review and update it very frequently, ensuring it always matches our evolving business needs."
+          },
+          {
+            "points": 4,
+            "text": "We regularly review it, though some updates could be implemented quicker."
+          },
+          {
+            "points": 3,
+            "text": "We occasionally review and update it, but not as often as necessary."
+          },
+          {
+            "points": 2,
+            "text": "Updates are infrequent, and reviews do not always lead to necessary changes."
+          },
+          {
+            "points": 1,
+            "text": "It is rarely reviewed or updated, often being outdated."
+          }
+        ]
+      },
+      {
+        "prompt": "How robust are our internal controls to prevent financial theft or fraud?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our controls are state-of-the-art and offer comprehensive protection."
+          },
+          {
+            "points": 4,
+            "text": "Our controls are strong but could be updated with the latest security measures."
+          },
+          {
+            "points": 3,
+            "text": "Our controls are adequate but have known vulnerabilities that need addressing."
+          },
+          {
+            "points": 2,
+            "text": "Our controls are below industry standards, exposing us to potential risks."
+          },
+          {
+            "points": 1,
+            "text": "Our controls are weak, frequently leading to issues with theft or fraud."
+          }
+        ]
+      },
+      {
+        "prompt": "How reliable are our financial projections, and how well do they inform our management decisions?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our projections are extremely reliable and form the basis of most management decisions."
+          },
+          {
+            "points": 4,
+            "text": "They are generally reliable and useful for decision-making."
+          },
+          {
+            "points": 3,
+            "text": "They provide a reasonable basis for decisions but could be more accurate."
+          },
+          {
+            "points": 2,
+            "text": "They are occasionally reliable but not dependable for critical decisions."
+          },
+          {
+            "points": 1,
+            "text": "They are unreliable and rarely used to inform decisions."
+          }
+        ]
+      },
+      {
+        "prompt": "How regularly do we assess our competitive advantage through our Unique Selling Proposition and Guarantee?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We assess it continuously, ensuring it always provides us with a strong competitive edge."
+          },
+          {
+            "points": 4,
+            "text": "We regularly assess it, keeping it relevant and effective most of the time."
+          },
+          {
+            "points": 3,
+            "text": "We assess it periodically, but not as often as we should."
+          },
+          {
+            "points": 2,
+            "text": "We infrequently assess it, which sometimes leads to missed opportunities."
+          },
+          {
+            "points": 1,
+            "text": "We rarely assess it, and it often fails to provide us with any real advantage."
+          }
+        ]
+      },
+      {
+        "prompt": "How effective is our leadership in maintaining a clear and proactive organizational plan?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our leadership is extremely effective, maintaining a perfectly clear and proactive plan."
+          },
+          {
+            "points": 4,
+            "text": "Our leadership is generally effective, with occasional lapses that are quickly addressed."
+          },
+          {
+            "points": 3,
+            "text": "It is moderately effective, though sometimes reactive rather than proactive."
+          },
+          {
+            "points": 2,
+            "text": "It is often ineffective, with frequent periods of reactive management."
+          },
+          {
+            "points": 1,
+            "text": "It is largely ineffective, lacking clarity and proactivity."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do we manage our cash flow and financial resources to ensure stability and growth?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We manage them exceptionally well, always ensuring financial stability and growth."
+          },
+          {
+            "points": 4,
+            "text": "We manage them effectively, with occasional shortfalls quickly corrected."
+          },
+          {
+            "points": 3,
+            "text": "We manage them adequately, but there are areas needing improvement for better stability."
+          },
+          {
+            "points": 2,
+            "text": "Management is often reactive, leading to periods of financial instability."
+          },
+          {
+            "points": 1,
+            "text": "Our management of financial resources is poor, frequently causing financial issues."
+          }
+        ]
+      },
+      {
+        "prompt": "Are we satisfied with our current revenue and profit margins, and what strategies do we have for improvement?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We are very satisfied and have effective strategies for continuous improvement."
+          },
+          {
+            "points": 4,
+            "text": "We are generally satisfied and actively seek ways to improve further."
+          },
+          {
+            "points": 3,
+            "text": "We are moderately satisfied but need better strategies for improvement."
+          },
+          {
+            "points": 2,
+            "text": "We are dissatisfied and struggling to develop effective improvement strategies."
+          },
+          {
+            "points": 1,
+            "text": "We are very dissatisfied with no clear strategies for improvement."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Performance",
+    "questions": [
+      {
+        "prompt": "How well-defined are our Key Performance Indicators (KPIs), and do they provide valuable insights into our performance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our KPIs are exceptionally well-defined and consistently provide critical insights that drive performance improvement."
+          },
+          {
+            "points": 4,
+            "text": "Our KPIs are well-defined and generally provide useful insights into our performance."
+          },
+          {
+            "points": 3,
+            "text": "Our KPIs are somewhat defined but sometimes fail to provide actionable insights."
+          },
+          {
+            "points": 2,
+            "text": "Our KPIs are poorly defined and rarely offer valuable insights."
+          },
+          {
+            "points": 1,
+            "text": "Our KPIs are not defined, providing no insights into our performance."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do our performance incentive plans motivate employees and align with company goals?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Extremely effectively; they significantly motivate employees and are perfectly aligned with our company goals."
+          },
+          {
+            "points": 4,
+            "text": "Effectively; they motivate employees well and align with most of our company goals."
+          },
+          {
+            "points": 3,
+            "text": "Moderately effectively; there are areas of misalignment or lack of motivation."
+          },
+          {
+            "points": 2,
+            "text": "Ineffectively; they seldom motivate employees or align with our company goals."
+          },
+          {
+            "points": 1,
+            "text": "Not at all; they do not motivate employees nor align with company goals."
+          }
+        ]
+      },
+      {
+        "prompt": "How regularly do we update our strategic business plan to reflect performance metrics and insights?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We update it very regularly, ensuring it always incorporates the latest performance metrics and insights."
+          },
+          {
+            "points": 4,
+            "text": "We update it frequently, generally incorporating recent performance metrics and insights."
+          },
+          {
+            "points": 3,
+            "text": "We update it occasionally, but not as often as necessary to reflect new insights."
+          },
+          {
+            "points": 2,
+            "text": "We rarely update it, often overlooking new performance metrics and insights."
+          },
+          {
+            "points": 1,
+            "text": "We never update it based on performance metrics, missing critical insights for strategic planning."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively does our weekly financial scorecard help us monitor and manage business performance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "It is invaluable, providing crucial indicators that help us effectively monitor and manage all aspects of our business."
+          },
+          {
+            "points": 4,
+            "text": "It is very helpful, offering good indicators for monitoring and managing business performance."
+          },
+          {
+            "points": 3,
+            "text": "It is somewhat helpful, but some indicators could be more informative."
+          },
+          {
+            "points": 2,
+            "text": "It is minimally useful, lacking crucial indicators needed for effective management."
+          },
+          {
+            "points": 1,
+            "text": "It does not provide any useful information for monitoring or managing business performance."
+          }
+        ]
+      },
+      {
+        "prompt": "Are we achieving the profit margins we desire on all of our products and services?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Yes, we consistently achieve desired profit margins across all products and services."
+          },
+          {
+            "points": 4,
+            "text": "Generally, most products and services meet our profit margin goals."
+          },
+          {
+            "points": 3,
+            "text": "Occasionally, some products and services achieve the desired margins."
+          },
+          {
+            "points": 2,
+            "text": "Rarely, few products or services meet our profit margin goals."
+          },
+          {
+            "points": 1,
+            "text": "No, none of our products or services achieve the profit margins we desire."
+          }
+        ]
+      },
+      {
+        "prompt": "How well do we use data to inform and guide our major business decisions?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We consistently use data excellently to inform all major business decisions."
+          },
+          {
+            "points": 4,
+            "text": "We generally use data effectively to guide most of our major decisions."
+          },
+          {
+            "points": 3,
+            "text": "We use data, but not consistently or effectively for major decision-making."
+          },
+          {
+            "points": 2,
+            "text": "We rarely use data effectively, often making decisions without sufficient data support."
+          },
+          {
+            "points": 1,
+            "text": "We do not use data to inform our major business decisions."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "People",
+    "questions": [
+      {
+        "prompt": "How effective is our psychometric profiling in screening candidates and contributing to hiring success?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Extremely effective; it significantly enhances our hiring success and quality of hires."
+          },
+          {
+            "points": 4,
+            "text": "Generally effective; it contributes positively to our hiring process."
+          },
+          {
+            "points": 3,
+            "text": "Moderately effective; it helps but does not significantly impact hiring success."
+          },
+          {
+            "points": 2,
+            "text": "Slightly effective; its impact on hiring success is minimal."
+          },
+          {
+            "points": 1,
+            "text": "Not effective; it does not contribute to improving our hiring outcomes."
+          }
+        ]
+      },
+      {
+        "prompt": "Do our managers actively develop and coach team members, fostering a strong training culture?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Yes, they actively and effectively develop and coach all team members."
+          },
+          {
+            "points": 4,
+            "text": "Mostly, with some managers more engaged in development than others."
+          },
+          {
+            "points": 3,
+            "text": "Somewhat, but there is significant room for improvement in coaching and development."
+          },
+          {
+            "points": 2,
+            "text": "Rarely, only a few managers engage in active development and coaching."
+          },
+          {
+            "points": 1,
+            "text": "No, our managers do not engage in coaching or developing team members."
+          }
+        ]
+      },
+      {
+        "prompt": "How effective are our employee recruitment and retention strategies?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Highly effective; we excel in both recruitment and retention."
+          },
+          {
+            "points": 4,
+            "text": "Effective; we successfully recruit and retain most employees."
+          },
+          {
+            "points": 3,
+            "text": "Moderately effective; we face challenges but manage decent recruitment and retention."
+          },
+          {
+            "points": 2,
+            "text": "Ineffective; we struggle with either recruitment or retention."
+          },
+          {
+            "points": 1,
+            "text": "Very ineffective; we struggle significantly with both recruitment and retention."
+          }
+        ]
+      },
+      {
+        "prompt": "Are our employees highly committed and minimally supervised while delivering quality work?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Yes, they consistently deliver high-quality work with minimal supervision."
+          },
+          {
+            "points": 4,
+            "text": "Generally, most employees are committed and require little supervision."
+          },
+          {
+            "points": 3,
+            "text": "Somewhat, many employees are committed, but supervision is often needed to ensure quality."
+          },
+          {
+            "points": 2,
+            "text": "Rarely, many employees require significant supervision to achieve quality work."
+          },
+          {
+            "points": 1,
+            "text": "No, employees are not committed and always require close supervision."
+          }
+        ]
+      },
+      {
+        "prompt": "Do we conduct regular and meaningful performance evaluations that contribute to personal and organizational growth?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Always; our evaluations are comprehensive and significantly contribute to growth."
+          },
+          {
+            "points": 4,
+            "text": "Often; our evaluations generally contribute to both personal and organizational growth."
+          },
+          {
+            "points": 3,
+            "text": "Sometimes; our evaluations could be more regular or meaningful."
+          },
+          {
+            "points": 2,
+            "text": "Rarely; our evaluations are infrequent and not very impactful."
+          },
+          {
+            "points": 1,
+            "text": "Never; we do not conduct evaluations that contribute effectively to growth."
+          }
+        ]
+      },
+      {
+        "prompt": "How do we manage the dynamics of team building to enhance communication and resolve conflicts?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We excel in managing team dynamics, effectively enhancing communication and resolving conflicts."
+          },
+          {
+            "points": 4,
+            "text": "We manage well, usually enhancing communication and resolving conflicts effectively."
+          },
+          {
+            "points": 3,
+            "text": "We manage adequately, but our approach could be improved for better results."
+          },
+          {
+            "points": 2,
+            "text": "We struggle to manage team dynamics effectively, often facing unresolved conflicts."
+          },
+          {
+            "points": 1,
+            "text": "We fail to manage team dynamics, resulting in poor communication and frequent conflicts."
+          }
+        ]
+      },
+      {
+        "prompt": "What strategies do we have in place for leadership development and preparing future leaders?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our strategies are robust and clearly prepare a strong pipeline of future leaders."
+          },
+          {
+            "points": 4,
+            "text": "Our strategies are generally effective, with some areas needing enhancement."
+          },
+          {
+            "points": 3,
+            "text": "Our strategies are in place, but their effectiveness in preparing leaders is inconsistent."
+          },
+          {
+            "points": 2,
+            "text": "Our strategies are underdeveloped and rarely effective in preparing future leaders."
+          },
+          {
+            "points": 1,
+            "text": "We lack strategies for developing future leaders."
+          }
+        ]
+      },
+      {
+        "prompt": "Are employee problems managed efficiently without taking up excessive managerial time?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Yes, employee issues are resolved efficiently with minimal impact on managerial time."
+          },
+          {
+            "points": 4,
+            "text": "Generally, most employee issues are managed efficiently."
+          },
+          {
+            "points": 3,
+            "text": "Moderately, some issues are resolved efficiently, while others consume more time."
+          },
+          {
+            "points": 2,
+            "text": "Rarely, many employee issues require significant managerial time to resolve."
+          },
+          {
+            "points": 1,
+            "text": "No, employee issues consistently require excessive time and are inefficiently managed."
+          }
+        ]
+      },
+      {
+        "prompt": "Do we effectively use training to minimize the need for repeated supervision?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Training is highly effective, significantly reducing the need for supervision."
+          },
+          {
+            "points": 4,
+            "text": "Training generally reduces the need for supervision, though some areas might need more focus."
+          },
+          {
+            "points": 3,
+            "text": "Training somewhat reduces the need for supervision, but not consistently across all areas."
+          },
+          {
+            "points": 2,
+            "text": "Training rarely impacts the need for supervision; many areas still require frequent oversight."
+          },
+          {
+            "points": 1,
+            "text": "Training is ineffective in reducing the need for supervision."
+          }
+        ]
+      },
+      {
+        "prompt": "How proactive are we in addressing the sudden departure of key personnel?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We are highly proactive, with clear succession plans and minimal disruption."
+          },
+          {
+            "points": 4,
+            "text": "We are generally proactive, managing to address departures effectively most of the time."
+          },
+          {
+            "points": 3,
+            "text": "We are somewhat proactive, though the departure of key personnel can sometimes cause issues."
+          },
+          {
+            "points": 2,
+            "text": "We are reactive, often struggling to cope with the departure of key personnel."
+          },
+          {
+            "points": 1,
+            "text": "We are unprepared for the departure of key personnel, leading to significant disruptions."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Processes",
+    "questions": [
+      {
+        "prompt": "Does our organizational plan ensure efficient workflows and clear roles?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Absolutely, our organizational plan guarantees efficiency and clarity in all roles and workflows."
+          },
+          {
+            "points": 4,
+            "text": "It generally ensures efficient workflows and clarity, with minimal exceptions."
+          },
+          {
+            "points": 3,
+            "text": "It somewhat ensures efficiency and role clarity, though some areas could be improved."
+          },
+          {
+            "points": 2,
+            "text": "It insufficiently ensures efficiency, often leading to confusion and inefficiencies."
+          },
+          {
+            "points": 1,
+            "text": "It does not ensure efficient workflows or clarity, resulting in frequent disruptions."
+          }
+        ]
+      },
+      {
+        "prompt": "Are our Operations and Training Manuals up-to-date and do they provide clear guidance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "They are always up-to-date and provide exceptionally clear guidance."
+          },
+          {
+            "points": 4,
+            "text": "They are mostly up-to-date and generally provide clear guidance."
+          },
+          {
+            "points": 3,
+            "text": "They are somewhat up-to-date, but the guidance could be clearer."
+          },
+          {
+            "points": 2,
+            "text": "They are often outdated and provide unclear guidance."
+          },
+          {
+            "points": 1,
+            "text": "They are outdated and fail to provide any useful guidance."
+          }
+        ]
+      },
+      {
+        "prompt": "How do we prioritize and manage high-importance tasks to enhance productivity?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We excellently prioritize and manage high-importance tasks, significantly enhancing productivity."
+          },
+          {
+            "points": 4,
+            "text": "We effectively prioritize and manage these tasks, with good productivity outcomes."
+          },
+          {
+            "points": 3,
+            "text": "We manage and prioritize these tasks adequately, though productivity could be better."
+          },
+          {
+            "points": 2,
+            "text": "We struggle to prioritize and manage these tasks effectively, often impacting productivity negatively."
+          },
+          {
+            "points": 1,
+            "text": "We fail to prioritize or manage high-importance tasks, severely affecting productivity."
+          }
+        ]
+      },
+      {
+        "prompt": "What measures do we have in place to continuously improve operational efficiency?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We have strong measures in place that consistently and effectively improve operational efficiency."
+          },
+          {
+            "points": 4,
+            "text": "We have measures in place that generally improve efficiency, though not always consistently."
+          },
+          {
+            "points": 3,
+            "text": "We have some measures, but they are not comprehensive or fully effective."
+          },
+          {
+            "points": 2,
+            "text": "Our measures are limited and often fail to produce significant improvements."
+          },
+          {
+            "points": 1,
+            "text": "We lack effective measures for improving operational efficiency."
+          }
+        ]
+      },
+      {
+        "prompt": "How effective are our team meetings in facilitating communication, goal-setting, and accountability?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our team meetings are highly effective in all areas: communication, goal-setting, and accountability."
+          },
+          {
+            "points": 4,
+            "text": "They are generally effective, though there's room for improvement in some areas."
+          },
+          {
+            "points": 3,
+            "text": "They facilitate these aspects to a moderate extent but lack consistency."
+          },
+          {
+            "points": 2,
+            "text": "They are somewhat ineffective, often failing to facilitate proper communication or goal-setting."
+          },
+          {
+            "points": 1,
+            "text": "They are ineffective, rarely achieving their intended purpose."
+          }
+        ]
+      },
+      {
+        "prompt": "Do we have a systematic approach to maintaining and updating critical operational documents and practices?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Yes, our approach is highly systematic and ensures all documents and practices are current and effective."
+          },
+          {
+            "points": 4,
+            "text": "Generally, our system works well but could be fine-tuned for better consistency."
+          },
+          {
+            "points": 3,
+            "text": "Our approach is somewhat systematic but not fully reliable or consistent."
+          },
+          {
+            "points": 2,
+            "text": "Our approach is irregular and often fails to keep documents and practices adequately updated."
+          },
+          {
+            "points": 1,
+            "text": "We lack a systematic approach, resulting in outdated or ineffective practices."
+          }
+        ]
+      },
+      {
+        "prompt": "How do we handle operational challenges, and what strategies do we have for long-term solutions?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We handle challenges expertly, with effective long-term strategies consistently applied."
+          },
+          {
+            "points": 4,
+            "text": "We handle challenges well, with generally effective long-term strategies."
+          },
+          {
+            "points": 3,
+            "text": "We manage challenges adequately, but our long-term strategies need strengthening."
+          },
+          {
+            "points": 2,
+            "text": "We struggle with challenges, and our long-term strategies are often ineffective."
+          },
+          {
+            "points": 1,
+            "text": "We fail to effectively handle operational challenges, lacking long-term solutions."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Sales",
+    "questions": [
+      {
+        "prompt": "How well-coordinated is our sales management system, and does it drive consistent sales results?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "It is extremely well-coordinated, consistently driving excellent sales results."
+          },
+          {
+            "points": 4,
+            "text": "It is generally well-coordinated and drives good sales results."
+          },
+          {
+            "points": 3,
+            "text": "It is adequately coordinated but sometimes fails to drive consistent results."
+          },
+          {
+            "points": 2,
+            "text": "Coordination is lacking, resulting in inconsistent sales performance."
+          },
+          {
+            "points": 1,
+            "text": "It is poorly coordinated, rarely driving satisfactory sales results."
+          }
+        ]
+      },
+      {
+        "prompt": "Does our marketing plan effectively generate predictable leads and significantly boost our profits?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "It consistently generates a high volume of predictable leads and significantly boosts profits."
+          },
+          {
+            "points": 4,
+            "text": "It generally generates good leads and has a positive impact on profits."
+          },
+          {
+            "points": 3,
+            "text": "It somewhat effectively generates leads and boosts profits but lacks consistency."
+          },
+          {
+            "points": 2,
+            "text": "It rarely generates predictable leads or significantly boosts profits."
+          },
+          {
+            "points": 1,
+            "text": "It fails to generate leads or impact profits positively."
+          }
+        ]
+      },
+      {
+        "prompt": "Are we meeting our sales objectives, and how effectively do we manage our sales team and their activities?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We consistently meet or exceed our sales objectives, and our management of the sales team is exemplary."
+          },
+          {
+            "points": 4,
+            "text": "We often meet our sales objectives, and our management of the team is generally effective."
+          },
+          {
+            "points": 3,
+            "text": "We sometimes meet our sales objectives, but management of the team could be improved."
+          },
+          {
+            "points": 2,
+            "text": "We struggle to meet our sales objectives, and our management of the team is inconsistent."
+          },
+          {
+            "points": 1,
+            "text": "We rarely meet our sales objectives, and our management of the sales team is ineffective."
+          }
+        ]
+      },
+      {
+        "prompt": "How do we measure the effectiveness of our branding efforts and their impact on customer engagement?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We use advanced metrics to measure branding effectiveness and see excellent customer engagement."
+          },
+          {
+            "points": 4,
+            "text": "We have good metrics for measuring branding effectiveness and generally see positive customer engagement."
+          },
+          {
+            "points": 3,
+            "text": "We measure branding effectiveness but lack comprehensive metrics, leading to varied customer engagement."
+          },
+          {
+            "points": 2,
+            "text": "We infrequently measure branding effectiveness, and customer engagement is low."
+          },
+          {
+            "points": 1,
+            "text": "We do not effectively measure branding efforts, and customer engagement is poor."
+          }
+        ]
+      },
+      {
+        "prompt": "Are our marketing strategies effectively tailored to the demographics and preferences of our target customers?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our strategies are perfectly tailored and resonate strongly with our target demographics."
+          },
+          {
+            "points": 4,
+            "text": "Our strategies are generally well-tailored, appealing to most of our target customers."
+          },
+          {
+            "points": 3,
+            "text": "Our strategies are somewhat tailored but do not fully align with customer preferences."
+          },
+          {
+            "points": 2,
+            "text": "Our strategies are poorly tailored, often missing the mark with our target audience."
+          },
+          {
+            "points": 1,
+            "text": "Our strategies are not tailored to our target demographics, resulting in ineffective"
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do we utilize customer feedback to continuously improve our sales processes and strategies?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We utilize feedback exceptionally well, continuously improving all related processes and strategies."
+          },
+          {
+            "points": 4,
+            "text": "We effectively use feedback to make regular improvements."
+          },
+          {
+            "points": 3,
+            "text": "We use feedback, but not all insights are effectively implemented."
+          },
+          {
+            "points": 2,
+            "text": "We infrequently use customer feedback, missing many opportunities for improvement."
+          },
+          {
+            "points": 1,
+            "text": "We rarely use customer feedback, resulting in stagnant sales processes."
+          }
+        ]
+      },
+      {
+        "prompt": "What is our lead conversion rate, and what strategies do we have to improve it?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our lead conversion rate is high, and we continuously refine our strategies for improvement."
+          },
+          {
+            "points": 4,
+            "text": "Our conversion rate is good, and we actively work on strategies for further improvement."
+          },
+          {
+            "points": 3,
+            "text": "Our conversion rate is average, with some effective strategies in place."
+          },
+          {
+            "points": 2,
+            "text": "Our conversion rate is low, and our improvement strategies are ineffective."
+          },
+          {
+            "points": 1,
+            "text": "Our conversion rate is very low, with no effective strategies for improvement."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do we leverage technology to enhance and promote our brand?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We leverage technology excellently, significantly enhancing and promoting our brand."
+          },
+          {
+            "points": 4,
+            "text": "We generally leverage technology well, with good enhancements to our brand."
+          },
+          {
+            "points": 3,
+            "text": "We use technology, but not all tools are effective in enhancing our brand."
+          },
+          {
+            "points": 2,
+            "text": "Our use of technology in branding is limited and often ineffective."
+          },
+          {
+            "points": 1,
+            "text": "We poorly leverage technology, which does not contribute to our branding efforts."
+          }
+        ]
+      },
+      {
+        "prompt": "Do we have a clear, consistent message that aligns with our brand across all platforms?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our message is crystal clear and consistently presented across all platforms."
+          },
+          {
+            "points": 4,
+            "text": "Our message is generally clear and consistent, with minor discrepancies."
+          },
+          {
+            "points": 3,
+            "text": "Our message is somewhat clear but lacks consistency across platforms."
+          },
+          {
+            "points": 2,
+            "text": "Our message is unclear and inconsistently delivered across different platforms."
+          },
+          {
+            "points": 1,
+            "text": "Our messaging is neither clear nor consistent, often confusing our audience."
+          }
+        ]
+      },
+      {
+        "prompt": "Are our advertising strategies delivering a high return on investment, and how do we track this?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our advertising strategies deliver a high ROI, and we track this meticulously."
+          },
+          {
+            "points": 4,
+            "text": "Our ROI is good, and we track it effectively, though improvements could be made."
+          },
+          {
+            "points": 3,
+            "text": "We achieve a moderate ROI, and our tracking methods are adequate."
+          },
+          {
+            "points": 2,
+            "text": "Our advertising ROI is low, and tracking methods are not fully effective."
+          },
+          {
+            "points": 1,
+            "text": "We do not achieve a satisfactory ROI, and our tracking methods are inadequate."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Personal Development",
+    "questions": [
+      {
+        "prompt": "How effectively do you manage your work-life balance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I maintain a perfect balance that allows me to be highly productive at work while enjoying my personal life."
+          },
+          {
+            "points": 4,
+            "text": "I generally manage a good balance, though there are occasional periods where work dominates."
+          },
+          {
+            "points": 3,
+            "text": "My work-life balance is average, with regular instances of work interfering with personal time."
+          },
+          {
+            "points": 2,
+            "text": "I struggle to maintain a work-life balance, often feeling overwhelmed by work commitments."
+          },
+          {
+            "points": 1,
+            "text": "I frequently experience burnout due to poor management of work and personal time."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do you prioritize and manage your professional responsibilities?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I excel in prioritizing and managing tasks, always focusing on what's critical."
+          },
+          {
+            "points": 4,
+            "text": "I am generally good at managing my responsibilities but can improve in some areas."
+          },
+          {
+            "points": 3,
+            "text": "I manage my responsibilities adequately, though not always optimally."
+          },
+          {
+            "points": 2,
+            "text": "I often find it challenging to prioritize tasks, leading to inefficiencies."
+          },
+          {
+            "points": 1,
+            "text": "I frequently miss deadlines and struggle with managing my responsibilities."
+          }
+        ]
+      },
+      {
+        "prompt": "How clearly defined are your personal and professional goals?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "My goals are clearly defined, and I regularly review and adapt them."
+          },
+          {
+            "points": 4,
+            "text": "My goals are generally clear, with occasional updates needed."
+          },
+          {
+            "points": 3,
+            "text": "My goals could be clearer and more defined."
+          },
+          {
+            "points": 2,
+            "text": "I rarely set clear goals, which sometimes leads to a lack of direction."
+          },
+          {
+            "points": 1,
+            "text": "I do not have well-defined goals, significantly impacting my progress and success."
+          }
+        ]
+      },
+      {
+        "prompt": "How do you assess the effectiveness of your personal development activities?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I have a robust system for measuring the impact of my development activities, leading to continuous improvement."
+          },
+          {
+            "points": 4,
+            "text": "I frequently assess and adjust my development activities based on their effectiveness."
+          },
+          {
+            "points": 3,
+            "text": "I occasionally assess the effectiveness but lack a systematic approach."
+          },
+          {
+            "points": 2,
+            "text": "I seldom evaluate the impact of my development activities."
+          },
+          {
+            "points": 1,
+            "text": "I do not assess the effectiveness, missing opportunities for growth."
+          }
+        ]
+      },
+      {
+        "prompt": "How proactive are you in addressing your development needs?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I am highly proactive and consistently seek out opportunities for growth."
+          },
+          {
+            "points": 4,
+            "text": "I am proactive in most cases, occasionally missing out on some opportunities."
+          },
+          {
+            "points": 3,
+            "text": "I address my development needs when they become apparent."
+          },
+          {
+            "points": 2,
+            "text": "I am reactive rather than proactive, often waiting too long to address needs."
+          },
+          {
+            "points": 1,
+            "text": "I rarely take action to address my personal development needs."
+          }
+        ]
+      },
+      {
+        "prompt": "How effective are your strategies for coping with stress and maintaining mental health?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I employ highly effective strategies that consistently maintain good mental health."
+          },
+          {
+            "points": 4,
+            "text": "My strategies are generally effective, though improvements could be made."
+          },
+          {
+            "points": 3,
+            "text": "My strategies work to an extent but are not always reliable."
+          },
+          {
+            "points": 2,
+            "text": "I struggle to maintain effective strategies, often feeling overwhelmed."
+          },
+          {
+            "points": 1,
+            "text": "I lack effective strategies for managing stress, negatively affecting my well-being."
+          }
+        ]
+      },
+      {
+        "prompt": "How committed are you to continuous learning and skill development?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I am deeply committed to continuous learning, consistently engaging in skill development."
+          },
+          {
+            "points": 4,
+            "text": "I am committed but sometimes find it challenging to stay consistent."
+          },
+          {
+            "points": 3,
+            "text": "I engage in learning occasionally but not as consistently as I would like."
+          },
+          {
+            "points": 2,
+            "text": "I engage in learning sporadically, often due to external pressures."
+          },
+          {
+            "points": 1,
+            "text": "I rarely engage in learning or skill development."
+          }
+        ]
+      },
+      {
+        "prompt": "How well do you understand and apply your strengths to your professional role?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I have a deep understanding of my strengths and apply them effectively in my role."
+          },
+          {
+            "points": 4,
+            "text": "I generally understand and apply my strengths, with room for more consistent application."
+          },
+          {
+            "points": 3,
+            "text": "I am aware of my strengths but do not always apply them effectively."
+          },
+          {
+            "points": 2,
+            "text": "I occasionally recognize my strengths but struggle to apply them in my work."
+          },
+          {
+            "points": 1,
+            "text": "I have limited awareness and application of my strengths in my professional role."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do you manage your professional relationships and networking?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I manage my relationships and networking exceptionally well, consistently expanding my professional network."
+          },
+          {
+            "points": 4,
+            "text": "I manage well, though I could be more active in networking."
+          },
+          {
+            "points": 3,
+            "text": "I maintain necessary contacts but am not proactive in expanding my network."
+          },
+          {
+            "points": 2,
+            "text": "I infrequently network and sometimes neglect professional relationships."
+          },
+          {
+            "points": 1,
+            "text": "I do not effectively manage professional relationships or engage in networking."
+          }
+        ]
+      },
+      {
+        "prompt": "How often do you seek feedback to improve your professional performance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "I regularly seek and utilize feedback to enhance my performance significantly."
+          },
+          {
+            "points": 4,
+            "text": "I often seek feedback and find it somewhat useful for my development."
+          },
+          {
+            "points": 3,
+            "text": "I occasionally seek feedback but not as regularly as I could."
+          },
+          {
+            "points": 2,
+            "text": "I seldom seek feedback, which hampers my ability to improve."
+          },
+          {
+            "points": 1,
+            "text": "I rarely seek or use feedback, missing opportunities to enhance my performance."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Technology and Software",
+    "questions": [
+      {
+        "prompt": "How integrated are your technology systems within your business operations?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our systems are fully integrated, providing seamless support for all business operations."
+          },
+          {
+            "points": 4,
+            "text": "Most of our systems are integrated, though some areas could be improved."
+          },
+          {
+            "points": 3,
+            "text": "Our systems are moderately integrated, but disconnects sometimes hinder operations."
+          },
+          {
+            "points": 2,
+            "text": "Integration is minimal, often causing disruptions and inefficiencies."
+          },
+          {
+            "points": 1,
+            "text": "We lack integration of technology systems, significantly affecting our operational capability."
+          }
+        ]
+      },
+      {
+        "prompt": "How frequently do you update your technology to enhance performance?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We regularly update our technology, always staying ahead with the latest advancements."
+          },
+          {
+            "points": 4,
+            "text": "We update our technology frequently enough to maintain a competitive edge."
+          },
+          {
+            "points": 3,
+            "text": "We update our technology occasionally, but could be more proactive."
+          },
+          {
+            "points": 2,
+            "text": "Updates are infrequent, often only in response to problems."
+          },
+          {
+            "points": 1,
+            "text": "We rarely update our technology, which has led to obsolescence and issues."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively does your technology enhance customer experience?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our technology significantly enhances the customer experience across all touchpoints."
+          },
+          {
+            "points": 4,
+            "text": "Our technology generally supports a good customer experience, with minor issues occasionally."
+          },
+          {
+            "points": 3,
+            "text": "It somewhat enhances the experience but lacks consistency or full coverage."
+          },
+          {
+            "points": 2,
+            "text": "Our technology does not effectively support the customer experience, often leading to complaints."
+          },
+          {
+            "points": 1,
+            "text": "Our technology hampers the customer experience, causing frequent problems and dissatisfaction."
+          }
+        ]
+      },
+      {
+        "prompt": "How proactive are you in adopting new technologies that could benefit your business?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We are highly proactive, constantly exploring and adopting technologies that can offer competitive advantages."
+          },
+          {
+            "points": 4,
+            "text": "We are generally proactive, though sometimes slow to implement new technologies."
+          },
+          {
+            "points": 3,
+            "text": "We adopt new technologies occasionally, often after they become mainstream."
+          },
+          {
+            "points": 2,
+            "text": "We are slow to adopt new technologies, typically lagging behind industry trends."
+          },
+          {
+            "points": 1,
+            "text": "We rarely adopt new technologies, often resisting change even when clearly beneficial."
+          }
+        ]
+      },
+      {
+        "prompt": "How effectively do you use technology to streamline operations and increase productivity?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We use technology superbly to streamline operations and significantly enhance productivity."
+          },
+          {
+            "points": 4,
+            "text": "We effectively use technology to improve operations, though there are occasional hiccups."
+          },
+          {
+            "points": 3,
+            "text": "We use technology to some extent to aid operations, but not optimally."
+          },
+          {
+            "points": 2,
+            "text": "Our use of technology in operations is minimal, not fully tapping into its potential to increase productivity."
+          },
+          {
+            "points": 1,
+            "text": "We do not effectively use technology, often missing out on opportunities to enhance productivity."
+          }
+        ]
+      },
+      {
+        "prompt": "How secure are your IT systems and data protection measures?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our IT security and data protection measures are state-of-the-art, ensuring excellent safety and compliance."
+          },
+          {
+            "points": 4,
+            "text": "Our security measures are strong but could be updated to reflect the latest standards."
+          },
+          {
+            "points": 3,
+            "text": "Our security is adequate, but we experience occasional vulnerabilities that need addressing."
+          },
+          {
+            "points": 2,
+            "text": "Our security measures are outdated and frequently compromised."
+          },
+          {
+            "points": 1,
+            "text": "We lack effective IT security measures, posing serious risks to our business."
+          }
+        ]
+      },
+      {
+        "prompt": "How do you assess the return on investment (ROI) for your technology expenditures?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We meticulously track and optimize ROI, ensuring high returns on all technology investments"
+          },
+          {
+            "points": 4,
+            "text": "We generally track ROI and see good returns, though not consistently across all investments."
+          },
+          {
+            "points": 3,
+            "text": "We track ROI occasionally, not systematically enough to ensure optimal investment decisions."
+          },
+          {
+            "points": 2,
+            "text": "We rarely assess ROI, leading to uncertain outcomes from our technology investments."
+          },
+          {
+            "points": 1,
+            "text": "We do not assess ROI on technology, often resulting in poor investment choices."
+          }
+        ]
+      },
+      {
+        "prompt": "How well do your technology solutions meet your current business needs?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "Our technology solutions perfectly meet our business needs, enhancing every aspect of our operations."
+          },
+          {
+            "points": 4,
+            "text": "Our solutions meet most of our needs, with minor areas needing improvement."
+          },
+          {
+            "points": 3,
+            "text": "Our technology meets some of our needs but falls short in key areas."
+          },
+          {
+            "points": 2,
+            "text": "Our technology solutions are barely adequate, often failing to meet our needs effectively."
+          },
+          {
+            "points": 1,
+            "text": "Our technology solutions do not meet our business needs, hindering our operational efficiency."
+          }
+        ]
+      },
+      {
+        "prompt": "How do you utilize technology to improve team collaboration and communication?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We excellently utilize technology to foster seamless collaboration and communication across all teams."
+          },
+          {
+            "points": 4,
+            "text": "We effectively use technology for collaboration, though improvements could enhance interaction."
+          },
+          {
+            "points": 3,
+            "text": "We use technology for team collaboration, but it's not fully effective or consistent."
+          },
+          {
+            "points": 2,
+            "text": "Our technology for collaboration is underutilized or ineffective, often leading to communication gaps."
+          },
+          {
+            "points": 1,
+            "text": "We do not effectively use technology to support team collaboration, resulting in frequent misunderstandings and inefficiencies."
+          }
+        ]
+      },
+      {
+        "prompt": "How advanced is your use of data analytics and insights to drive business decisions?",
+        "answers": [
+          {
+            "points": 5,
+            "text": "We are at the cutting edge, using advanced data analytics to inform and guide all major business decisions."
+          },
+          {
+            "points": 4,
+            "text": "We effectively use data analytics, though not as comprehensively as we could."
+          },
+          {
+            "points": 3,
+            "text": "We use data analytics in some areas but lack a comprehensive strategy."
+          },
+          {
+            "points": 2,
+            "text": "Our use of data analytics is minimal, not significantly impacting decision-making."
+          },
+          {
+            "points": 1,
+            "text": "We rarely use data analytics, missing out on critical insights for business improvement."
+          }
+        ]
+      }
+    ]
+  }
+]

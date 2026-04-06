@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "Complete Business Analysis Tool for understanding strength and weakness of business and creating a plan for success."
 readme = "README.md"
 license = { text = "Not open source" }
-authors = [
-  { name = "Grant Vickers", email = "grantv@3-peak.com" },
-]
+authors = [{ name = "Grant Vickers", email = "grantv@3-peak.com" }]
 requires-python = "==3.14.*"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -59,14 +57,12 @@ dev = [
   "sphinx-autobuild==2025.8.25",
   "watchfiles==1.1.1",
   "werkzeug[watchdog]==3.1.8",
+  "ipykernel (>=7.2.0,<8.0.0)",
 ]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
-extend-exclude = [
-  "*/migrations/*.py",
-  "staticfiles/*",
-]
+extend-exclude = ["*/migrations/*.py", "staticfiles/*"]
 
 lint.select = [
   "A",
@@ -126,7 +122,6 @@ lint.ignore = [
   # Deactivated because it can make the code slow:
   # https://github.com/astral-sh/ruff/issues/7871
 ]
-lint.isort.force-single-line = true
 
 [tool.pyproject-fmt]
 keep_full_version = true
@@ -136,17 +131,14 @@ keep_full_version = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--ds=config.settings.test --reuse-db --import-mode=importlib"
-python_files = [
-  "tests.py",
-  "test_*.py",
-]
+python_files = ["tests.py", "test_*.py"]
 
 # ==== Coverage ====
 
 [tool.coverage.run]
-include = [ "complete_business_analysis_tool/**" ]
-omit = [ "*/migrations/*", "*/tests/*" ]
-plugins = [ "django_coverage_plugin" ]
+include = ["complete_business_analysis_tool/**"]
+omit = ["*/migrations/*", "*/tests/*"]
+plugins = ["django_coverage_plugin"]
 
 # ==== mypy ====
 
@@ -157,10 +149,7 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-plugins = [
-  "mypy_django_plugin.main",
-  "mypy_drf_plugin.main",
-]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [[tool.mypy.overrides]]
 # Django migrations should not produce any errors:

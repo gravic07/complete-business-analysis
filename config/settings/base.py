@@ -55,7 +55,6 @@ DATABASES = {
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # URLS
 # ------------------------------------------------------------------------------
@@ -93,7 +92,11 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "complete_business_analysis_tool.users",
-    # Your stuff: custom apps go here
+    "complete_business_analysis_tool.core",
+    "complete_business_analysis_tool.assessments",
+    "complete_business_analysis_tool.clients",
+    "complete_business_analysis_tool.analysis",
+    "complete_business_analysis_tool.reports",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -101,7 +104,9 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # MIGRATIONS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
-MIGRATION_MODULES = {"sites": "complete_business_analysis_tool.contrib.sites.migrations"}
+MIGRATION_MODULES = {
+    "sites": "complete_business_analysis_tool.contrib.sites.migrations"
+}
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
