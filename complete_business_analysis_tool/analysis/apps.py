@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class AnalysisConfig(AppConfig):
-    name = "analysis"
+    name = "complete_business_analysis_tool.analysis"
