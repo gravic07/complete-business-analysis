@@ -95,6 +95,11 @@ class Assessment(BaseModel):
         on_delete=models.PROTECT,
         related_name="assessments",
     )
+    client = models.ForeignKey(
+        "clients.Client",
+        on_delete=models.CASCADE,
+        related_name="assessments",
+    )
 
     def __str__(self) -> str:
         return f"{self.template} ({self.created_at:%Y-%m-%d})"

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Assessment Templates
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="level">
+        <div class="level-left">
+          <div class="level-item">
+            <h1 class="title">Assessment Templates</h1>
+          </div>
+        </div>
+      </div>
+      {% if templates %}
+        <div class="columns is-multiline">
+          {% for assessment_template in templates %}
+            <div class="column is-one-third">
+              <div class="card">
+                <header class="card-header">
+                  <p class="card-header-title is-size-4">{{ assessment_template.title }}</p>
+                </header>
+                <div class="card-content">
+                  {% if assessment_template.description %}<p class="content">{{ assessment_template.description }}</p>{% endif %}
+                  <p class="is-size-7 has-text-grey">
+                    {{ assessment_template.template_questions.count }}
+                    question{{ assessment_template.template_questions.count|pluralize }}
+                  </p>
+                </div>
+                <footer class="card-footer">
+                  <a href="{% url 'assessments:entry' assessment_template.pk %}"
+                     class="card-footer-item">Start Assessment</a>
+                </footer>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="notification is-info is-light">No assessment templates are available yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock content %}

@@ -1,0 +1,27 @@
+{% if form.errors or form.non_field_errors %}
+  <div class="notification is-danger">
+    <button class="delete" type="button"></button>
+    {% if form.non_field_errors %}
+      <div class="error-notification-section">
+        <h4 class="title is-3">General Form Errors:</h4>
+        <ul>
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% if form.non_field_errors and form.errors|length > 1 or not form.non_field_errors and form.errors %}
+      <div class="error-notification-section">
+        <h4 class="title is-3">Field Specific Errors:</h4>
+        <ul>
+          {% for field in form.visible_fields %}
+            {% for error in field.errors %}
+              <li>
+                <strong>{{ field.label }}:</strong> {{ error }}
+              </li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

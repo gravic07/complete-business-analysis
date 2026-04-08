@@ -1,0 +1,25 @@
+<div class="modal" id="create-client-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Create Client</p>
+      <button type="button" class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+      <div id="create-client-errors"
+           class="notification is-danger is-light is-hidden"></div>
+      <form id="create-client-form">
+        {% csrf_token %}
+        {% with form=client_form %}
+          {% include 'form_fields/client-fields.html' %}
+        {% endwith %}
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <div class="buttons">
+        <button type="button" class="button is-primary" id="submit-create-client">Save Client</button>
+        <button type="button" class="button modal-close-btn">Cancel</button>
+      </div>
+    </footer>
+  </div>
+</div>

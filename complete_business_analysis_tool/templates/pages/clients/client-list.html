@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}
+  Clients
+{% endblock title %}
+{% block css %}
+  {{ block.super }}
+  <link href="https://cdn.datatables.net/v/bm/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.css"
+        rel="stylesheet"
+        integrity="sha384-J/gTPZrGTmBJJ7/7EqAP59oOHCXk63dRgpw2+CD3krSfsnN2dJwQUz8voiGjbE7B"
+        crossorigin="anonymous" />
+{% endblock css %}
+{% block javascript %}
+  <script src="{% static 'js/jquery-4.0.0.min.js' %}"></script>
+  {{ block.super }}
+{% endblock javascript %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="level">
+        <div class="level-left">
+          <h1 class="title">Clients</h1>
+        </div>
+        <div class="level-right">
+          <a href="{% url 'clients:create' %}" class="button is-primary">
+            <span class="icon">
+              <i class="fa-duotone fa-regular fa-plus"></i>
+            </span>
+            <span>New Client</span>
+          </a>
+        </div>
+      </div>
+      <table class="table is-fullwidth is-striped is-hoverable" id="client-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Contact</th>
+            <th>Title</th>
+            <th>Industry</th>
+            <th>Assessments</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+            <tr>
+              <td>{{ client.business_name }}</td>
+              <td>{{ client.first_name }} {{ client.last_name }}</td>
+              <td>{{ client.title }}</td>
+              <td>{{ client.get_industry_display }}</td>
+              <td>{{ client.assessment_count }}</td>
+              <td>
+                <div class="buttons is-right">
+                  <a href="#" class="button is-small is-light" title="View client">
+                    <span class="icon">
+                      <i class="fa-duotone fa-regular fa-eye"></i>
+                    </span>
+                  </a>
+                  <a href="{% url 'clients:edit' client.pk %}"
+                     class="button is-small is-light"
+                     title="Edit client">
+                    <span class="icon">
+                      <i class="fa-duotone fa-regular fa-pen-to-square"></i>
+                    </span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="has-text-centered has-text-grey">No clients found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock content %}
+{% block inline_javascript %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"
+          integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7"
+          crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"
+          integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.datatables.net/v/bm/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.js"
+          integrity="sha384-ijAa9zrTG/Rp+bJvbNG0v2XR83nbe/gbODEXCkZ7t7pGALUoZhQxQ4gfG7nFry0/"
+          crossorigin="anonymous"></script>
+  <script type="application/javascript">
+    DataTable.type('num', 'className', 'dt-body-left');
+    $(document).ready(function() {
+      $('#client-table').DataTable({
+        initComplete: function(settings, json) {
+          $("#client-table").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
+        },
+        layout: {
+          top2Start: {
+            pageLength: {
+              menu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+              ]
+            }
+          },
+          topStart: {
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+          },
+          topEnd: 'search',
+          bottomStart: 'info',
+          bottomEnd: 'paging'
+        },
+        language: {
+          search: '<span class="icon is-medium"><i class="fa-regular fa-lg fa-magnifying-glass"></i></span>'
+        },
+        pageLength: 50,
+        order: [
+          [0, "asc"]
+        ],
+        columnDefs: [{
+          "targets": [5],
+          "orderable": false
+        }],
+      });
+    });
+  </script>
+{% endblock inline_javascript %}

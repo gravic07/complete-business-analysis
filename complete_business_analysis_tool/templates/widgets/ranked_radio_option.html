@@ -1,0 +1,9 @@
+<label class="ranked-radio-option{% if widget.selected %} is-selected{% endif %}"
+       for="{{ widget.attrs.id }}">
+  <span class="ranked-radio-option__rank tag is-primary is-light">{{ widget.rank }}</span>
+  <input type="{{ widget.type }}"
+         name="{{ widget.name }}"
+         value="{{ widget.value|stringformat:'s' }}"
+         {% include "django/forms/widgets/attrs.html" %} />
+  <span class="ranked-radio-option__text">{{ widget.label }}</span>
+</label>

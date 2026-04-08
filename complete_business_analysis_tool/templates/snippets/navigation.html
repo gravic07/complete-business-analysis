@@ -31,8 +31,8 @@
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link">More</a>
           <div class="navbar-dropdown">
-            <a class="navbar-item">Item #1</a>
-            <a class="navbar-item">Item #1</a>
+            <a href="{% url 'assessments:list' %}" class="navbar-item">Assessments</a>
+            <a href="{% url 'clients:list' %}" class="navbar-item">Clients</a>
             <hr class="navbar-divider" />
             <a class="navbar-item">Report an issue</a>
           </div>

@@ -1,0 +1,33 @@
+@use "bulma/sass/utilities" as bulma
+
+.ranked-radio-option
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  padding: 0.6rem 0.75rem
+  border: 1px solid transparent
+  border-radius: 4px
+  cursor: pointer
+  margin-bottom: 0.5rem
+  transition: background-color 0.15s ease, border-color 0.15s ease
+
+  &:hover
+    background-color: hsl(0, 0%, 96%)
+
+  &.is-selected
+    background-color: hsl(271, 100%, 96%)
+    border-color: bulma.$primary
+
+  &__rank
+    flex-shrink: 0
+    min-width: 2rem
+    text-align: center
+
+  &__text
+    flex: 1
+
+  input[type="radio"]
+    position: absolute
+    opacity: 0
+    width: 0
+    height: 0

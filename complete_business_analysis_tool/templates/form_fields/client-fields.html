@@ -1,0 +1,7 @@
+{% include 'snippets/input-text.html' with field=form.business_name icon="fa-buildings" %}
+<div class="columns">
+  <div class="column">{% include 'snippets/input-text.html' with field=form.first_name icon="fa-user-hair" %}</div>
+  <div class="column">{% include 'snippets/input-text.html' with field=form.last_name icon="fa-user-hair" %}</div>
+</div>
+{% include 'snippets/input-text.html' with field=form.title icon="fa-id-card-clip" %}
+{% include 'snippets/input-select.html' with field=form.industry icon="fa-industry-windows" %}

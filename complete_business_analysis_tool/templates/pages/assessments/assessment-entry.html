@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ assessment_template.title }} — Assessment Entry
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'assessments:list' %}">Assessment Templates</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">{{ assessment_template.title }}</a>
+          </li>
+        </ul>
+      </nav>
+      <h1 class="title">{{ assessment_template.title }}</h1>
+      {% if assessment_template.description %}<p class="subtitle">{{ assessment_template.description }}</p>{% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "snippets/form-errors.html" with form=form %}
+        {# Client selection #}
+        <div class="box mb-5">
+          <h2 class="title is-5">Select the Client</h2>
+          {% include 'snippets/input-select.html' with field=form.client icon="fa-buildings" fullwidth=1 %}
+          <button type="button"
+                  class="button is-link is-light mt-2"
+                  id="open-create-client-modal">
+            <span class="icon is-small"><i class="fa-duotone fa-regular fa-plus"></i></span>
+            <span>Create Client</span>
+          </button>
+        </div>
+        {# Questions grouped by category #}
+        {% for category_name, bound_fields in form.get_grouped_fields %}
+          <div class="box mb-5">
+            <h2 class="title is-5 has-text-primary">
+              {% if category_name %}
+                {{ category_name }}
+              {% else %}
+                General
+              {% endif %}
+            </h2>
+            <hr />
+            {% for bound_field in bound_fields %}
+              <div class="field mb-5">
+                <label class="label">{{ bound_field.label }}</label>
+                {% for error in bound_field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                <div class="control">{{ bound_field }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary is-medium">Submit Assessment</button>
+            <a href="{% url 'assessments:list' %}"
+               class="button is-light is-medium ml-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock content %}
+{% block modal %}
+  {% include "modals/create-client.html" %}
+{% endblock modal %}
+{% block inline_javascript %}
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('create-client-modal');
+
+      document.getElementById('open-create-client-modal').addEventListener('click', () => {
+        modal.classList.add('is-active');
+      });
+
+      modal.querySelectorAll('.modal-background, .delete, .modal-close-btn').forEach(el => {
+        el.addEventListener('click', () => modal.classList.remove('is-active'));
+      });
+
+      document.getElementById('submit-create-client').addEventListener('click', () => {
+        const form = document.getElementById('create-client-form');
+        const errorsEl = document.getElementById('create-client-errors');
+        errorsEl.classList.add('is-hidden');
+        errorsEl.innerHTML = '';
+
+        const formData = new FormData(form);
+        const body = new URLSearchParams(formData);
+
+        fetch('/api/clients/create/', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body,
+          })
+          .then(r => r.json().then(data => ({
+            ok: r.ok,
+            data
+          })))
+          .then(({
+            ok,
+            data
+          }) => {
+            if (ok) {
+              const select = document.getElementById('id_client');
+              const option = new Option(data.text, data.id, true, true);
+              select.appendChild(option);
+              form.reset();
+              modal.classList.remove('is-active');
+            } else {
+              const msgs = Object.values(data.errors || {}).flat().join('<br />');
+              errorsEl.innerHTML = msgs;
+              errorsEl.classList.remove('is-hidden');
+            }
+          });
+      });
+    });
+  </script>
+{% endblock inline_javascript %}
