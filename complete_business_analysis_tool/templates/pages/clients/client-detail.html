@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}
+  {{ client.business_name }}
+{% endblock title %}
+{% block css %}
+  {{ block.super }}
+  <link href="https://cdn.datatables.net/v/bm/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.css"
+        rel="stylesheet"
+        integrity="sha384-J/gTPZrGTmBJJ7/7EqAP59oOHCXk63dRgpw2+CD3krSfsnN2dJwQUz8voiGjbE7B"
+        crossorigin="anonymous" />
+{% endblock css %}
+{% block javascript %}
+  <script src="{% static 'js/jquery-4.0.0.min.js' %}"></script>
+  {{ block.super }}
+{% endblock javascript %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'clients:list' %}">Clients</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">{{ client.business_name }}</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="level">
+        <div class="level-left">
+          <div>
+            <h1 class="title">{{ client.business_name }}</h1>
+            <p class="subtitle">{{ client.first_name }} {{ client.last_name }}</p>
+          </div>
+        </div>
+        <div class="level-right">
+          <a href="{% url 'clients:edit' client.pk %}" class="button is-light">
+            <span class="icon">
+              <i class="fa-duotone fa-regular fa-pen-to-square"></i>
+            </span>
+            <span>Edit Client</span>
+          </a>
+        </div>
+      </div>
+      <div class="columns mb-4">
+        <div class="column">
+          <div class="box">
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-large mr-4 has-text-grey-light">
+                <i class="fa-duotone fa-regular fa-2x fa-user-hair"></i>
+              </span>
+              <div>
+                <p class="is-size-5">{{ client.first_name }} {{ client.last_name }}</p>
+                <p class="has-text-weight-bold mb-0">Contact</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box">
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-large mr-4 has-text-grey-light">
+                <i class="fa-duotone fa-regular fa-2x fa-id-card-clip"></i>
+              </span>
+              <div>
+                <p class="is-size-5">{{ client.title }}</p>
+                <p class="has-text-weight-bold mb-0">Title</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box">
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-large mr-4 has-text-grey-light">
+                <i class="fa-duotone fa-regular fa-2x fa-industry-windows"></i>
+              </span>
+              <div>
+                <p class="is-size-5">{{ client.get_industry_display }}</p>
+                <p class="has-text-weight-bold mb-0">Industry</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <h2 class="title is-3">Assessments</h2>
+      <table class="table is-fullwidth is-striped is-hoverable"
+             id="assessment-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Questions</th>
+            <th>Score</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for assessment in assessments %}
+            <tr>
+              <td>{{ assessment.template.title }}</td>
+              <td>{{ assessment.question_count }}</td>
+              <td>{{ assessment.score|default:"—" }}</td>
+              <td data-order="{{ assessment.created_at|date:'Y-m-d' }}">{{ assessment.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="buttons is-right">
+                  <a href="#" class="button is-small is-light" title="View assessment">
+                    <span class="icon">
+                      <i class="fa-duotone fa-regular fa-eye"></i>
+                    </span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="has-text-centered has-text-grey">No assessments found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock content %}
+{% block inline_javascript %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"
+          integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7"
+          crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"
+          integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.datatables.net/v/bm/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.js"
+          integrity="sha384-ijAa9zrTG/Rp+bJvbNG0v2XR83nbe/gbODEXCkZ7t7pGALUoZhQxQ4gfG7nFry0/"
+          crossorigin="anonymous"></script>
+  <script type="application/javascript">
+    DataTable.type('num', 'className', 'dt-body-left');
+    $(document).ready(function() {
+      $('#assessment-table').DataTable({
+        initComplete: function(settings, json) {
+          $("#client-table").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
+        },
+        layout: {
+          top2Start: {
+            pageLength: {
+              menu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+              ]
+            }
+          },
+          topStart: {
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+          },
+          topEnd: 'search',
+          bottomStart: 'info',
+          bottomEnd: 'paging'
+        },
+        language: {
+          search: '<span class="icon is-medium"><i class="fa-regular fa-lg fa-magnifying-glass"></i></span>'
+        },
+        pageLength: 50,
+        order: [
+          [3, "asc"]
+        ],
+        columnDefs: [{
+          "targets": [4],
+          "orderable": false
+        }],
+      });
+    });
+  </script>
+{% endblock inline_javascript %}

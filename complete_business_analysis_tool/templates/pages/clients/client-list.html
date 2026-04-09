@@ -53,7 +53,9 @@
               <td>{{ client.assessment_count }}</td>
               <td>
                 <div class="buttons is-right">
-                  <a href="#" class="button is-small is-light" title="View client">
+                  <a href="{% url 'clients:detail' client.pk %}"
+                     class="button is-small is-light"
+                     title="View client">
                     <span class="icon">
                       <i class="fa-duotone fa-regular fa-eye"></i>
                     </span>
