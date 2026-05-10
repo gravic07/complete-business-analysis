@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ assessment.template.title }} — {{ assessment.client.business_name }}
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'clients:list' %}">Clients</a>
+          </li>
+          <li>
+            <a href="{% url 'clients:detail' assessment.client.pk %}">{{ assessment.client.business_name }}</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">{{ assessment.template.title }}</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="level">
+        <div class="level-left">
+          <div>
+            <h1 class="title">{{ assessment.template.title }}</h1>
+            <p class="subtitle">{{ assessment.client.business_name }}</p>
+          </div>
+        </div>
+        <div class="level-right">
+          <p class="has-text-grey">{{ assessment.created_at|date:"M d, Y" }}</p>
+        </div>
+      </div>
+      <div class="box mb-5">
+        <div class="columns is-vcentered">
+          <div class="column">
+            <p class="heading">Total Score</p>
+            <p class="title">{{ assessment.total_score }}</p>
+          </div>
+          <div class="column">
+            <p class="heading">Questions Answered</p>
+            <p class="title">{{ assessment.answers.count }}</p>
+          </div>
+        </div>
+      </div>
+      {% for category_name, answers in grouped_answers %}
+        <div class="box mb-5">
+          <h2 class="title is-5 has-text-primary">{{ category_name }}</h2>
+          <hr />
+          {% for answer in answers %}
+            <div class="field mb-5">
+              <p class="label">{{ answer.question_snapshot }}</p>
+              <div class="is-flex is-align-items-center is-justify-content-space-between">
+                <p>{{ answer.option_snapshot.text }}</p>
+                <span class="tag is-light is-medium ml-3">Score: {{ answer.option_snapshot.rank }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <div class="notification is-warning">No answers recorded for this assessment.</div>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock content %}

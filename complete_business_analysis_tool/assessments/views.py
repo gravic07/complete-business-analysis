@@ -5,12 +5,36 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import FormView, ListView
+from django.views.generic import DetailView, FormView, ListView
 
 from complete_business_analysis_tool.clients.forms import ClientForm
 
 from .forms import AssessmentEntryForm
-from .models import AssessmentTemplate
+from .models import Assessment, AssessmentTemplate
+
+
+class AssessmentDetailView(LoginRequiredMixin, DetailView):
+    model = Assessment
+    template_name = "pages/assessments/assessment-detail.html"
+    context_object_name = "assessment"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        answers = self.object.answers.select_related("question__category").order_by(
+            "question__category__name",
+            "created_at",
+        )
+        groups: dict[str, list] = {}
+        for answer in answers:
+            cat = (
+                answer.question.category
+                if answer.question and answer.question.category
+                else None
+            )
+            cat_name = cat.name if cat else "General"
+            groups.setdefault(cat_name, []).append(answer)
+        context["grouped_answers"] = list(groups.items())
+        return context
 
 
 class AssessmentTemplateListView(LoginRequiredMixin, ListView):

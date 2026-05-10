@@ -1,6 +1,7 @@
 """Django models for the assessments application."""
 
 from django.db import models
+from django.db.models import Sum
 
 from complete_business_analysis_tool.core.models import BaseModel
 
@@ -100,6 +101,10 @@ class Assessment(BaseModel):
         on_delete=models.CASCADE,
         related_name="assessments",
     )
+
+    @property
+    def total_score(self) -> int:
+        return self.answers.aggregate(total=Sum("selected_option__rank"))["total"] or 0
 
     def __str__(self) -> str:
         return f"{self.template} ({self.created_at:%Y-%m-%d})"

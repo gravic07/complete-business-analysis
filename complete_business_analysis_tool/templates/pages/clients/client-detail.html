@@ -111,7 +111,9 @@
               <td data-order="{{ assessment.created_at|date:'Y-m-d' }}">{{ assessment.created_at|date:"M d, Y" }}</td>
               <td>
                 <div class="buttons is-right">
-                  <a href="#" class="button is-small is-light" title="View assessment">
+                  <a href="{% url 'assessments:detail' assessment.pk %}"
+                     class="button is-small is-light"
+                     title="View assessment">
                     <span class="icon">
                       <i class="fa-duotone fa-regular fa-eye"></i>
                     </span>
