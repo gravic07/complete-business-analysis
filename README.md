@@ -1,102 +1,128 @@
 # Complete Business Analysis Tool
 
-Complete Business Analysis Tool for understanding strength and weakness of business and creating a plan for success.
+A tool for analyzing the strengths and weaknesses of a business and building a plan for success.
 
-[![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-## Settings
+## Tech Stack
 
-Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
+- **Backend:** Django 6.0, Django REST Framework, Celery
+- **Database:** PostgreSQL
+- **Cache / Broker:** Redis
+- **Frontend:** Sass, BrowserSync
+- **Python:** 3.14 managed by uv
 
-## Basic Commands
+## Django Applications
 
-### Setting Up Your Users
+A **Client** is the top-level entity. An **Assessment** is completed for a client using a reusable template of weighted, categorized questions. The **Analysis** app processes the answered questions into scored, category-level insights, and the **Reports** app turns those insights into a presentable business analysis report. The **core** and **users** apps underpin the whole system.
 
-- To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
+| App | Purpose |
+|---|---|
+| `core` | Provides the abstract `BaseModel` (UUID primary key, `created_at`, `updated_at`) inherited by every other app's models. |
+| `users` | Custom user model with email-based authentication, extending Django's `AbstractUser`. |
+| `clients` | Stores client businesses and their primary contact; the top-level entity that assessments are run against. |
+| `assessments` | Owns assessment templates (sets of weighted, categorized questions) and records completed assessments with per-answer snapshots linked to a client. |
+| `analysis` | Processes completed assessment answers to produce scored, category-level insights. |
+| `reports` | Generates and presents the business analysis report from scored assessment data. |
 
-- To create a **superuser account**, use this command:
+## Prerequisites
 
-      uv run python manage.py createsuperuser
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- [Node.js](https://nodejs.org/) (for frontend tooling)
+- PostgreSQL running locally
+- Redis running locally
 
-For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
+## Installation
 
-### Type checks
+1. Clone the repo and navigate to the project root.
 
-Running type checks with mypy:
+2. Install Python dependencies:
 
-    uv run mypy complete_business_analysis_tool
+       uv sync
 
-### Test coverage
+3. Install Node dependencies:
 
-To run the tests, check your test coverage, and generate an HTML coverage report:
+       npm install
 
-    uv run coverage run -m pytest
-    uv run coverage html
-    uv run open htmlcov/index.html
+4. Copy the example env file and configure it:
 
-#### Running tests with pytest
+       cp .env.example .env
+
+5. Create the database and run migrations:
+
+       uv run python manage.py migrate
+
+6. Load the CBA question data:
+
+       uv run python scripts/create_cba_model_instances.py
+
+7. Create a superuser:
+
+       uv run python manage.py createsuperuser
+
+## Running the Dev Server
+
+`npm run dev` starts three processes in parallel:
+
+- Django dev server at `http://localhost:8000`
+- Sass compiler (watches `static/sass/` and outputs compressed CSS)
+- BrowserSync proxy at `http://localhost:3000` with live reload on CSS and template changes
+
+Because the npm scripts call `python` directly, the virtual environment must be active first:
+
+```bash
+source .venv/bin/activate
+npm run dev
+```
+
+Open `http://localhost:3000` in your browser.
+
+## Common Commands
+
+### Tests
 
     uv run pytest
 
-### Live reloading and Sass CSS compilation
+### Test coverage
 
-Moved to [Live reloading and SASS compilation](https://cookiecutter-django.readthedocs.io/en/latest/2-local-development/developing-locally.html#using-webpack-or-gulp).
+    uv run coverage run -m pytest
+    uv run coverage html
+    open htmlcov/index.html
 
-### Celery
+### Type checking
 
-This app comes with Celery.
+    uv run mypy complete_business_analysis_tool
 
-To run a celery worker:
+### Linting and formatting
+
+Pre-commit hooks run Ruff, djLint, and pyproject-fmt automatically on commit. To run manually:
+
+    uv run pre-commit run --all-files
+
+## Celery
+
+In development, Celery tasks run eagerly (synchronously) — no worker needed.
+
+In production, start a worker from the project root:
 
 ```bash
-cd complete_business_analysis_tool
 uv run celery -A config.celery_app worker -l info
 ```
 
-Please note: For Celery's import magic to work, it is important _where_ the celery commands are run. If you are in the same folder with _manage.py_, you should be right.
-
-To run [periodic tasks](https://docs.celeryq.dev/en/stable/userguide/periodic-tasks.html), you'll need to start the celery beat scheduler service. You can start it as a standalone process:
+To run periodic tasks, start the beat scheduler:
 
 ```bash
-cd complete_business_analysis_tool
 uv run celery -A config.celery_app beat
 ```
 
-or you can embed the beat service inside a worker with the `-B` option (not recommended for production use):
+## Settings
 
-```bash
-cd complete_business_analysis_tool
-uv run celery -A config.celery_app worker -B -l info
-```
+Settings are split by environment under `config/settings/`:
 
-### Email Server
+| File | Used when |
+|---|---|
+| `local.py` | Local development (default) |
+| `test.py` | Test suite |
+| `production.py` | Production deployment |
 
-In development, it is often nice to be able to see emails that are being sent from your application. If you choose to use [Mailpit](https://github.com/axllent/mailpit) when generating the project a local SMTP server with a web interface will be available.
-
-1.  [Download the latest Mailpit release](https://github.com/axllent/mailpit/releases) for your OS.
-
-2.  Copy the binary file to the project root.
-
-3.  Make it executable:
-
-        chmod +x mailpit
-
-4.  Spin up another terminal window and start it there:
-
-        ./mailpit
-
-5.  Check out <http://127.0.0.1:8025/> to see how it goes.
-
-Now you have your own mail server running locally, ready to receive whatever you send it.
-
-### Sentry
-
-Sentry is an error logging aggregator service. You can sign up for a free account at <https://sentry.io/signup/?code=cookiecutter> or download and host it yourself.
-The system is set up with reasonable defaults, including 404 logging and integration with the WSGI application.
-
-You must set the DSN url in production.
-
-## Deployment
-
-The following details how to deploy this application.
+Key production environment variables: `DJANGO_SECRET_KEY`, `DATABASE_URL`, `REDIS_URL`, `MAILGUN_API_KEY`, `SENTRY_DSN`.
