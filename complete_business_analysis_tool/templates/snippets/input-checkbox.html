@@ -1,0 +1,12 @@
+{% extends 'snippets/input-base.html' %}
+
+{% block label %}
+{% endblock label %}
+{% block control %}
+  <div class="control">
+    <label class="checkbox">
+      {{ field }}
+      {% if not no_label %}{{ field.label }}{% endif %}
+    </label>
+  </div>
+{% endblock control %}

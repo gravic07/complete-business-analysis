@@ -1,0 +1,35 @@
+<div class="field{% if column != 0 %} column{% if column %} is-{{ column }}{% endif %}{% endif %}{% if hidden %} is-hidden{% endif %}"
+     {% if field_id %}id="{{ field_id }}"{% endif %}>
+  {% block label %}
+    <label class="label{% if field.field.required %} required{% endif %}"
+           for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {% endblock label %}
+  {% block control %}
+    <div class="control{% if icon %} has-icons-{% if reversed %}right{% else %}left{% endif %}{% endif %}">
+      {{ field }}
+      {% if icon %}
+        <span class="icon is-small is-{% if reversed %}right{% else %}left{% endif %}">
+          <i class="fad {{ icon }}"></i>
+        </span>
+      {% endif %}
+    </div>
+  {% endblock control %}
+  {% block help %}
+    {% if field.help_text %}
+      {% if help_safe_text %}
+        <p class="help">{{ field.help_text|safe }}</p>
+      {% else %}
+        <p class="help">{{ field.help_text }}</p>
+      {% endif %}
+    {% endif %}
+  {% endblock help %}
+  {% block errors %}
+    {% if field.errors %}
+      <p class="help is-danger">
+        {% for error in field.errors %}{{ error }}{% endfor %}
+      </p>
+    {% endif %}
+  {% endblock errors %}
+  {% block extra %}
+  {% endblock extra %}
+</div>

@@ -1,0 +1,42 @@
+<div class="box file-upload-row has-background-white">
+  <div class="level">
+    <div class="level-left">
+      <div class="level-item">
+        <div>
+          <span class="icon-text">
+            <span class="icon">
+              <i class="fa-duotone {{ icon }}"></i>
+            </span>
+            <span><strong>{{ field.label }}</strong></span>
+          </span>
+          <div class="is-size-7">{{ field.help_text }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <div>
+          <div class="file has-name">
+            <label class="file-label">
+              {{ field }}
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">Choose a file…</span>
+              </span>
+              <span class="file-name">No File Selected</span>
+            </label>
+          </div>
+          {% comment %} {% if agent.payroll_form %}
+            <div class="is-size-7">
+              <a href="{{ agent.payroll_form.url }}" target="_blank">
+                {{ agent.payroll_form_filename }}
+              </a>
+            </div>
+          {% endif %} {% endcomment %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+{% extends 'snippets/input-base.html' %}
+
+{% block label %}
+  <label class="label{% if field.field.required %} required{% endif %}"
+         for="{{ field.id_for_label }}">
+    {% if not no_label %}{{ field.label }}{% endif %}
+  </label>
+{% endblock label %}
+{% block control %}
+  {{ field }}
+{% endblock control %}
