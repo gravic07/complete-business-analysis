@@ -62,6 +62,7 @@ dev = [
 ]
 
 [tool.ruff]
+line-length = 90
 # Exclude a variety of commonly ignored directories.
 extend-exclude = [ "*/migrations/*.py", "staticfiles/*" ]
 lint.select = [

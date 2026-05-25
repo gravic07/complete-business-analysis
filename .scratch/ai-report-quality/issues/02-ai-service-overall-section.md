@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # AI Service — overall section generation
 
@@ -22,14 +22,14 @@ Like `generate_category_section`, the output must be written in second person ad
 
 ## Acceptance criteria
 
-- [ ] `generate_overall_section` exists in the AI service module and accepts: category_sections (dict mapping category name to section text), category_scores (dict mapping category name to score), optional prior_content, optional feedback_text, optional llm_client
-- [ ] The prompt includes the full text of each category section passed in
-- [ ] The prompt includes the category scores (as internal context)
-- [ ] The prompt explicitly instructs the model not to cite raw numeric scores in the output
-- [ ] The prompt specifies all four parts of the Overall mandate: execution sequencing, low-hanging fruit, most urgent items, and an overall acknowledgment
-- [ ] The prompt instructs the model to write in second person, addressing the client directly
-- [ ] Unit tests use the injectable stub LLM client to capture and assert on the prompt
-- [ ] Tests verify: category section text present in prompt, scores present in prompt as context, mandate language present, no instruction to cite raw scores
+- [x] `generate_overall_section` exists in the AI service module and accepts: category_sections (dict mapping category name to section text), category_scores (dict mapping category name to score), optional prior_content, optional feedback_text, optional llm_client
+- [x] The prompt includes the full text of each category section passed in
+- [x] The prompt includes the category scores (as internal context)
+- [x] The prompt explicitly instructs the model not to cite raw numeric scores in the output
+- [x] The prompt specifies all four parts of the Overall mandate: execution sequencing, low-hanging fruit, most urgent items, and an overall acknowledgment
+- [x] The prompt instructs the model to write in second person, addressing the client directly
+- [x] Unit tests use the injectable stub LLM client to capture and assert on the prompt
+- [x] Tests verify: category section text present in prompt, scores present in prompt as context, mandate language present, no instruction to cite raw scores
 
 ## Blocked by
 

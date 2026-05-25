@@ -32,6 +32,26 @@ def generate_section(  # noqa: PLR0913
     return llm_client(prompt)
 
 
+def generate_overall_section(  # noqa: PLR0913
+    category_sections: dict[str, str],
+    category_scores: dict[str, Decimal],
+    category_max_scores: dict[str, Decimal],
+    prior_content: str | None = None,
+    feedback_text: str | None = None,
+    llm_client: Callable[[str], str] | None = None,
+) -> str:
+    if llm_client is None:
+        llm_client = _default_llm_client()
+    prompt = _build_overall_prompt(
+        category_sections,
+        category_scores,
+        category_max_scores,
+        prior_content,
+        feedback_text,
+    )
+    return llm_client(prompt)
+
+
 def generate_category_section(
     answers: list[dict],
     prior_content: str | None = None,
@@ -59,9 +79,7 @@ def _build_category_prompt(
     for answer in answers:
         question = answer["question_snapshot"]
         option = answer["option_snapshot"]
-        option_text = (
-            option.get("text", "") if isinstance(option, dict) else str(option)
-        )
+        option_text = option.get("text", "") if isinstance(option, dict) else str(option)
         lines.append(f"  Q: {question}")
         lines.append(f"  A: {option_text}")
 
@@ -133,6 +151,53 @@ def _build_prompt(  # noqa: PLR0913
         ],
     )
 
+    return "\n".join(lines)
+
+
+def _build_overall_prompt(
+    category_sections: dict[str, str],
+    category_scores: dict[str, Decimal],
+    category_max_scores: dict[str, Decimal],
+    prior_content: str | None = None,
+    feedback_text: str | None = None,
+) -> str:
+    lines = [
+        "You are a business advisor writing the Overall section of a business "
+        "analysis report.",
+        "Write in second person, addressing the client directly"
+        " (use 'your business', 'you are currently', etc.).",
+        "",
+        "Internal context — category scores (do not cite raw numeric scores in "
+        "your output):",
+    ]
+    for category, score in category_scores.items():
+        max_score = category_max_scores.get(category, score)
+        lines.append(f"  - {category}: {score} / {max_score}")
+
+    lines.append("")
+    lines.append("Category sections:")
+    for category, section_text in category_sections.items():
+        lines.append(f"\n## {category}\n{section_text}")
+
+    if prior_content:
+        lines.append("")
+        lines.append(f"Current Overall section to revise:\n{prior_content}")
+
+    if feedback_text:
+        lines.append("")
+        lines.append(f"Advisor feedback to incorporate: {feedback_text}")
+
+    lines.extend(
+        [
+            "",
+            "Write the Overall section covering all four parts:",
+            "1. Brief acknowledgment of the overall picture across all categories.",
+            "2. Execution sequencing — which category plans can be tackled simultaneously"
+            " and which depend on others being addressed first.",
+            "3. Low-hanging fruit — high-impact actions that are easy to implement now.",
+            "4. Most urgent items to address first.",
+        ],
+    )
     return "\n".join(lines)
 
 
