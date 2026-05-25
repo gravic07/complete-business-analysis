@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Report — {{ assessment.template.title }} — {{ assessment.client.business_name }}
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'clients:list' %}">Clients</a>
+          </li>
+          <li>
+            <a href="{% url 'clients:detail' assessment.client.pk %}">{{ assessment.client.business_name }}</a>
+          </li>
+          <li>
+            <a href="{% url 'assessments:detail' assessment.pk %}">{{ assessment.template.title }}</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">Report</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="level">
+        <div class="level-left">
+          <div>
+            <h1 class="title">Business Analysis Report</h1>
+            <p class="subtitle">{{ assessment.client.business_name }} — {{ assessment.template.title }}</p>
+          </div>
+        </div>
+      </div>
+      {% if sections %}
+        {% for section in sections %}
+          <div class="box mb-5">
+            {% if section.category %}
+              <h2 class="title is-4 has-text-primary">{{ section.category.name }}</h2>
+            {% else %}
+              <h2 class="title is-4">Overall Assessment</h2>
+            {% endif %}
+            <hr />
+            <div class="content">{{ section.content|linebreaksbr }}</div>
+          </div>
+        {% endfor %}
+        <div class="box mt-6">
+          <h2 class="title is-4">Submit Feedback</h2>
+          <p class="subtitle is-6">
+            Provide feedback to refine the report. Leave fields blank to skip re-analysis for that section.
+          </p>
+          {% if feedback_form.non_field_errors %}
+            <div class="notification is-danger">
+              {% for error in feedback_form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+          <form method="post"
+                action="{% url 'reports:submit_feedback' assessment.pk %}">
+            {% csrf_token %}
+            <div class="field">
+              <label class="label">{{ feedback_form.overall_text.label }}</label>
+              <div class="control">{{ feedback_form.overall_text }}</div>
+            </div>
+            {% for category, field in category_fields %}
+              <div class="field">
+                <label class="label">{{ category.name }}</label>
+                <div class="control">{{ field }}</div>
+              </div>
+            {% endfor %}
+            <div class="field">
+              <div class="control">
+                <button type="submit" class="button is-primary">Submit Feedback &amp; Reanalyse</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      {% else %}
+        <div class="notification is-warning">No report has been generated for this assessment yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock content %}

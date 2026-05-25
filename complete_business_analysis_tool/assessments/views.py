@@ -34,6 +34,7 @@ class AssessmentDetailView(LoginRequiredMixin, DetailView):
             cat_name = cat.name if cat else "General"
             groups.setdefault(cat_name, []).append(answer)
         context["grouped_answers"] = list(groups.items())
+        context["analyses"] = self.object.analyses.order_by("-created_at")
         return context
 
 

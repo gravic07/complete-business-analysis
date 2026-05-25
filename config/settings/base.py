@@ -1,4 +1,4 @@
-# ruff: noqa: ERA001, E501
+# ruff: noqa: ERA001
 """Base settings to build other settings files upon."""
 
 import ssl
@@ -105,7 +105,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
 MIGRATION_MODULES = {
-    "sites": "complete_business_analysis_tool.contrib.sites.migrations"
+    "sites": "complete_business_analysis_tool.contrib.sites.migrations",
 }
 
 # AUTHENTICATION
@@ -252,6 +252,10 @@ MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
 DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
+
+# ANTHROPIC
+# ------------------------------------------------------------------------------
+CLAUDE_API_KEY = env("CLAUDE_API_KEY", default="")
 
 # LOGGING
 # ------------------------------------------------------------------------------

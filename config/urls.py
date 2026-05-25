@@ -37,6 +37,13 @@ urlpatterns = [
             namespace="clients",
         ),
     ),
+    path(
+        "reports/",
+        include(
+            "complete_business_analysis_tool.reports.urls",
+            namespace="reports",
+        ),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
