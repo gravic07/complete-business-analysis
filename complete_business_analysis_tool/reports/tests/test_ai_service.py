@@ -1,6 +1,9 @@
 from decimal import Decimal
 
-from complete_business_analysis_tool.reports.ai_service import generate_section
+from complete_business_analysis_tool.reports.ai_service import (
+    generate_category_section,
+    generate_section,
+)
 
 
 def test_generate_section_returns_non_empty_string():
@@ -79,3 +82,109 @@ def test_generate_section_includes_feedback_when_provided():
         llm_client=capturing_client,
     )
     assert "Focus more on cash flow." in captured["prompt"]
+
+
+# --- generate_category_section ---
+
+
+def test_generate_category_section_returns_non_empty_string():
+    stub = lambda prompt: "Generated narrative."  # noqa: E731
+    answers = [
+        {
+            "question_snapshot": "How is your cash flow?",
+            "option_snapshot": {"text": "Very strong", "rank": 5},
+        },
+    ]
+    result = generate_category_section(answers=answers, llm_client=stub)
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+def test_generate_category_section_prompt_contains_no_numeric_scores():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    answers = [
+        {
+            "question_snapshot": "How is your cash flow?",
+            "option_snapshot": {"text": "Strong", "rank": 7},
+        },
+    ]
+    generate_category_section(answers=answers, llm_client=capturing_client)
+    prompt = captured["prompt"]
+    assert "score" not in prompt.lower()
+    assert "7" not in prompt
+
+
+def test_generate_category_section_prompt_contains_no_section_header():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    generate_category_section(answers=[], llm_client=capturing_client)
+    assert "Section:" not in captured["prompt"]
+
+
+def test_generate_category_section_prompt_instructs_second_person():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    generate_category_section(answers=[], llm_client=capturing_client)
+    prompt = captured["prompt"]
+    assert "second person" in prompt.lower() or "your business" in prompt.lower()
+
+
+def test_generate_category_section_includes_qa_answers_in_prompt():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    answers = [
+        {
+            "question_snapshot": "Describe your pricing strategy.",
+            "option_snapshot": {"text": "Value-based pricing", "rank": 3},
+        },
+    ]
+    generate_category_section(answers=answers, llm_client=capturing_client)
+    assert "Describe your pricing strategy." in captured["prompt"]
+    assert "Value-based pricing" in captured["prompt"]
+
+
+def test_generate_category_section_includes_prior_content_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    generate_category_section(
+        answers=[],
+        prior_content="Your operations are currently fragmented.",
+        llm_client=capturing_client,
+    )
+    assert "Your operations are currently fragmented." in captured["prompt"]
+
+
+def test_generate_category_section_includes_feedback_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    generate_category_section(
+        answers=[],
+        feedback_text="Emphasise the supply chain risks.",
+        llm_client=capturing_client,
+    )
+    assert "Emphasise the supply chain risks." in captured["prompt"]

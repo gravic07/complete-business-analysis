@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # AI Service — category section generation
 
@@ -19,12 +19,12 @@ The old `generate_section` function stays in place until the orchestrator is upd
 
 ## Acceptance criteria
 
-- [ ] `generate_category_section` exists in the AI service module and accepts: answers (list of Q&A dicts), optional prior_content, optional feedback_text, optional llm_client
-- [ ] The prompt constructed by `generate_category_section` contains no numeric score values
-- [ ] The prompt constructed by `generate_category_section` contains no "Section:" header line
-- [ ] The prompt instructs the model to write in second person, addressing the client directly
-- [ ] Unit tests use the injectable stub LLM client (same pattern as existing `test_ai_service.py`) to capture and assert on the prompt without making real API calls
-- [ ] Tests pass for the no-scores constraint, no-header constraint, and second-person instruction
+- [x] `generate_category_section` exists in the AI service module and accepts: answers (list of Q&A dicts), optional prior_content, optional feedback_text, optional llm_client
+- [x] The prompt constructed by `generate_category_section` contains no numeric score values
+- [x] The prompt constructed by `generate_category_section` contains no "Section:" header line
+- [x] The prompt instructs the model to write in second person, addressing the client directly
+- [x] Unit tests use the injectable stub LLM client (same pattern as existing `test_ai_service.py`) to capture and assert on the prompt without making real API calls
+- [x] Tests pass for the no-scores constraint, no-header constraint, and second-person instruction
 
 ## Blocked by
 
