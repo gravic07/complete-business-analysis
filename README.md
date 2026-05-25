@@ -25,6 +25,8 @@ A **Client** is the top-level entity. An **Assessment** is completed for a clien
 | `analysis` | Processes completed assessment answers to produce scored, category-level insights. |
 | `reports` | Generates and presents the business analysis report from scored assessment data. |
 
+See [Assessment-to-Report Flow](docs/assessment-to-report-flow.md) for a deep-dive on the full analysis pipeline, including the Mermaid diagram, model reference, and stage-by-stage function walkthrough.
+
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
