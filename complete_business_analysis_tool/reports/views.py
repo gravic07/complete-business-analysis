@@ -1,6 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db.models import Subquery
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, FormView
@@ -14,6 +13,7 @@ from complete_business_analysis_tool.reports.models import (
     Feedback,
     ReportSection,
 )
+from complete_business_analysis_tool.reports.queries import latest_sections_by_category
 
 
 class ReportView(LoginRequiredMixin, DetailView):
@@ -97,24 +97,4 @@ def _assessment_categories(assessment: Assessment):
 
 
 def _assemble_report(assessment: Assessment) -> list[ReportSection]:
-    """Return the latest ReportSection per category across all Analysis runs.
-
-    Overall section (category=None) is first, then categories ordered by name.
-    """
-
-    sections = list(
-        ReportSection.objects.filter(
-            pk__in=Subquery(
-                ReportSection.objects.filter(analysis__assessment=assessment)
-                .order_by("category_id", "-analysis__created_at")
-                .distinct("category_id")
-                .values("pk"),
-            ),
-        )
-        .select_related("category")
-        .order_by("category__name"),
-    )
-
-    overall = [s for s in sections if s.category is None]
-    categorised = [s for s in sections if s.category is not None]
-    return overall + categorised
+    return latest_sections_by_category(assessment)

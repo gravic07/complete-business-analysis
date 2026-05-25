@@ -5,8 +5,12 @@ from complete_business_analysis_tool.analysis.models import Analysis, CategorySc
 from complete_business_analysis_tool.analysis.scope import resolve_scope
 from complete_business_analysis_tool.analysis.scoring import compute_scores
 from complete_business_analysis_tool.assessments.models import Category
-from complete_business_analysis_tool.reports.ai_service import generate_section
+from complete_business_analysis_tool.reports.ai_service import (
+    generate_category_section,
+    generate_overall_section,
+)
 from complete_business_analysis_tool.reports.models import ReportSection
+from complete_business_analysis_tool.reports.queries import latest_sections_by_category
 
 
 def _build_answer_dicts(assessment) -> list[dict]:
@@ -79,8 +83,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
         category_names[cat_id] = a["category_name"]
 
     category_score_by_name = {
-        category_names[cat_id]: score
-        for cat_id, score in result.category_scores.items()
+        category_names[cat_id]: score for cat_id, score in result.category_scores.items()
     }
 
     categories = Category.objects.filter(pk__in=in_scope_ids)
@@ -101,11 +104,8 @@ def _run_analysis_work(analysis: Analysis) -> None:
         ]
         combined_feedback = "\n\n".join(feedback_parts) or None
 
-        content = generate_section(
-            scope_label=category.name,
+        content = generate_category_section(
             answers=answers_by_category.get(cat_id, []),
-            category_scores={category.name: result.category_scores[cat_id]},
-            total_score=result.total,
             feedback_text=combined_feedback,
             prior_content=prior_section.content if prior_section else None,
         )
@@ -115,20 +115,34 @@ def _run_analysis_work(analysis: Analysis) -> None:
             content=content,
         )
 
-    # Overall section: always on first run; only when overall feedback exists on re-runs
-    if not analysis.feedback_id or overall_feedback:
-        overall_content = generate_section(
-            scope_label="Overall",
-            answers=answer_dicts,
-            category_scores=category_score_by_name,
-            total_score=result.total,
-            feedback_text=overall_feedback,
-        )
-        ReportSection.objects.create(
-            analysis=analysis,
+    all_current_sections = latest_sections_by_category(analysis.assessment)
+    category_sections_dict = {
+        s.category.name: s.content for s in all_current_sections if s.category is not None
+    }
+    category_max_scores_by_name = {
+        category_names[cat_id]: result.category_max_scores[cat_id]
+        for cat_id in result.category_scores
+    }
+    prior_overall = (
+        ReportSection.objects.filter(
+            analysis__assessment=analysis.assessment,
             category=None,
-            content=overall_content,
         )
+        .order_by("-analysis__created_at")
+        .first()
+    )
+    overall_content = generate_overall_section(
+        category_sections=category_sections_dict,
+        category_scores=category_score_by_name,
+        category_max_scores=category_max_scores_by_name,
+        prior_content=prior_overall.content if prior_overall else None,
+        feedback_text=overall_feedback,
+    )
+    ReportSection.objects.create(
+        analysis=analysis,
+        category=None,
+        content=overall_content,
+    )
 
 
 @shared_task()

@@ -29,7 +29,11 @@ def test_analysis_starts_in_pending_status():
 @pytest.mark.django_db
 def test_run_analysis_task_transitions_to_complete(monkeypatch):
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
         lambda **kwargs: "stub",
     )
     assessment = AssessmentFactory()
@@ -54,7 +58,11 @@ def test_cannot_create_second_active_analysis_for_same_assessment():
 @pytest.mark.django_db
 def test_task_persists_category_scores_and_total(monkeypatch):
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
         lambda **kwargs: "stub",
     )
     category = CategoryFactory()
@@ -115,8 +123,12 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
-        lambda **kwargs: f"Section for {kwargs['scope_label']}",
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "cat stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall stub",
     )
     assessment, cat_a, cat_b = _make_two_category_assessment()
 
@@ -138,13 +150,13 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
-    # Only cat_a gets new records in analysis2
+    # Only cat_a gets new category records in analysis2
     assert CategoryScore.objects.filter(analysis=analysis2, category=cat_a).exists()
     assert not CategoryScore.objects.filter(analysis=analysis2, category=cat_b).exists()
     assert ReportSection.objects.filter(analysis=analysis2, category=cat_a).exists()
     assert not ReportSection.objects.filter(analysis=analysis2, category=cat_b).exists()
-    # No new overall section for category-only feedback
-    assert not ReportSection.objects.filter(analysis=analysis2, category=None).exists()
+    # Overall is always regenerated
+    assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()
 
 
 @pytest.mark.django_db
@@ -152,8 +164,12 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
-        lambda **kwargs: f"Section for {kwargs['scope_label']}",
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "cat stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall stub",
     )
     assessment, cat_a, cat_b = _make_two_category_assessment()
 
@@ -177,16 +193,22 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
 
 
 @pytest.mark.django_db
-def test_reanalysis_passes_prior_section_content_to_generate_section(monkeypatch):
-    call_log = []
+def test_reanalysis_passes_prior_section_content_to_generate_category_section(
+    monkeypatch,
+):
+    cat_call_log = []
 
-    def capture_generate(**kwargs):
-        call_log.append(kwargs)
-        return f"Section for {kwargs['scope_label']}"
+    def capture_category(**kwargs):
+        cat_call_log.append(kwargs)
+        return "cat content"
 
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
-        capture_generate,
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall",
     )
     assessment, cat_a, _ = _make_two_category_assessment()
 
@@ -195,7 +217,7 @@ def test_reanalysis_passes_prior_section_content_to_generate_section(monkeypatch
     analysis1.status = Analysis.Status.COMPLETE
     analysis1.save(update_fields=["status"])
 
-    call_log.clear()
+    cat_call_log.clear()
 
     feedback = Feedback.objects.create(assessment=assessment)
     CategoryFeedback.objects.create(
@@ -206,5 +228,35 @@ def test_reanalysis_passes_prior_section_content_to_generate_section(monkeypatch
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
-    alpha_call = next(c for c in call_log if c["scope_label"] == "Alpha")
-    assert alpha_call["prior_content"] == "Section for Alpha"
+    # Only cat_a is regenerated; verify prior content was passed
+    assert len(cat_call_log) == 1
+    assert cat_call_log[0]["prior_content"] == "cat content"
+
+
+@pytest.mark.django_db
+def test_category_only_feedback_always_creates_overall_section(monkeypatch):
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "cat stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall stub",
+    )
+    assessment, cat_a, _cat_b = _make_two_category_assessment()
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+    analysis1.status = Analysis.Status.COMPLETE
+    analysis1.save(update_fields=["status"])
+
+    feedback = Feedback.objects.create(assessment=assessment)
+    CategoryFeedback.objects.create(
+        feedback=feedback,
+        category=cat_a,
+        text="Improve Alpha.",
+    )
+    analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
+    run_analysis(analysis2.pk)
+
+    assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()

@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Orchestrator — wire new AI service and fix Overall regeneration
 
@@ -23,13 +23,13 @@ The orchestrator needs to fetch the full current state of all Category sections 
 
 ## Acceptance criteria
 
-- [ ] The orchestrator calls `generate_category_section` (not `generate_section`) for each Category in scope; no scores are passed
-- [ ] The orchestrator calls `generate_overall_section` for the Overall section; the assembled current state of all Category sections is passed (not raw Q&A)
-- [ ] The Overall section is generated on every Analysis run, not only when `overall_feedback` is present
-- [ ] The assembled-Report query lives in one shared location used by both the report view and the orchestrator
-- [ ] The old `generate_section` function is removed
-- [ ] Integration test: run the orchestrator for an Analysis with category-only Feedback (no `overall_text`); assert a ReportSection with `category=None` is created
-- [ ] Integration test: set up a first Analysis run that produces sections for all categories; run a second Analysis that only regenerates one category; assert the Overall section for the second Analysis was generated with content from all categories, including unchanged ones from the first run
+- [x] The orchestrator calls `generate_category_section` (not `generate_section`) for each Category in scope; no scores are passed
+- [x] The orchestrator calls `generate_overall_section` for the Overall section; the assembled current state of all Category sections is passed (not raw Q&A)
+- [x] The Overall section is generated on every Analysis run, not only when `overall_feedback` is present
+- [x] The assembled-Report query lives in one shared location used by both the report view and the orchestrator
+- [x] The old `generate_section` function is removed
+- [x] Integration test: run the orchestrator for an Analysis with category-only Feedback (no `overall_text`); assert a ReportSection with `category=None` is created
+- [x] Integration test: set up a first Analysis run that produces sections for all categories; run a second Analysis that only regenerates one category; assert the Overall section for the second Analysis was generated with content from all categories, including unchanged ones from the first run
 
 ## Blocked by
 

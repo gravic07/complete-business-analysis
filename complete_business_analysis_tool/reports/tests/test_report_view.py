@@ -20,8 +20,12 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 def _make_report(assessment, monkeypatch):
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
-        lambda **kwargs: f"Narrative for {kwargs['scope_label']}",
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "cat narrative",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall narrative",
     )
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -69,23 +73,26 @@ def test_report_view_shows_overall_section_first(monkeypatch):
     response = client.get(url)
 
     content = response.content.decode()
-    overall_pos = content.index("Narrative for Overall")
-    category_pos = content.index(f"Narrative for {category.name}")
+    overall_pos = content.index("overall narrative")
+    category_pos = content.index("cat narrative")
     assert overall_pos < category_pos
 
 
 @pytest.mark.django_db
 def test_report_view_assembles_latest_section_per_category(monkeypatch):
-    call_num = 0
+    call_num = [0]
 
-    def numbered_generate(**kwargs):
-        nonlocal call_num
-        call_num += 1
-        return f"Run{call_num} {kwargs['scope_label']}"
+    def numbered_category(**kwargs):
+        call_num[0] += 1
+        return f"cat-run-{call_num[0]}"
 
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_section",
-        numbered_generate,
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        numbered_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall",
     )
 
     category = CategoryFactory()
@@ -108,8 +115,6 @@ def test_report_view_assembles_latest_section_per_category(monkeypatch):
     response = client.get(url)
     content = response.content.decode()
 
-    # Latest category section is from analysis2 (runs 3 + 4), earliest from
-    # analysis1 (runs 1 + 2)
     latest_section = ReportSection.objects.filter(
         analysis=analysis2,
         category=category,
