@@ -59,6 +59,13 @@ def _run_analysis_work(analysis: Analysis) -> None:
         category_feedback_by_id = {}
         in_scope_ids = all_category_ids
 
+    existing_score_cat_ids = {
+        str(pk)
+        for pk in CategoryScore.objects.filter(analysis=analysis).values_list(
+            "category_id",
+            flat=True,
+        )
+    }
     CategoryScore.objects.bulk_create(
         [
             CategoryScore(
@@ -68,7 +75,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
                 max_possible_score=result.category_max_scores[cat_id],
             )
             for cat_id, score in result.category_scores.items()
-            if cat_id in in_scope_ids
+            if cat_id in in_scope_ids and cat_id not in existing_score_cat_ids
         ],
     )
 
@@ -89,6 +96,9 @@ def _run_analysis_work(analysis: Analysis) -> None:
     categories = Category.objects.filter(pk__in=in_scope_ids)
     for category in categories:
         cat_id = str(category.pk)
+
+        if ReportSection.objects.filter(analysis=analysis, category=category).exists():
+            continue
 
         prior_section = (
             ReportSection.objects.filter(
@@ -131,18 +141,19 @@ def _run_analysis_work(analysis: Analysis) -> None:
         .order_by("-analysis__created_at")
         .first()
     )
-    overall_content = generate_overall_section(
-        category_sections=category_sections_dict,
-        category_scores=category_score_by_name,
-        category_max_scores=category_max_scores_by_name,
-        prior_content=prior_overall.content if prior_overall else None,
-        feedback_text=overall_feedback,
-    )
-    ReportSection.objects.create(
-        analysis=analysis,
-        category=None,
-        content=overall_content,
-    )
+    if not ReportSection.objects.filter(analysis=analysis, category=None).exists():
+        overall_content = generate_overall_section(
+            category_sections=category_sections_dict,
+            category_scores=category_score_by_name,
+            category_max_scores=category_max_scores_by_name,
+            prior_content=prior_overall.content if prior_overall else None,
+            feedback_text=overall_feedback,
+        )
+        ReportSection.objects.create(
+            analysis=analysis,
+            category=None,
+            content=overall_content,
+        )
 
 
 @shared_task()

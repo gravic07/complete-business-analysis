@@ -260,3 +260,157 @@ def test_category_only_feedback_always_creates_overall_section(monkeypatch):
     run_analysis(analysis2.pk)
 
     assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()
+
+
+# ---------------------------------------------------------------------------
+# Issue 04 — Idempotency
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_rerunning_same_analysis_does_not_create_duplicate_sections(monkeypatch):
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "stub",
+    )
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    section_count_after_first_run = ReportSection.objects.filter(
+        analysis=analysis,
+    ).count()
+
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+    assert (
+        ReportSection.objects.filter(analysis=analysis).count()
+        == section_count_after_first_run
+    )
+
+
+@pytest.mark.django_db
+def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
+    cat_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return "generated"
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "overall",
+    )
+    assessment, cat_a, cat_b = _make_two_category_assessment()
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    # Simulate partial failure: cat_a was completed before the crash
+    ReportSection.objects.create(
+        analysis=analysis,
+        category=cat_a,
+        content="pre-existing",
+    )
+
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+    # AI was called only for cat_b (cat_a already had a section)
+    assert len(cat_calls) == 1
+    # The pre-existing cat_a section is preserved untouched
+    assert (
+        ReportSection.objects.get(analysis=analysis, category=cat_a).content
+        == "pre-existing"
+    )
+    # cat_b section was generated
+    assert ReportSection.objects.filter(analysis=analysis, category=cat_b).exists()
+
+
+@pytest.mark.django_db
+def test_failed_analysis_transitions_back_to_processing_on_retry(monkeypatch):
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        lambda **kwargs: "stub",
+    )
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(
+        assessment=assessment,
+        status=Analysis.Status.FAILED,
+    )
+
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+
+
+@pytest.mark.django_db
+def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
+    overall_calls = []
+
+    def capture_overall(**kwargs):
+        overall_calls.append(kwargs)
+        return "new overall"
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: "cat stub",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        capture_overall,
+    )
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    # Simulate partial failure: all category sections done, overall not yet created
+    ReportSection.objects.create(
+        analysis=analysis,
+        category=category,
+        content="cat pre-existing",
+    )
+    ReportSection.objects.create(
+        analysis=analysis,
+        category=None,
+        content="overall pre-existing",
+    )
+
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+    # Overall AI was never called
+    assert len(overall_calls) == 0
+    # Overall section content is unchanged
+    assert (
+        ReportSection.objects.get(analysis=analysis, category=None).content
+        == "overall pre-existing"
+    )

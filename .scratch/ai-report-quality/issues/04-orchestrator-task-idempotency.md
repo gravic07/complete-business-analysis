@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Orchestrator — task idempotency
 
@@ -20,11 +20,11 @@ No new Analysis record is created on retry. The audit trail for a partial failur
 
 ## Acceptance criteria
 
-- [ ] Before generating each Category ReportSection, the orchestrator checks for an existing `(analysis, category)` ReportSection and skips generation if one is found
-- [ ] Before generating the Overall ReportSection, the orchestrator checks for an existing `(analysis, category=None)` ReportSection and skips generation if one is found
-- [ ] Dispatching `run_analysis` with the `pk` of a `FAILED` Analysis transitions its status back to `processing` and resumes generation
-- [ ] Integration test: run the orchestrator for an Analysis, then call the orchestrator function again for the same Analysis; assert the total number of ReportSections belonging to that Analysis has not increased
-- [ ] Integration test: simulate a partial failure by creating some ReportSections for an Analysis manually, then run the orchestrator; assert only the missing sections are generated (the pre-existing ones are not regenerated)
+- [x] Before generating each Category ReportSection, the orchestrator checks for an existing `(analysis, category)` ReportSection and skips generation if one is found
+- [x] Before generating the Overall ReportSection, the orchestrator checks for an existing `(analysis, category=None)` ReportSection and skips generation if one is found
+- [x] Dispatching `run_analysis` with the `pk` of a `FAILED` Analysis transitions its status back to `processing` and resumes generation
+- [x] Integration test: run the orchestrator for an Analysis, then call the orchestrator function again for the same Analysis; assert the total number of ReportSections belonging to that Analysis has not increased
+- [x] Integration test: simulate a partial failure by creating some ReportSections for an Analysis manually, then run the orchestrator; assert only the missing sections are generated (the pre-existing ones are not regenerated)
 
 ## Blocked by
 
