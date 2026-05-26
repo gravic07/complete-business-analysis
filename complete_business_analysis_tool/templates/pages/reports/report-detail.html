@@ -30,16 +30,26 @@
           </div>
         </div>
       </div>
-      {% if sections %}
-        {% for section in sections %}
+      {% if executive_summary or category_sections %}
+        {% if executive_summary %}
           <div class="box mb-5">
-            {% if section.category %}
-              <h2 class="title is-4 has-text-primary">{{ section.category.name }}</h2>
-            {% else %}
-              <h2 class="title is-4">Overall Assessment</h2>
-            {% endif %}
+            <h2 class="title is-4">Executive Summary</h2>
             <hr />
-            <div class="content">{{ section.content|linebreaksbr }}</div>
+            <div class="content">{{ executive_summary.content|linebreaksbr }}</div>
+          </div>
+        {% endif %}
+        {% for section in category_sections %}
+          <div class="box mb-5">
+            <h2 class="title is-4 has-text-primary">{{ section.category.name }}</h2>
+            <hr />
+            <div class="content">
+              <h3 class="title is-6">Overview</h3>
+              {{ section.overview|linebreaksbr }}
+              <h3 class="title is-6">Impact</h3>
+              {{ section.impact|linebreaksbr }}
+              <h3 class="title is-6">Path Forward</h3>
+              {{ section.path_forward|linebreaksbr }}
+            </div>
           </div>
         {% endfor %}
         <div class="box mt-6">
@@ -56,8 +66,8 @@
                 action="{% url 'reports:submit_feedback' assessment.pk %}">
             {% csrf_token %}
             <div class="field">
-              <label class="label">{{ feedback_form.overall_text.label }}</label>
-              <div class="control">{{ feedback_form.overall_text }}</div>
+              <label class="label">{{ feedback_form.report_feedback.label }}</label>
+              <div class="control">{{ feedback_form.report_feedback }}</div>
             </div>
             {% for category, field in category_fields %}
               <div class="field">

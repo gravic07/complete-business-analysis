@@ -2,7 +2,7 @@ from django import forms
 
 
 class FeedbackForm(forms.Form):
-    overall_text = forms.CharField(
+    report_feedback = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 4}),
         label="Overall Feedback",

@@ -12,7 +12,10 @@ from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
     Feedback,
 )
-from complete_business_analysis_tool.reports.queries import latest_category_sections
+from complete_business_analysis_tool.reports.queries import (
+    latest_category_sections,
+    latest_executive_summary,
+)
 
 
 class ReportView(LoginRequiredMixin, DetailView):
@@ -25,7 +28,8 @@ class ReportView(LoginRequiredMixin, DetailView):
         assessment = self.object
         categories = _assessment_categories(assessment)
         form = FeedbackForm(categories=categories)
-        context["sections"] = _assemble_report(assessment)
+        context["executive_summary"] = latest_executive_summary(assessment)
+        context["category_sections"] = latest_category_sections(assessment)
         context["feedback_form"] = form
         context["category_fields"] = [
             (cat, form[f"category_{cat.pk}"]) for cat in categories
@@ -51,7 +55,8 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         form = context["form"]
         context["assessment"] = self.assessment
-        context["sections"] = _assemble_report(self.assessment)
+        context["executive_summary"] = latest_executive_summary(self.assessment)
+        context["category_sections"] = latest_category_sections(self.assessment)
         context["feedback_form"] = form
         context["category_fields"] = [
             (cat, form[f"category_{cat.pk}"]) for cat in self.categories
@@ -62,10 +67,10 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         return reverse("reports:report", kwargs={"pk": self.assessment.pk})
 
     def form_valid(self, form):
-        overall_text = (form.cleaned_data.get("overall_text") or "").strip()
+        report_feedback = (form.cleaned_data.get("report_feedback") or "").strip()
         feedback = Feedback.objects.create(
             assessment=self.assessment,
-            report_feedback=overall_text,
+            report_feedback=report_feedback,
         )
         for category in self.categories:
             text = (form.cleaned_data.get(f"category_{category.pk}") or "").strip()
@@ -93,7 +98,3 @@ def _assessment_categories(assessment: Assessment):
         .distinct()
         .order_by("name")
     )
-
-
-def _assemble_report(assessment: Assessment) -> list:
-    return latest_category_sections(assessment)

@@ -43,7 +43,7 @@ def test_post_overall_feedback_creates_feedback_and_pending_analysis(monkeypatch
     client.force_login(user)
 
     url = reverse("reports:submit_feedback", kwargs={"pk": assessment.pk})
-    response = client.post(url, {"overall_text": "Needs more depth overall."})
+    response = client.post(url, {"report_feedback": "Needs more depth overall."})
 
     assert response.status_code == http.HTTPStatus.FOUND
     feedback = Feedback.objects.get(assessment=assessment)
@@ -88,16 +88,31 @@ def test_post_empty_feedback_is_rejected(monkeypatch):
     client.force_login(user)
 
     url = reverse("reports:submit_feedback", kwargs={"pk": assessment.pk})
-    response = client.post(
-        url,
-        {
-            "overall_text": "",
-        },
-    )
+    response = client.post(url, {"report_feedback": ""})
 
     assert response.status_code == http.HTTPStatus.OK
     assert not Feedback.objects.filter(assessment=assessment).exists()
     assert not Analysis.objects.filter(assessment=assessment).exists()
+
+
+@pytest.mark.django_db
+def test_submit_feedback_view_context_has_executive_summary_and_category_sections(
+    monkeypatch,
+):
+    _stub_task(monkeypatch)
+    assessment, _ = _make_assessment_with_category()
+
+    user = UserFactory()
+    client = Client()
+    client.force_login(user)
+
+    url = reverse("reports:submit_feedback", kwargs={"pk": assessment.pk})
+    response = client.post(url, {"report_feedback": ""})
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert "executive_summary" in response.context
+    assert "category_sections" in response.context
+    assert "sections" not in response.context
 
 
 @pytest.mark.django_db
@@ -111,7 +126,7 @@ def test_post_feedback_rejected_when_analysis_already_active(monkeypatch):
     client.force_login(user)
 
     url = reverse("reports:submit_feedback", kwargs={"pk": assessment.pk})
-    response = client.post(url, {"overall_text": "Something is off."})
+    response = client.post(url, {"report_feedback": "Something is off."})
 
     assert response.status_code == http.HTTPStatus.OK
     assert not Feedback.objects.filter(assessment=assessment).exists()

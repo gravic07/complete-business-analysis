@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Report view and template
 
@@ -18,13 +18,13 @@ Update all view and template tests to match the new context variable names and r
 
 ## Acceptance criteria
 
-- [ ] Report page renders the Executive Summary as the first section
-- [ ] Each category is rendered with Overview, Impact, and Path Forward subheadings
-- [ ] `executive_summary` and `category_sections` are the context variables (not `sections`)
-- [ ] The report view handles `executive_summary=None` gracefully (no crash when no Analysis has run yet)
-- [ ] Feedback form continues to work; `report_feedback` field is correctly read and written
-- [ ] No references to `ReportSection`, `sections` (as the combined list), or `latest_sections_by_category` remain in views or templates
-- [ ] All view and template tests pass
+- [x] Report page renders the Executive Summary as the first section
+- [x] Each category is rendered with Overview, Impact, and Path Forward subheadings
+- [x] `executive_summary` and `category_sections` are the context variables (not `sections`)
+- [x] The report view handles `executive_summary=None` gracefully (no crash when no Analysis has run yet)
+- [x] Feedback form continues to work; `report_feedback` field is correctly read and written
+- [x] No references to `ReportSection`, `sections` (as the combined list), or `latest_sections_by_category` remain in views or templates
+- [x] All view and template tests pass
 
 ## Blocked by
 
