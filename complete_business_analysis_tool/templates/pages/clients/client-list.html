@@ -32,51 +32,59 @@
           </a>
         </div>
       </div>
-      <table class="table is-fullwidth is-striped is-hoverable" id="client-table">
-        <thead>
-          <tr>
-            <th>Business</th>
-            <th>Contact</th>
-            <th>Title</th>
-            <th>Industry</th>
-            <th>Assessments</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for client in clients %}
+      {% if clients %}
+        <table class="table is-fullwidth is-striped is-hoverable" id="client-table">
+          <thead>
             <tr>
-              <td>{{ client.business_name }}</td>
-              <td>{{ client.first_name }} {{ client.last_name }}</td>
-              <td>{{ client.title }}</td>
-              <td>{{ client.get_industry_display }}</td>
-              <td>{{ client.assessment_count }}</td>
-              <td>
-                <div class="buttons is-right">
-                  <a href="{% url 'clients:detail' client.pk %}"
-                     class="button is-small is-light"
-                     title="View client">
-                    <span class="icon">
-                      <i class="fa-duotone fa-regular fa-eye"></i>
-                    </span>
-                  </a>
-                  <a href="{% url 'clients:edit' client.pk %}"
-                     class="button is-small is-light"
-                     title="Edit client">
-                    <span class="icon">
-                      <i class="fa-duotone fa-regular fa-pen-to-square"></i>
-                    </span>
-                  </a>
-                </div>
-              </td>
+              <th>Business</th>
+              <th>Contact</th>
+              <th>Title</th>
+              <th>Industry</th>
+              <th>Assessments</th>
+              <th></th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="has-text-centered has-text-grey">No clients found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for client in clients %}
+              <tr>
+                <td>{{ client.business_name }}</td>
+                <td>{{ client.first_name }} {{ client.last_name }}</td>
+                <td>{{ client.title }}</td>
+                <td>{{ client.get_industry_display }}</td>
+                <td>{{ client.assessment_count }}</td>
+                <td>
+                  <div class="buttons is-right">
+                    <a href="{% url 'clients:detail' client.pk %}"
+                       class="button is-small is-light"
+                       title="View client">
+                      <span class="icon">
+                        <i class="fa-duotone fa-regular fa-eye"></i>
+                      </span>
+                    </a>
+                    <a href="{% url 'clients:edit' client.pk %}"
+                       class="button is-small is-light"
+                       title="Edit client">
+                      <span class="icon">
+                        <i class="fa-duotone fa-regular fa-pen-to-square"></i>
+                      </span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="has-text-centered py-6">
+          <p class="has-text-grey mb-4">No clients have been created yet.</p>
+          <a href="{% url 'clients:create' %}" class="button is-primary">
+            <span class="icon">
+              <i class="fa-duotone fa-regular fa-plus"></i>
+            </span>
+            <span>Add Your First Client</span>
+          </a>
+        </div>
+      {% endif %}
     </div>
   </section>
 {% endblock content %}
@@ -93,6 +101,7 @@
   <script type="application/javascript">
     DataTable.type('num', 'className', 'dt-body-left');
     $(document).ready(function() {
+      if ($('#client-table').length === 0) return;
       $('#client-table').DataTable({
         initComplete: function(settings, json) {
           $("#client-table").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
