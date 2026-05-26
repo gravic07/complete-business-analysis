@@ -9,12 +9,12 @@ from complete_business_analysis_tool.reports.ai_service import (
 
 
 def test_generate_category_section_returns_dict_with_three_keys():
-    def stub(_prompt: str) -> str:
-        return (
-            '{"overview": "Overview text.", '
-            '"impact": "Impact text.", '
-            '"path_forward": "Path."}'
-        )
+    def stub(_prompt: str) -> dict:
+        return {
+            "overview": "Overview text.",
+            "impact": "Impact text.",
+            "path_forward": "Path.",
+        }
 
     answers = [
         {
@@ -39,9 +39,9 @@ def test_generate_category_section_returns_dict_with_three_keys():
 def test_generate_category_section_includes_prior_overview_when_provided():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -55,9 +55,9 @@ def test_generate_category_section_includes_prior_overview_when_provided():
 def test_generate_category_section_includes_prior_impact_when_provided():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -71,9 +71,9 @@ def test_generate_category_section_includes_prior_impact_when_provided():
 def test_generate_category_section_includes_prior_path_forward_when_provided():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -87,9 +87,9 @@ def test_generate_category_section_includes_prior_path_forward_when_provided():
 def test_generate_category_section_prompt_specifies_five_to_eight_sentences():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -99,12 +99,12 @@ def test_generate_category_section_prompt_specifies_five_to_eight_sentences():
     assert "5-8 sentences" in captured["prompt"]
 
 
-def test_generate_category_section_prompt_instructs_json_with_three_keys():
+def test_generate_category_section_prompt_names_three_sections():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -112,18 +112,17 @@ def test_generate_category_section_prompt_instructs_json_with_three_keys():
         llm_client=capturing_client,
     )
     prompt = captured["prompt"]
-    assert '"overview"' in prompt
-    assert '"impact"' in prompt
-    assert '"path_forward"' in prompt
-    assert "json" in prompt.lower()
+    assert "overview" in prompt
+    assert "impact" in prompt
+    assert "path_forward" in prompt
 
 
 def test_generate_category_section_prompt_contains_no_numeric_scores():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     answers = [
         {
@@ -144,9 +143,9 @@ def test_generate_category_section_prompt_contains_no_numeric_scores():
 def test_generate_category_section_prompt_contains_no_section_header():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -159,9 +158,9 @@ def test_generate_category_section_prompt_contains_no_section_header():
 def test_generate_category_section_prompt_instructs_third_person():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],
@@ -175,9 +174,9 @@ def test_generate_category_section_prompt_instructs_third_person():
 def test_generate_category_section_includes_qa_answers_in_prompt():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     answers = [
         {
@@ -197,9 +196,9 @@ def test_generate_category_section_includes_qa_answers_in_prompt():
 def test_generate_category_section_includes_feedback_when_provided():
     captured = {}
 
-    def capturing_client(prompt: str) -> str:
+    def capturing_client(prompt: str) -> dict:
         captured["prompt"] = prompt
-        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
 
     generate_category_section(
         answers=[],

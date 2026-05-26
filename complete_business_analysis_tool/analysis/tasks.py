@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.db.models import Max
 
@@ -17,6 +19,8 @@ from complete_business_analysis_tool.reports.queries import (
     latest_category_sections,
     latest_executive_summary,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _build_answer_dicts(assessment) -> list[dict]:
@@ -180,7 +184,8 @@ def run_analysis(analysis_pk: str) -> None:
 
     try:
         _run_analysis_work(analysis)
-    except Exception:  # noqa: BLE001
+    except Exception:
+        logger.exception("Analysis %s failed", analysis_pk)
         analysis.status = Analysis.Status.FAILED
         analysis.save(update_fields=["status"])
         return
