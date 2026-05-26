@@ -12,7 +12,7 @@ from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
     Feedback,
 )
-from complete_business_analysis_tool.reports.queries import latest_sections_by_category
+from complete_business_analysis_tool.reports.queries import latest_category_sections
 
 
 class ReportView(LoginRequiredMixin, DetailView):
@@ -96,4 +96,4 @@ def _assessment_categories(assessment: Assessment):
 
 
 def _assemble_report(assessment: Assessment) -> list:
-    return latest_sections_by_category(assessment)
+    return latest_category_sections(assessment)

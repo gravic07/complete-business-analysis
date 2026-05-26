@@ -1,10 +1,16 @@
 from django.db.models import Subquery
 
-from complete_business_analysis_tool.reports.models import CategorySection
+from complete_business_analysis_tool.reports.models import (
+    CategorySection,
+    ExecutiveSummary,
+)
 
 
-def latest_sections_by_category(assessment) -> list[CategorySection]:
-    """Return the latest CategorySection per category across all Analysis runs."""
+def latest_category_sections(assessment) -> list[CategorySection]:
+    """
+    Return the latest CategorySection per category across all Analysis runs,
+    ordered by name.
+    """
     return list(
         CategorySection.objects.filter(
             pk__in=Subquery(
@@ -16,4 +22,13 @@ def latest_sections_by_category(assessment) -> list[CategorySection]:
         )
         .select_related("category")
         .order_by("category__name"),
+    )
+
+
+def latest_executive_summary(assessment) -> ExecutiveSummary | None:
+    """Return the latest ExecutiveSummary across all Analysis runs, or None."""
+    return (
+        ExecutiveSummary.objects.filter(analysis__assessment=assessment)
+        .order_by("-analysis__created_at")
+        .first()
     )

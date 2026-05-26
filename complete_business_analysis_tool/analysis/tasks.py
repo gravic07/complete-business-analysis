@@ -13,7 +13,10 @@ from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
 )
-from complete_business_analysis_tool.reports.queries import latest_sections_by_category
+from complete_business_analysis_tool.reports.queries import (
+    latest_category_sections,
+    latest_executive_summary,
+)
 
 
 def _build_answer_dicts(assessment) -> list[dict]:
@@ -37,6 +40,17 @@ def _build_answer_dicts(assessment) -> list[dict]:
         for a in answers
         if a.selected_option.question.category_id is not None
     ]
+
+
+def _build_section_text(section: CategorySection) -> str:
+    parts = []
+    if section.overview:
+        parts.append(f"Overview:\n{section.overview}")
+    if section.impact:
+        parts.append(f"Impact:\n{section.impact}")
+    if section.path_forward:
+        parts.append(f"Path Forward:\n{section.path_forward}")
+    return "\n\n".join(parts)
 
 
 def _run_analysis_work(analysis: Analysis) -> None:
@@ -132,19 +146,15 @@ def _run_analysis_work(analysis: Analysis) -> None:
             path_forward=content["path_forward"],
         )
 
-    all_current_sections = latest_sections_by_category(analysis.assessment)
-    category_sections_dict = {s.category.name: s.overview for s in all_current_sections}
+    all_current_sections = latest_category_sections(analysis.assessment)
+    category_sections_dict = {
+        s.category.name: _build_section_text(s) for s in all_current_sections
+    }
     category_max_scores_by_name = {
         category_names[cat_id]: result.category_max_scores[cat_id]
         for cat_id in result.category_scores
     }
-    prior_overall = (
-        ExecutiveSummary.objects.filter(
-            analysis__assessment=analysis.assessment,
-        )
-        .order_by("-analysis__created_at")
-        .first()
-    )
+    prior_overall = latest_executive_summary(analysis.assessment)
     if not ExecutiveSummary.objects.filter(analysis=analysis).exists():
         overall_content = generate_executive_summary(
             category_sections=category_sections_dict,

@@ -152,7 +152,7 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
     assert cat_a.name in sections_passed
     assert cat_b.name in sections_passed
     # cat_b's content must come from the first run's section (unchanged)
-    assert sections_passed[cat_b.name] == cat_b_section.overview
+    assert cat_b_section.overview in sections_passed[cat_b.name]
 
 
 @pytest.mark.django_db
@@ -261,3 +261,119 @@ def test_report_sections_are_never_updated_after_creation(monkeypatch):
     # New analysis has its own sections
     assert CategorySection.objects.filter(analysis=analysis2, category=category).exists()
     assert ExecutiveSummary.objects.filter(analysis=analysis2).exists()
+
+
+@pytest.mark.django_db
+def test_executive_summary_receives_labeled_concatenated_text_per_category(monkeypatch):
+    overall_calls = []
+
+    def capture_overall(**kwargs):
+        overall_calls.append(kwargs)
+        return "overall"
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: {
+            "overview": "the overview",
+            "impact": "the impact",
+            "path_forward": "the path forward",
+        },
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        capture_overall,
+    )
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    assert len(overall_calls) == 1
+    text = overall_calls[0]["category_sections"][category.name]
+    assert "the overview" in text
+    assert "the impact" in text
+    assert "the path forward" in text
+    assert "Overview:" in text
+    assert "Impact:" in text
+    assert "Path Forward:" in text
+
+
+@pytest.mark.django_db
+def test_prior_section_fields_passed_on_reanalysis(monkeypatch):
+    cat_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return {"overview": f"run-{len(cat_calls)}", "impact": "i", "path_forward": "p"}
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+
+    analysis2 = Analysis.objects.create(assessment=assessment)
+    cat_calls.clear()
+    run_analysis(analysis2.pk)
+
+    assert len(cat_calls) == 1
+    call = cat_calls[0]
+    assert call["prior_overview"] == "run-1"
+    assert call["prior_impact"] == "i"
+    assert call["prior_path_forward"] == "p"
+
+
+@pytest.mark.django_db
+def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
+    cat_calls = []
+    overall_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    def capture_overall(**kwargs):
+        overall_calls.append(kwargs)
+        return "overall"
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        capture_overall,
+    )
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        report_feedback="Global feedback text.",
+    )
+    analysis = Analysis.objects.create(assessment=assessment, feedback=feedback)
+    run_analysis(analysis.pk)
+
+    assert "Global feedback text." in cat_calls[0]["feedback_text"]
+    assert overall_calls[0]["feedback_text"] == "Global feedback text."

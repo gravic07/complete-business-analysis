@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Orchestrator: wire models, queries, and AI service
 
@@ -22,18 +22,18 @@ Update all integration tests to reference `CategorySection` and `ExecutiveSummar
 
 ## Acceptance criteria
 
-- [ ] `latest_category_sections(assessment)` returns the latest `CategorySection` per category, ordered by category name
-- [ ] `latest_executive_summary(assessment)` returns the latest `ExecutiveSummary` or `None`
-- [ ] The orchestrator creates `CategorySection` records with all three fields populated from the AI service dict
-- [ ] The orchestrator creates one `ExecutiveSummary` record per Analysis run
-- [ ] Prior `CategorySection` fields are passed as `prior_overview`, `prior_impact`, `prior_path_forward` on reanalysis
-- [ ] `ExecutiveSummary` receives a concatenated text block per category when being generated
-- [ ] `feedback.report_feedback` is used throughout; no references to `overall_text` remain in the orchestrator
-- [ ] Idempotency: re-running the task against the same Analysis does not create duplicate `CategorySection` or `ExecutiveSummary` records
-- [ ] Integration test: task creates one `CategorySection` per category and one `ExecutiveSummary`
-- [ ] Integration test: `ExecutiveSummary` on a partial reanalysis run is assembled from all categories including unchanged ones from prior runs
-- [ ] Integration test: `report_feedback` text flows through to AI service calls as the report-wide context
-- [ ] All tests pass; no references to `ReportSection` or `latest_sections_by_category` remain
+- [x] `latest_category_sections(assessment)` returns the latest `CategorySection` per category, ordered by category name
+- [x] `latest_executive_summary(assessment)` returns the latest `ExecutiveSummary` or `None`
+- [x] The orchestrator creates `CategorySection` records with all three fields populated from the AI service dict
+- [x] The orchestrator creates one `ExecutiveSummary` record per Analysis run
+- [x] Prior `CategorySection` fields are passed as `prior_overview`, `prior_impact`, `prior_path_forward` on reanalysis
+- [x] `ExecutiveSummary` receives a concatenated text block per category when being generated
+- [x] `feedback.report_feedback` is used throughout; no references to `overall_text` remain in the orchestrator
+- [x] Idempotency: re-running the task against the same Analysis does not create duplicate `CategorySection` or `ExecutiveSummary` records
+- [x] Integration test: task creates one `CategorySection` per category and one `ExecutiveSummary`
+- [x] Integration test: `ExecutiveSummary` on a partial reanalysis run is assembled from all categories including unchanged ones from prior runs
+- [x] Integration test: `report_feedback` text flows through to AI service calls as the report-wide context
+- [x] All tests pass; no references to `ReportSection` or `latest_sections_by_category` remain
 
 ## Blocked by
 
