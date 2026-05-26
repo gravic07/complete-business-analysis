@@ -44,10 +44,17 @@ Computed at two layers:
 A normalized record storing the computed score for one Category within one Analysis run. Fields: `analysis`, `category`, `score`, `max_possible_score`. Enables filtering and trend queries across Analysis runs.
 
 ### Plan
-The AI-generated content inside a Report — actionable recommendations derived from the content of questions and answers, not just their scores. Advisors can influence a Plan by submitting Feedback, which produces a new Report. A Plan consists of two distinct layers:
+The AI-generated content inside a Report — actionable recommendations derived from the content of questions and answers, not just their scores. Advisors can influence a Plan by submitting Feedback, which produces a new Report. A Plan consists of three distinct layers:
 
 - **Category Section** — a focused analysis of one business area structured as three named sub-sections: Overview (current state summary), Impact (how the current state affects the business), and Path Forward (short description of changes needed). Generated from that category's Q&A answers only.
 - **Executive Summary** — a true synthesis of the full report, condensing and stitching together the Category Sections into a coherent holistic picture. Does not carry a sequencing or urgency mandate — those are handled within each Category Section's Path Forward. Generated from the full text of all Category Sections — not from raw Q&A data. Rendered as 4-5 paragraphs with no Overview/Impact/Path Forward structure.
+- **Recommendations** — action-focused content generated for every category regardless of score. Consists of a top-level RecommendationsOverview and one CategoryRecommendations record per category. The start/stop/continue framing is a soft generative lens: high-scoring categories emphasise continuation, lower-scoring categories emphasise what to start and stop — but every category receives all three types of guidance. Generated after CategorySections are complete; CategorySection content is used as input context alongside Q&A answers.
+
+### RecommendationsOverview
+The top-level section that leads the Recommendations portion of a Report. Action-focused — orients the Client to where the business's biggest gaps are and what the recommendations collectively aim to address. Approximately 300–500 words. Does not carry the Overview/Impact/Path Forward structure. Analogous to ExecutiveSummary in scope, but forward-looking and prescriptive rather than synthetic. Regenerated whenever any CategoryRecommendations changes — mirrors the ExecutiveSummary regeneration trigger. Generated from: all CategoryRecommendations text (assembled) + all CategoryScores + business background context.
+
+### CategoryRecommendations
+Exactly 7 actionable recommendations for one Category within one Analysis run. Generated for every category regardless of score. Regenerates under exactly the same conditions as its corresponding CategorySection — same feedback scope, same triggers. The start/stop/continue framing is a soft generative lens applied by the model: high-scoring categories will emphasise continuation, lower-scoring categories will emphasise what to start and stop — but all three types of guidance appear in every set. Each recommendation is a single, self-contained, 1–3 sentence item. Not structured with sub-fields per recommendation — the model applies the framing through language, not labeling. Generated from: that category's Q&A answers + its CategorySection text + its CategoryScore + business background context only — no cross-category visibility.
 
 ### Analysis Status
 An Analysis moves through states: `pending → processing → complete` or `pending → processing → failed`. Status is stored on the Analysis record. Processing is handled asynchronously via Celery so the UI can show a processing state without blocking.
@@ -68,9 +75,11 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 - `Client` has many `Assessments`
 - `Assessment` has many `Analysis` runs
 - `Analysis` belongs to one `Assessment`, optionally references one `Feedback` (null on first run)
-- `Analysis` produces many `CategoryScore` records, many `CategorySection` records, and one `ExecutiveSummary`
+- `Analysis` produces many `CategoryScore` records, many `CategorySection` records, one `ExecutiveSummary`, many `CategoryRecommendations` records, and one `RecommendationsOverview`
 - `CategorySection` belongs to one `Analysis` and one `Category`
 - `ExecutiveSummary` belongs to one `Analysis`
+- `CategoryRecommendations` belongs to one `Analysis` and one `Category`
+- `RecommendationsOverview` belongs to one `Analysis`
 - `Feedback` belongs to one `Assessment`, has optional `overall_text` and many `CategoryFeedback` records
 - `CategoryFeedback` belongs to one `Feedback` and one `Category`
 
@@ -87,6 +96,8 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 |---|---|
 | `CategorySection` | `analysis` FK, `category` FK, `overview` TextField, `impact` TextField, `path_forward` TextField |
 | `ExecutiveSummary` | `analysis` FK, `content` TextField |
+| `CategoryRecommendations` | `analysis` FK, `category` FK, `recommendations` JSONField (list of 7 strings) |
+| `RecommendationsOverview` | `analysis` FK, `content` TextField |
 | `Feedback` | `assessment` FK, `report_feedback` (nullable) |
 | `CategoryFeedback` | `feedback` FK, `category` FK, `text` TextField |
 
@@ -101,3 +112,4 @@ The ExecutiveSummary regenerates whenever any CategorySection changes — not on
 - Category section prompts contain no numeric scores — severity is communicated through qualitative answer content only.
 - The ExecutiveSummary prompt receives scores as silent context; the model is instructed not to cite raw numbers in output.
 - All generated content is written in third person, referring to the business by name ("Acme Corp is currently...", "Acme Corp's approach...") — never in second person ("your business", "you are currently..."). The business name is passed to every generation call from `Client.business_name`.
+- CategoryRecommendations prompts use a start/stop/continue lens as a soft generative guide — not a structural label. The model is instructed to consider what the business should start doing, stop doing, and continue doing, with the balance weighted by category performance. High-scoring categories emphasise continuation; low-scoring categories emphasise change. Every set of 7 must include all three types of guidance.
