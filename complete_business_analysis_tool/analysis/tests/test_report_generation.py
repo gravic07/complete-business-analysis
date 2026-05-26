@@ -25,7 +25,7 @@ def test_orchestrator_calls_generate_category_section_not_generate_section(monke
 
     def capture_category(**kwargs):
         cat_calls.append(kwargs)
-        return "generated"
+        return {"overview": "generated", "impact": "", "path_forward": ""}
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
@@ -59,7 +59,7 @@ def test_orchestrator_calls_generate_overall_section_with_category_sections(monk
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat content",
+        lambda **kwargs: {"overview": "cat content", "impact": "", "path_forward": ""},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -103,7 +103,11 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
 
     def category_stub(**kwargs):
         call_count[0] += 1
-        return f"cat-content-{call_count[0]}"
+        return {
+            "overview": f"cat-content-{call_count[0]}",
+            "impact": "",
+            "path_forward": "",
+        }
 
     overall_calls = []
 
@@ -153,7 +157,11 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
 def test_task_creates_one_report_section_per_category_plus_overall(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "Generated narrative",
+        lambda **kwargs: {
+            "overview": "Generated narrative",
+            "impact": "",
+            "path_forward": "",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -178,7 +186,11 @@ def test_task_creates_one_report_section_per_category_plus_overall(monkeypatch):
 def test_task_creates_separate_sections_for_two_categories(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "Generated narrative",
+        lambda **kwargs: {
+            "overview": "Generated narrative",
+            "impact": "",
+            "path_forward": "",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -211,7 +223,7 @@ def test_report_sections_are_never_updated_after_creation(monkeypatch):
     def counting_client(**kwargs):
         nonlocal call_count
         call_count += 1
-        return f"Run {call_count}"
+        return {"overview": f"Run {call_count}", "impact": "", "path_forward": ""}
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",

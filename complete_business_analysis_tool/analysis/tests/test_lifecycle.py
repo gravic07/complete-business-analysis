@@ -31,7 +31,7 @@ def test_analysis_starts_in_pending_status():
 def test_run_analysis_task_transitions_to_complete(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "stub",
+        lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -60,7 +60,7 @@ def test_cannot_create_second_active_analysis_for_same_assessment():
 def test_task_persists_category_scores_and_total(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "stub",
+        lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -125,7 +125,11 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
 ):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat stub",
+        lambda **kwargs: {
+            "overview": "cat stub",
+            "impact": "cat stub",
+            "path_forward": "cat stub",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -166,7 +170,11 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
 ):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat stub",
+        lambda **kwargs: {
+            "overview": "cat stub",
+            "impact": "cat stub",
+            "path_forward": "cat stub",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -201,7 +209,7 @@ def test_reanalysis_passes_prior_section_content_to_generate_category_section(
 
     def capture_category(**kwargs):
         cat_call_log.append(kwargs)
-        return "cat content"
+        return {"overview": "cat content", "impact": "", "path_forward": ""}
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
@@ -229,16 +237,20 @@ def test_reanalysis_passes_prior_section_content_to_generate_category_section(
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
-    # Only cat_a is regenerated; verify prior content (overview) was passed
+    # Only cat_a is regenerated; verify prior overview was passed
     assert len(cat_call_log) == 1
-    assert cat_call_log[0]["prior_content"] == "cat content"
+    assert cat_call_log[0]["prior_overview"] == "cat content"
 
 
 @pytest.mark.django_db
 def test_category_only_feedback_always_creates_overall_section(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat stub",
+        lambda **kwargs: {
+            "overview": "cat stub",
+            "impact": "cat stub",
+            "path_forward": "cat stub",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -272,7 +284,7 @@ def test_category_only_feedback_always_creates_overall_section(monkeypatch):
 def test_rerunning_same_analysis_does_not_create_duplicate_sections(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "stub",
+        lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -309,7 +321,7 @@ def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
 
     def capture_category(**kwargs):
         cat_calls.append(kwargs)
-        return "generated"
+        return {"overview": "generated", "impact": "", "path_forward": ""}
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
@@ -350,7 +362,7 @@ def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
 def test_failed_analysis_transitions_back_to_processing_on_retry(monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "stub",
+        lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -383,7 +395,11 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat stub",
+        lambda **kwargs: {
+            "overview": "cat stub",
+            "impact": "cat stub",
+            "path_forward": "cat stub",
+        },
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",

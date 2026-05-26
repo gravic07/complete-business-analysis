@@ -120,14 +120,16 @@ def _run_analysis_work(analysis: Analysis) -> None:
         content = generate_category_section(
             answers=answers_by_category.get(cat_id, []),
             feedback_text=combined_feedback,
-            prior_content=prior_section.overview if prior_section else None,
+            prior_overview=prior_section.overview if prior_section else None,
+            prior_impact=prior_section.impact if prior_section else None,
+            prior_path_forward=prior_section.path_forward if prior_section else None,
         )
         CategorySection.objects.create(
             analysis=analysis,
             category=category,
-            overview=content,
-            impact="",
-            path_forward="",
+            overview=content["overview"],
+            impact=content["impact"],
+            path_forward=content["path_forward"],
         )
 
     all_current_sections = latest_sections_by_category(analysis.assessment)

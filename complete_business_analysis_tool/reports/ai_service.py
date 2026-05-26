@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import anthropic
@@ -30,21 +31,31 @@ def generate_overall_section(  # noqa: PLR0913
     return llm_client(prompt)
 
 
-def generate_category_section(
+def generate_category_section(  # noqa: PLR0913
     answers: list[dict],
-    prior_content: str | None = None,
+    prior_overview: str | None = None,
+    prior_impact: str | None = None,
+    prior_path_forward: str | None = None,
     feedback_text: str | None = None,
     llm_client: Callable[[str], str] | None = None,
-) -> str:
+) -> dict:
     if llm_client is None:
         llm_client = _default_llm_client()
-    prompt = _build_category_prompt(answers, prior_content, feedback_text)
-    return llm_client(prompt)
+    prompt = _build_category_prompt(
+        answers,
+        prior_overview,
+        prior_impact,
+        prior_path_forward,
+        feedback_text,
+    )
+    return json.loads(llm_client(prompt))
 
 
 def _build_category_prompt(
     answers: list[dict],
-    prior_content: str | None = None,
+    prior_overview: str | None = None,
+    prior_impact: str | None = None,
+    prior_path_forward: str | None = None,
     feedback_text: str | None = None,
 ) -> str:
     lines = [
@@ -61,9 +72,17 @@ def _build_category_prompt(
         lines.append(f"  Q: {question}")
         lines.append(f"  A: {option_text}")
 
-    if prior_content:
+    if prior_overview:
         lines.append("")
-        lines.append(f"Current section content to revise:\n{prior_content}")
+        lines.append(f"Current Overview sub-section to revise:\n{prior_overview}")
+
+    if prior_impact:
+        lines.append("")
+        lines.append(f"Current Impact sub-section to revise:\n{prior_impact}")
+
+    if prior_path_forward:
+        lines.append("")
+        lines.append(f"Current Path Forward sub-section to revise:\n{prior_path_forward}")
 
     if feedback_text:
         lines.append("")
@@ -72,9 +91,13 @@ def _build_category_prompt(
     lines.extend(
         [
             "",
-            "Write a concise, actionable narrative (2-4 paragraphs) for this section "
-            "of the business analysis report. Focus on the client's current strengths, "
-            "weaknesses, and specific recommendations.",
+            "Respond with valid JSON only. The JSON must have exactly three keys:",
+            '  "overview": current state of this business area (5-8 sentences, '
+            "second person)",
+            '  "impact": how the current state affects the business (5-8 sentences, '
+            "second person)",
+            '  "path_forward": changes needed to improve (5-8 sentences, second person)',
+            "Do not include any text outside the JSON object.",
         ],
     )
     return "\n".join(lines)

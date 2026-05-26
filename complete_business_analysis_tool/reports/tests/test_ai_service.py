@@ -8,8 +8,14 @@ from complete_business_analysis_tool.reports.ai_service import (
 # --- generate_category_section ---
 
 
-def test_generate_category_section_returns_non_empty_string():
-    stub = lambda prompt: "Generated narrative."  # noqa: E731
+def test_generate_category_section_returns_dict_with_three_keys():
+    def stub(_prompt: str) -> str:
+        return (
+            '{"overview": "Overview text.", '
+            '"impact": "Impact text.", '
+            '"path_forward": "Path."}'
+        )
+
     answers = [
         {
             "question_snapshot": "How is your cash flow?",
@@ -17,8 +23,84 @@ def test_generate_category_section_returns_non_empty_string():
         },
     ]
     result = generate_category_section(answers=answers, llm_client=stub)
-    assert isinstance(result, str)
-    assert len(result) > 0
+    assert isinstance(result, dict)
+    assert isinstance(result["overview"], str)
+    assert result["overview"]
+    assert isinstance(result["impact"], str)
+    assert result["impact"]
+    assert isinstance(result["path_forward"], str)
+    assert result["path_forward"]
+
+
+def test_generate_category_section_includes_prior_overview_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+
+    generate_category_section(
+        answers=[],
+        prior_overview="Your cash flow is currently strong.",
+        llm_client=capturing_client,
+    )
+    assert "Your cash flow is currently strong." in captured["prompt"]
+
+
+def test_generate_category_section_includes_prior_impact_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+
+    generate_category_section(
+        answers=[],
+        prior_impact="This limits your growth potential.",
+        llm_client=capturing_client,
+    )
+    assert "This limits your growth potential." in captured["prompt"]
+
+
+def test_generate_category_section_includes_prior_path_forward_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+
+    generate_category_section(
+        answers=[],
+        prior_path_forward="You should invest in automation.",
+        llm_client=capturing_client,
+    )
+    assert "You should invest in automation." in captured["prompt"]
+
+
+def test_generate_category_section_prompt_specifies_five_to_eight_sentences():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+
+    generate_category_section(answers=[], llm_client=capturing_client)
+    assert "5-8 sentences" in captured["prompt"]
+
+
+def test_generate_category_section_prompt_instructs_json_with_three_keys():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
+
+    generate_category_section(answers=[], llm_client=capturing_client)
+    prompt = captured["prompt"]
+    assert '"overview"' in prompt
+    assert '"impact"' in prompt
+    assert '"path_forward"' in prompt
+    assert "json" in prompt.lower()
 
 
 def test_generate_category_section_prompt_contains_no_numeric_scores():
@@ -26,7 +108,7 @@ def test_generate_category_section_prompt_contains_no_numeric_scores():
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
-        return "Response"
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
     answers = [
         {
@@ -45,7 +127,7 @@ def test_generate_category_section_prompt_contains_no_section_header():
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
-        return "Response"
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
     generate_category_section(answers=[], llm_client=capturing_client)
     assert "Section:" not in captured["prompt"]
@@ -56,7 +138,7 @@ def test_generate_category_section_prompt_instructs_second_person():
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
-        return "Response"
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
     generate_category_section(answers=[], llm_client=capturing_client)
     prompt = captured["prompt"]
@@ -68,7 +150,7 @@ def test_generate_category_section_includes_qa_answers_in_prompt():
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
-        return "Response"
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
     answers = [
         {
@@ -81,27 +163,12 @@ def test_generate_category_section_includes_qa_answers_in_prompt():
     assert "Value-based pricing" in captured["prompt"]
 
 
-def test_generate_category_section_includes_prior_content_when_provided():
-    captured = {}
-
-    def capturing_client(prompt: str) -> str:
-        captured["prompt"] = prompt
-        return "Response"
-
-    generate_category_section(
-        answers=[],
-        prior_content="Your operations are currently fragmented.",
-        llm_client=capturing_client,
-    )
-    assert "Your operations are currently fragmented." in captured["prompt"]
-
-
 def test_generate_category_section_includes_feedback_when_provided():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
-        return "Response"
+        return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
     generate_category_section(
         answers=[],

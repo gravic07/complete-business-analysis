@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # AI service: generate_category_section returns structured dict
 
@@ -20,15 +20,15 @@ Update all existing tests for `generate_category_section` to match the new signa
 
 ## Acceptance criteria
 
-- [ ] `generate_category_section` returns a `dict` with keys `overview`, `impact`, and `path_forward`, each a non-empty string
-- [ ] The prompt instructs the LLM to return JSON with those three keys
-- [ ] The prompt specifies 5-8 sentences per sub-section
-- [ ] The prompt instructs second person throughout
-- [ ] No numeric score values appear in the prompt (existing test must still pass)
-- [ ] `prior_content` parameter is replaced by `prior_overview`, `prior_impact`, and `prior_path_forward` (all optional)
-- [ ] When prior sub-section strings are provided, they appear in the prompt
-- [ ] When `feedback_text` is provided, it appears in the prompt
-- [ ] All tests for `generate_category_section` pass
+- [x] `generate_category_section` returns a `dict` with keys `overview`, `impact`, and `path_forward`, each a non-empty string
+- [x] The prompt instructs the LLM to return JSON with those three keys
+- [x] The prompt specifies 5-8 sentences per sub-section
+- [x] The prompt instructs second person throughout
+- [x] No numeric score values appear in the prompt (existing test must still pass)
+- [x] `prior_content` parameter is replaced by `prior_overview`, `prior_impact`, and `prior_path_forward` (all optional)
+- [x] When prior sub-section strings are provided, they appear in the prompt
+- [x] When `feedback_text` is provided, it appears in the prompt
+- [x] All tests for `generate_category_section` pass
 
 ## Blocked by
 

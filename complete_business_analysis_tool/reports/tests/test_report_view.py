@@ -21,7 +21,7 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 def _make_report(assessment, monkeypatch):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
-        lambda **kwargs: "cat narrative",
+        lambda **kwargs: {"overview": "cat narrative", "impact": "", "path_forward": ""},
     )
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
@@ -86,7 +86,7 @@ def test_report_view_assembles_latest_section_per_category(monkeypatch):
 
     def numbered_category(**kwargs):
         call_num[0] += 1
-        return f"cat-run-{call_num[0]}"
+        return {"overview": f"cat-run-{call_num[0]}", "impact": "", "path_forward": ""}
 
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_section",
