@@ -34,7 +34,7 @@ def test_run_analysis_task_transitions_to_complete(monkeypatch):
         lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
     assessment = AssessmentFactory()
@@ -63,7 +63,7 @@ def test_task_persists_category_scores_and_total(monkeypatch):
         lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
     category = CategoryFactory()
@@ -132,7 +132,7 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall stub",
     )
     assessment, cat_a, cat_b = _make_two_category_assessment()
@@ -177,7 +177,7 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall stub",
     )
     assessment, cat_a, cat_b = _make_two_category_assessment()
@@ -216,7 +216,7 @@ def test_reanalysis_passes_prior_section_content_to_generate_category_section(
         capture_category,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
     assessment, cat_a, _ = _make_two_category_assessment()
@@ -253,7 +253,7 @@ def test_category_only_feedback_always_creates_overall_section(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall stub",
     )
     assessment, cat_a, _cat_b = _make_two_category_assessment()
@@ -287,7 +287,7 @@ def test_rerunning_same_analysis_does_not_create_duplicate_sections(monkeypatch)
         lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
     category = CategoryFactory()
@@ -328,7 +328,7 @@ def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
         capture_category,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
     assessment, cat_a, cat_b = _make_two_category_assessment()
@@ -365,7 +365,7 @@ def test_failed_analysis_transitions_back_to_processing_on_retry(monkeypatch):
         lambda **kwargs: {"overview": "stub", "impact": "stub", "path_forward": "stub"},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
     category = CategoryFactory()
@@ -402,7 +402,7 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         capture_overall,
     )
     category = CategoryFactory()

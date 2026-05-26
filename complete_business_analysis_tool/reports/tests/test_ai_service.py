@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from complete_business_analysis_tool.reports.ai_service import (
     generate_category_section,
-    generate_overall_section,
+    generate_executive_summary,
 )
 
 # --- generate_category_section ---
@@ -178,12 +178,12 @@ def test_generate_category_section_includes_feedback_when_provided():
     assert "Emphasise the supply chain risks." in captured["prompt"]
 
 
-# --- generate_overall_section ---
+# --- generate_executive_summary ---
 
 
-def test_generate_overall_section_returns_non_empty_string():
+def test_generate_executive_summary_returns_non_empty_string():
     stub = lambda prompt: "Overall synthesis narrative."  # noqa: E731
-    result = generate_overall_section(
+    result = generate_executive_summary(
         category_sections={"Finance": "Your cash flow is strong."},
         category_scores={"Finance": Decimal("8.0")},
         category_max_scores={"Finance": Decimal("10.0")},
@@ -193,14 +193,14 @@ def test_generate_overall_section_returns_non_empty_string():
     assert len(result) > 0
 
 
-def test_generate_overall_section_includes_prior_content_when_provided():
+def test_generate_executive_summary_includes_prior_content_when_provided():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={},
         category_scores={},
         category_max_scores={},
@@ -210,14 +210,14 @@ def test_generate_overall_section_includes_prior_content_when_provided():
     assert "Your business has strong fundamentals." in captured["prompt"]
 
 
-def test_generate_overall_section_includes_feedback_when_provided():
+def test_generate_executive_summary_includes_feedback_when_provided():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={},
         category_scores={},
         category_max_scores={},
@@ -227,14 +227,14 @@ def test_generate_overall_section_includes_feedback_when_provided():
     assert "Focus more on operational dependencies." in captured["prompt"]
 
 
-def test_generate_overall_section_prompt_instructs_second_person():
+def test_generate_executive_summary_prompt_instructs_second_person():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={},
         category_scores={},
         category_max_scores={},
@@ -244,38 +244,50 @@ def test_generate_overall_section_prompt_instructs_second_person():
     assert "second person" in prompt_lower or "your business" in prompt_lower
 
 
-def test_generate_overall_section_prompt_specifies_four_part_mandate():
+def test_generate_executive_summary_prompt_does_not_contain_sequencing_language():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={},
         category_scores={},
         category_max_scores={},
         llm_client=capturing_client,
     )
     prompt_lower = captured["prompt"].lower()
-    assert "overall" in prompt_lower
-    assert (
-        "sequencing" in prompt_lower
-        or "simultaneously" in prompt_lower
-        or "depend" in prompt_lower
-    )
-    assert "low-hanging fruit" in prompt_lower or "easy to implement" in prompt_lower
-    assert "urgent" in prompt_lower
+    assert "sequencing" not in prompt_lower
+    assert "simultaneously" not in prompt_lower
+    assert "low-hanging fruit" not in prompt_lower
+    assert "urgent" not in prompt_lower
 
 
-def test_generate_overall_section_prompt_prohibits_citing_raw_scores():
+def test_generate_executive_summary_prompt_instructs_four_to_five_paragraph_synthesis():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
+        category_sections={},
+        category_scores={},
+        category_max_scores={},
+        llm_client=capturing_client,
+    )
+    assert "4-5 paragraph" in captured["prompt"]
+
+
+def test_generate_executive_summary_prompt_prohibits_citing_raw_scores():
+    captured = {}
+
+    def capturing_client(prompt: str) -> str:
+        captured["prompt"] = prompt
+        return "Response"
+
+    generate_executive_summary(
         category_sections={},
         category_scores={"Finance": Decimal("6.0")},
         category_max_scores={"Finance": Decimal("10.0")},
@@ -285,14 +297,14 @@ def test_generate_overall_section_prompt_prohibits_citing_raw_scores():
     assert "do not cite" in prompt_lower or "not cite raw" in prompt_lower
 
 
-def test_generate_overall_section_prompt_contains_category_scores_with_max():
+def test_generate_executive_summary_prompt_contains_category_scores_with_max():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={"Finance": "Text."},
         category_scores={"Finance": Decimal("7.5")},
         category_max_scores={"Finance": Decimal("10.0")},
@@ -302,14 +314,14 @@ def test_generate_overall_section_prompt_contains_category_scores_with_max():
     assert "7.5 / 10.0" in captured["prompt"]
 
 
-def test_generate_overall_section_prompt_contains_all_category_section_texts():
+def test_generate_executive_summary_prompt_contains_all_category_section_texts():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return "Response"
 
-    generate_overall_section(
+    generate_executive_summary(
         category_sections={
             "Finance": "Your cash flow is strong.",
             "Marketing": "Your brand awareness needs work.",

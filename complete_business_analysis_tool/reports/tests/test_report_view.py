@@ -24,7 +24,7 @@ def _make_report(assessment, monkeypatch):
         lambda **kwargs: {"overview": "cat narrative", "impact": "", "path_forward": ""},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall narrative",
     )
     analysis = Analysis.objects.create(assessment=assessment)
@@ -93,7 +93,7 @@ def test_report_view_assembles_latest_section_per_category(monkeypatch):
         numbered_category,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
 

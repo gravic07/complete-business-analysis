@@ -32,7 +32,7 @@ def test_orchestrator_calls_generate_category_section_not_generate_section(monke
         capture_category,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
 
@@ -50,7 +50,9 @@ def test_orchestrator_calls_generate_category_section_not_generate_section(monke
 
 
 @pytest.mark.django_db
-def test_orchestrator_calls_generate_overall_section_with_category_sections(monkeypatch):
+def test_orchestrator_calls_generate_executive_summary_with_category_sections(
+    monkeypatch,
+):
     overall_calls = []
 
     def capture_overall(**kwargs):
@@ -62,7 +64,7 @@ def test_orchestrator_calls_generate_overall_section_with_category_sections(monk
         lambda **kwargs: {"overview": "cat content", "impact": "", "path_forward": ""},
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         capture_overall,
     )
 
@@ -120,7 +122,7 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
         category_stub,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         overall_stub,
     )
 
@@ -164,7 +166,7 @@ def test_task_creates_one_report_section_per_category_plus_overall(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "Generated narrative",
     )
 
@@ -193,7 +195,7 @@ def test_task_creates_separate_sections_for_two_categories(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "Generated narrative",
     )
 
@@ -230,7 +232,7 @@ def test_report_sections_are_never_updated_after_creation(monkeypatch):
         counting_client,
     )
     monkeypatch.setattr(
-        "complete_business_analysis_tool.analysis.tasks.generate_overall_section",
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
 

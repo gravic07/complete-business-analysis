@@ -7,7 +7,7 @@ from complete_business_analysis_tool.analysis.scoring import compute_scores
 from complete_business_analysis_tool.assessments.models import Category
 from complete_business_analysis_tool.reports.ai_service import (
     generate_category_section,
-    generate_overall_section,
+    generate_executive_summary,
 )
 from complete_business_analysis_tool.reports.models import (
     CategorySection,
@@ -146,7 +146,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
         .first()
     )
     if not ExecutiveSummary.objects.filter(analysis=analysis).exists():
-        overall_content = generate_overall_section(
+        overall_content = generate_executive_summary(
             category_sections=category_sections_dict,
             category_scores=category_score_by_name,
             category_max_scores=category_max_scores_by_name,

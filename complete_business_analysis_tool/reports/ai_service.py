@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from decimal import Decimal
 
 
-def generate_overall_section(  # noqa: PLR0913
+def generate_executive_summary(  # noqa: PLR0913
     category_sections: dict[str, str],
     category_scores: dict[str, Decimal],
     category_max_scores: dict[str, Decimal],
@@ -139,12 +139,10 @@ def _build_overall_prompt(
     lines.extend(
         [
             "",
-            "Write the Overall section covering all four parts:",
-            "1. Brief acknowledgment of the overall picture across all categories.",
-            "2. Execution sequencing — which category plans can be tackled simultaneously"
-            " and which depend on others being addressed first.",
-            "3. Low-hanging fruit — high-impact actions that are easy to implement now.",
-            "4. Most urgent items to address first.",
+            "Write the Executive Summary in 4-5 paragraphs. Weave the category sections"
+            " above into a coherent, holistic picture of the business. Focus on synthesis"
+            " only — the individual category sections already cover what to act on and"
+            " when. Write entirely in second person, addressing the client directly.",
         ],
     )
     return "\n".join(lines)

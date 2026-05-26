@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # AI service: generate_executive_summary
 
@@ -16,15 +16,15 @@ Update all existing tests for `generate_overall_section` to use the new function
 
 ## Acceptance criteria
 
-- [ ] `generate_executive_summary` function exists and `generate_overall_section` is removed
-- [ ] The prompt instructs 4-5 paragraphs of synthesis, not sequencing or urgency ranking
-- [ ] The prompt does not contain "sequencing", "simultaneously", "low-hanging fruit", or "urgent" language
-- [ ] The prompt passes scores as silent context with an explicit instruction not to cite raw numbers in output
-- [ ] The prompt instructs second person throughout
-- [ ] When prior content is provided, it appears in the prompt
-- [ ] When feedback text is provided, it appears in the prompt
-- [ ] All category section texts passed via `category_sections` appear in the prompt
-- [ ] All tests for `generate_executive_summary` pass
+- [x] `generate_executive_summary` function exists and `generate_overall_section` is removed
+- [x] The prompt instructs 4-5 paragraphs of synthesis, not sequencing or urgency ranking
+- [x] The prompt does not contain "sequencing", "simultaneously", "low-hanging fruit", or "urgent" language
+- [x] The prompt passes scores as silent context with an explicit instruction not to cite raw numbers in output
+- [x] The prompt instructs second person throughout
+- [x] When prior content is provided, it appears in the prompt
+- [x] When feedback text is provided, it appears in the prompt
+- [x] All category section texts passed via `category_sections` appear in the prompt
+- [x] All tests for `generate_executive_summary` pass
 
 ## Blocked by
 
