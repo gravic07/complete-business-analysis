@@ -14,8 +14,9 @@ from complete_business_analysis_tool.assessments.factories import (
 )
 from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
+    CategorySection,
+    ExecutiveSummary,
     Feedback,
-    ReportSection,
 )
 
 
@@ -153,10 +154,10 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
     # Only cat_a gets new category records in analysis2
     assert CategoryScore.objects.filter(analysis=analysis2, category=cat_a).exists()
     assert not CategoryScore.objects.filter(analysis=analysis2, category=cat_b).exists()
-    assert ReportSection.objects.filter(analysis=analysis2, category=cat_a).exists()
-    assert not ReportSection.objects.filter(analysis=analysis2, category=cat_b).exists()
+    assert CategorySection.objects.filter(analysis=analysis2, category=cat_a).exists()
+    assert not CategorySection.objects.filter(analysis=analysis2, category=cat_b).exists()
     # Overall is always regenerated
-    assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis2).exists()
 
 
 @pytest.mark.django_db
@@ -180,16 +181,16 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
 
     feedback = Feedback.objects.create(
         assessment=assessment,
-        overall_text="Everything needs rethinking.",
+        report_feedback="Everything needs rethinking.",
     )
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
     assert CategoryScore.objects.filter(analysis=analysis2, category=cat_a).exists()
     assert CategoryScore.objects.filter(analysis=analysis2, category=cat_b).exists()
-    assert ReportSection.objects.filter(analysis=analysis2, category=cat_a).exists()
-    assert ReportSection.objects.filter(analysis=analysis2, category=cat_b).exists()
-    assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()
+    assert CategorySection.objects.filter(analysis=analysis2, category=cat_a).exists()
+    assert CategorySection.objects.filter(analysis=analysis2, category=cat_b).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis2).exists()
 
 
 @pytest.mark.django_db
@@ -228,7 +229,7 @@ def test_reanalysis_passes_prior_section_content_to_generate_category_section(
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
-    # Only cat_a is regenerated; verify prior content was passed
+    # Only cat_a is regenerated; verify prior content (overview) was passed
     assert len(cat_call_log) == 1
     assert cat_call_log[0]["prior_content"] == "cat content"
 
@@ -259,7 +260,7 @@ def test_category_only_feedback_always_creates_overall_section(monkeypatch):
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
-    assert ReportSection.objects.filter(analysis=analysis2, category=None).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis2).exists()
 
 
 # ---------------------------------------------------------------------------
@@ -286,16 +287,18 @@ def test_rerunning_same_analysis_does_not_create_duplicate_sections(monkeypatch)
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
 
-    section_count_after_first_run = ReportSection.objects.filter(
-        analysis=analysis,
-    ).count()
+    section_count_after_first_run = (
+        CategorySection.objects.filter(analysis=analysis).count()
+        + ExecutiveSummary.objects.filter(analysis=analysis).count()
+    )
 
     run_analysis(analysis.pk)
 
     analysis.refresh_from_db()
     assert analysis.status == Analysis.Status.COMPLETE
     assert (
-        ReportSection.objects.filter(analysis=analysis).count()
+        CategorySection.objects.filter(analysis=analysis).count()
+        + ExecutiveSummary.objects.filter(analysis=analysis).count()
         == section_count_after_first_run
     )
 
@@ -320,10 +323,12 @@ def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
 
     analysis = Analysis.objects.create(assessment=assessment)
     # Simulate partial failure: cat_a was completed before the crash
-    ReportSection.objects.create(
+    CategorySection.objects.create(
         analysis=analysis,
         category=cat_a,
-        content="pre-existing",
+        overview="pre-existing",
+        impact="",
+        path_forward="",
     )
 
     run_analysis(analysis.pk)
@@ -334,11 +339,11 @@ def test_preexisting_category_section_is_skipped_on_retry(monkeypatch):
     assert len(cat_calls) == 1
     # The pre-existing cat_a section is preserved untouched
     assert (
-        ReportSection.objects.get(analysis=analysis, category=cat_a).content
+        CategorySection.objects.get(analysis=analysis, category=cat_a).overview
         == "pre-existing"
     )
     # cat_b section was generated
-    assert ReportSection.objects.filter(analysis=analysis, category=cat_b).exists()
+    assert CategorySection.objects.filter(analysis=analysis, category=cat_b).exists()
 
 
 @pytest.mark.django_db
@@ -392,14 +397,15 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
 
     analysis = Analysis.objects.create(assessment=assessment)
     # Simulate partial failure: all category sections done, overall not yet created
-    ReportSection.objects.create(
+    CategorySection.objects.create(
         analysis=analysis,
         category=category,
-        content="cat pre-existing",
+        overview="cat pre-existing",
+        impact="",
+        path_forward="",
     )
-    ReportSection.objects.create(
+    ExecutiveSummary.objects.create(
         analysis=analysis,
-        category=None,
         content="overall pre-existing",
     )
 
@@ -411,6 +417,5 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
     assert len(overall_calls) == 0
     # Overall section content is unchanged
     assert (
-        ReportSection.objects.get(analysis=analysis, category=None).content
-        == "overall pre-existing"
+        ExecutiveSummary.objects.get(analysis=analysis).content == "overall pre-existing"
     )

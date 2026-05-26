@@ -47,7 +47,7 @@ def test_post_overall_feedback_creates_feedback_and_pending_analysis(monkeypatch
 
     assert response.status_code == http.HTTPStatus.FOUND
     feedback = Feedback.objects.get(assessment=assessment)
-    assert feedback.overall_text == "Needs more depth overall."
+    assert feedback.report_feedback == "Needs more depth overall."
     assert Analysis.objects.filter(
         assessment=assessment,
         feedback=feedback,
@@ -72,7 +72,7 @@ def test_post_category_feedback_creates_category_feedback_record(monkeypatch):
 
     assert response.status_code == http.HTTPStatus.FOUND
     feedback = Feedback.objects.get(assessment=assessment)
-    assert feedback.overall_text is None
+    assert feedback.report_feedback == ""
     cf = CategoryFeedback.objects.get(feedback=feedback)
     assert cf.category == category
     assert cf.text == "Marketing section is weak."

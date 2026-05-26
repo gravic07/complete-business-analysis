@@ -11,7 +11,6 @@ from complete_business_analysis_tool.reports.forms import FeedbackForm
 from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
     Feedback,
-    ReportSection,
 )
 from complete_business_analysis_tool.reports.queries import latest_sections_by_category
 
@@ -63,10 +62,10 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         return reverse("reports:report", kwargs={"pk": self.assessment.pk})
 
     def form_valid(self, form):
-        overall_text = (form.cleaned_data.get("overall_text") or "").strip() or None
+        overall_text = (form.cleaned_data.get("overall_text") or "").strip()
         feedback = Feedback.objects.create(
             assessment=self.assessment,
-            overall_text=overall_text,
+            report_feedback=overall_text,
         )
         for category in self.categories:
             text = (form.cleaned_data.get(f"category_{category.pk}") or "").strip()
@@ -96,5 +95,5 @@ def _assessment_categories(assessment: Assessment):
     )
 
 
-def _assemble_report(assessment: Assessment) -> list[ReportSection]:
+def _assemble_report(assessment: Assessment) -> list:
     return latest_sections_by_category(assessment)

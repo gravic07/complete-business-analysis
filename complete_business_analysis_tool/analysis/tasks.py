@@ -9,7 +9,10 @@ from complete_business_analysis_tool.reports.ai_service import (
     generate_category_section,
     generate_overall_section,
 )
-from complete_business_analysis_tool.reports.models import ReportSection
+from complete_business_analysis_tool.reports.models import (
+    CategorySection,
+    ExecutiveSummary,
+)
 from complete_business_analysis_tool.reports.queries import latest_sections_by_category
 
 
@@ -48,7 +51,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
         cf_qs = list(feedback.category_feedbacks.all())
         category_feedback_ids = {str(cf.category_id) for cf in cf_qs}
         category_feedback_by_id = {str(cf.category_id): cf.text for cf in cf_qs}
-        overall_feedback = feedback.overall_text
+        overall_feedback = feedback.report_feedback
         in_scope_ids = resolve_scope(
             overall_text=overall_feedback,
             category_feedback_ids=category_feedback_ids,
@@ -97,11 +100,11 @@ def _run_analysis_work(analysis: Analysis) -> None:
     for category in categories:
         cat_id = str(category.pk)
 
-        if ReportSection.objects.filter(analysis=analysis, category=category).exists():
+        if CategorySection.objects.filter(analysis=analysis, category=category).exists():
             continue
 
         prior_section = (
-            ReportSection.objects.filter(
+            CategorySection.objects.filter(
                 analysis__assessment=analysis.assessment,
                 category=category,
             )
@@ -117,31 +120,30 @@ def _run_analysis_work(analysis: Analysis) -> None:
         content = generate_category_section(
             answers=answers_by_category.get(cat_id, []),
             feedback_text=combined_feedback,
-            prior_content=prior_section.content if prior_section else None,
+            prior_content=prior_section.overview if prior_section else None,
         )
-        ReportSection.objects.create(
+        CategorySection.objects.create(
             analysis=analysis,
             category=category,
-            content=content,
+            overview=content,
+            impact="",
+            path_forward="",
         )
 
     all_current_sections = latest_sections_by_category(analysis.assessment)
-    category_sections_dict = {
-        s.category.name: s.content for s in all_current_sections if s.category is not None
-    }
+    category_sections_dict = {s.category.name: s.overview for s in all_current_sections}
     category_max_scores_by_name = {
         category_names[cat_id]: result.category_max_scores[cat_id]
         for cat_id in result.category_scores
     }
     prior_overall = (
-        ReportSection.objects.filter(
+        ExecutiveSummary.objects.filter(
             analysis__assessment=analysis.assessment,
-            category=None,
         )
         .order_by("-analysis__created_at")
         .first()
     )
-    if not ReportSection.objects.filter(analysis=analysis, category=None).exists():
+    if not ExecutiveSummary.objects.filter(analysis=analysis).exists():
         overall_content = generate_overall_section(
             category_sections=category_sections_dict,
             category_scores=category_score_by_name,
@@ -149,9 +151,8 @@ def _run_analysis_work(analysis: Analysis) -> None:
             prior_content=prior_overall.content if prior_overall else None,
             feedback_text=overall_feedback,
         )
-        ReportSection.objects.create(
+        ExecutiveSummary.objects.create(
             analysis=analysis,
-            category=None,
             content=overall_content,
         )
 

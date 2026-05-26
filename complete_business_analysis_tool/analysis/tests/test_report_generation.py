@@ -13,8 +13,9 @@ from complete_business_analysis_tool.assessments.factories import (
 )
 from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
+    CategorySection,
+    ExecutiveSummary,
     Feedback,
-    ReportSection,
 )
 
 
@@ -126,7 +127,7 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
     analysis1.status = Analysis.Status.COMPLETE
     analysis1.save(update_fields=["status"])
 
-    cat_b_section = ReportSection.objects.get(analysis=analysis1, category=cat_b)
+    cat_b_section = CategorySection.objects.get(analysis=analysis1, category=cat_b)
 
     # Second run: only cat_a in scope (category-only feedback)
     feedback = Feedback.objects.create(assessment=assessment)
@@ -145,7 +146,7 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
     assert cat_a.name in sections_passed
     assert cat_b.name in sections_passed
     # cat_b's content must come from the first run's section (unchanged)
-    assert sections_passed[cat_b.name] == cat_b_section.content
+    assert sections_passed[cat_b.name] == cat_b_section.overview
 
 
 @pytest.mark.django_db
@@ -168,11 +169,9 @@ def test_task_creates_one_report_section_per_category_plus_overall(monkeypatch):
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
 
-    sections = ReportSection.objects.filter(analysis=analysis)
-    expected = 2  # one for the category + one overall
-    assert sections.count() == expected
-    assert sections.filter(category=category).exists()
-    assert sections.filter(category__isnull=True).exists()
+    assert CategorySection.objects.filter(analysis=analysis, category=category).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis).exists()
+    assert CategorySection.objects.filter(analysis=analysis).count() == 1
 
 
 @pytest.mark.django_db
@@ -198,12 +197,11 @@ def test_task_creates_separate_sections_for_two_categories(monkeypatch):
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
 
-    sections = ReportSection.objects.filter(analysis=analysis)
-    expected = 3  # cat_a + cat_b + overall
-    assert sections.count() == expected
-    assert sections.filter(category=cat_a).exists()
-    assert sections.filter(category=cat_b).exists()
-    assert sections.filter(category__isnull=True).exists()
+    assert CategorySection.objects.filter(analysis=analysis, category=cat_a).exists()
+    assert CategorySection.objects.filter(analysis=analysis, category=cat_b).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis).exists()
+    expected_cnt = 2
+    assert CategorySection.objects.filter(analysis=analysis).count() == expected_cnt
 
 
 @pytest.mark.django_db
@@ -233,19 +231,19 @@ def test_report_sections_are_never_updated_after_creation(monkeypatch):
     analysis1 = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis1.pk)
 
-    first_content = ReportSection.objects.get(
+    first_overview = CategorySection.objects.get(
         analysis=analysis1,
         category=category,
-    ).content
+    ).overview
 
     analysis2 = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis2.pk)
 
     # Original section is unchanged
     assert (
-        ReportSection.objects.get(analysis=analysis1, category=category).content
-        == first_content
+        CategorySection.objects.get(analysis=analysis1, category=category).overview
+        == first_overview
     )
-    # New analysis has its own new sections
-    expected_new = 2  # one category + one overall
-    assert ReportSection.objects.filter(analysis=analysis2).count() == expected_new
+    # New analysis has its own sections
+    assert CategorySection.objects.filter(analysis=analysis2, category=category).exists()
+    assert ExecutiveSummary.objects.filter(analysis=analysis2).exists()

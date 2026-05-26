@@ -9,7 +9,7 @@ class Feedback(BaseModel):
         on_delete=models.CASCADE,
         related_name="feedbacks",
     )
-    overall_text = models.TextField(blank=True)
+    report_feedback = models.TextField(blank=True)
 
 
 class CategoryFeedback(BaseModel):
@@ -26,20 +26,32 @@ class CategoryFeedback(BaseModel):
     text = models.TextField()
 
 
-class ReportSection(BaseModel):
+class CategorySection(BaseModel):
     analysis = models.ForeignKey(
         "analysis.Analysis",
         on_delete=models.CASCADE,
-        related_name="report_sections",
+        related_name="category_sections",
     )
     category = models.ForeignKey(
         "assessments.Category",
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="report_sections",
+        related_name="category_sections",
+    )
+    overview = models.TextField()
+    impact = models.TextField()
+    path_forward = models.TextField()
+
+    class Meta(BaseModel.Meta):
+        unique_together = [["analysis", "category"]]
+
+
+class ExecutiveSummary(BaseModel):
+    analysis = models.ForeignKey(
+        "analysis.Analysis",
+        on_delete=models.CASCADE,
+        related_name="executive_summaries",
     )
     content = models.TextField()
 
     class Meta(BaseModel.Meta):
-        unique_together = [["analysis", "category"]]
+        unique_together = [["analysis"]]

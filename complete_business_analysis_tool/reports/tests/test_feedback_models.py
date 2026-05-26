@@ -12,17 +12,17 @@ def test_feedback_requires_only_assessment():
     assessment = AssessmentFactory()
     feedback = Feedback.objects.create(assessment=assessment)
     assert feedback.pk is not None
-    assert feedback.overall_text == ""
+    assert feedback.report_feedback == ""
 
 
 @pytest.mark.django_db
-def test_feedback_stores_overall_text():
+def test_feedback_stores_report_feedback():
     assessment = AssessmentFactory()
     feedback = Feedback.objects.create(
         assessment=assessment,
-        overall_text="Needs more detail in financials.",
+        report_feedback="Needs more detail in financials.",
     )
-    assert feedback.overall_text == "Needs more detail in financials."
+    assert feedback.report_feedback == "Needs more detail in financials."
 
 
 @pytest.mark.django_db

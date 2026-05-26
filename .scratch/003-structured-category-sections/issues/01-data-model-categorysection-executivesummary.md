@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Data model: CategorySection, ExecutiveSummary, report_feedback
 
@@ -20,14 +20,14 @@ Create the necessary migrations. Update the Django admin to register `CategorySe
 
 ## Acceptance criteria
 
-- [ ] `CategorySection` model exists with `analysis` FK, `category` FK (non-nullable), `overview`, `impact`, and `path_forward` TextFields, and `unique_together = [["analysis", "category"]]`
-- [ ] `ExecutiveSummary` model exists with `analysis` FK, `content` TextField, and `unique_together = [["analysis"]]`
-- [ ] `ReportSection` model is removed
-- [ ] `Feedback.report_feedback` field exists (nullable TextField); `overall_text` field is removed
-- [ ] Migrations run cleanly from a clean state (`migrate --run-syncdb` passes)
-- [ ] Django admin registers `CategorySection` and `ExecutiveSummary`
-- [ ] No references to `ReportSection` or `overall_text` remain in model files, admin files, or migration files
-- [ ] Test suite passes (stubs or skips for any tests that depend on downstream AI service or orchestrator work not yet done in this issue)
+- [x] `CategorySection` model exists with `analysis` FK, `category` FK (non-nullable), `overview`, `impact`, and `path_forward` TextFields, and `unique_together = [["analysis", "category"]]`
+- [x] `ExecutiveSummary` model exists with `analysis` FK, `content` TextField, and `unique_together = [["analysis"]]`
+- [x] `ReportSection` model is removed
+- [x] `Feedback.report_feedback` field exists (nullable TextField); `overall_text` field is removed
+- [x] Migrations run cleanly from a clean state (`migrate --run-syncdb` passes)
+- [x] Django admin registers `CategorySection` and `ExecutiveSummary`
+- [x] No references to `ReportSection` or `overall_text` remain in model files, admin files, or migration files
+- [x] Test suite passes (stubs or skips for any tests that depend on downstream AI service or orchestrator work not yet done in this issue)
 
 ## Blocked by
 
