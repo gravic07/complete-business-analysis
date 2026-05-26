@@ -55,3 +55,20 @@ class ExecutiveSummary(BaseModel):
 
     class Meta(BaseModel.Meta):
         unique_together = [["analysis"]]
+
+
+class CategoryRecommendations(BaseModel):
+    analysis = models.ForeignKey(
+        "analysis.Analysis",
+        on_delete=models.CASCADE,
+        related_name="category_recommendations",
+    )
+    category = models.ForeignKey(
+        "assessments.Category",
+        on_delete=models.PROTECT,
+        related_name="category_recommendations",
+    )
+    recommendations = models.JSONField()
+
+    class Meta(BaseModel.Meta):
+        unique_together = [["analysis", "category"]]

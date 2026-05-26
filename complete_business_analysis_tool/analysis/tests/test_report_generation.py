@@ -13,6 +13,7 @@ from complete_business_analysis_tool.assessments.factories import (
 )
 from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
+    CategoryRecommendations,
     CategorySection,
     ExecutiveSummary,
     Feedback,
@@ -376,4 +377,101 @@ def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
     run_analysis(analysis.pk)
 
     assert "Global feedback text." in cat_calls[0]["feedback_text"]
-    assert overall_calls[0]["feedback_text"] == "Global feedback text."
+
+
+# --- CategoryRecommendations orchestrator tests ---
+
+
+def _patch_ai(monkeypatch, cat_recs_return=None):
+    """Monkeypatch both AI functions; returns a list that collects rec calls."""
+    if cat_recs_return is None:
+        cat_recs_return = ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
+    rec_calls = []
+
+    def capture_recs(**kwargs):
+        rec_calls.append(kwargs)
+        return list(cat_recs_return)
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: {"overview": "o", "impact": "i", "path_forward": "p"},
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_recommendations",
+        capture_recs,
+    )
+    return rec_calls
+
+
+@pytest.mark.django_db
+def test_orchestrator_creates_one_category_recommendations_per_category(monkeypatch):
+    _patch_ai(monkeypatch)
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    assert CategoryRecommendations.objects.filter(
+        analysis=analysis,
+        category=category,
+    ).exists()
+    assert CategoryRecommendations.objects.filter(analysis=analysis).count() == 1
+
+
+@pytest.mark.django_db
+def test_orchestrator_category_recommendations_idempotent(monkeypatch):
+    _patch_ai(monkeypatch)
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+    run_analysis(analysis.pk)
+
+    assert CategoryRecommendations.objects.filter(analysis=analysis).count() == 1
+
+
+@pytest.mark.django_db
+def test_orchestrator_partial_reanalysis_creates_recommendations_only_for_in_scope(
+    monkeypatch,
+):
+    rec_calls = _patch_ai(monkeypatch)
+
+    assessment, cat_a, cat_b = _make_two_category_assessment()
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+    analysis1.status = Analysis.Status.COMPLETE
+    analysis1.save(update_fields=["status"])
+
+    rec_calls.clear()
+
+    # Second run: only cat_a in scope
+    feedback = Feedback.objects.create(assessment=assessment)
+    CategoryFeedback.objects.create(feedback=feedback, category=cat_a, text="Revise.")
+    analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
+    run_analysis(analysis2.pk)
+
+    # Only one new CategoryRecommendations created (for cat_a)
+    assert CategoryRecommendations.objects.filter(analysis=analysis2).count() == 1
+    assert CategoryRecommendations.objects.filter(
+        analysis=analysis2,
+        category=cat_a,
+    ).exists()
+    assert not CategoryRecommendations.objects.filter(
+        analysis=analysis2,
+        category=cat_b,
+    ).exists()

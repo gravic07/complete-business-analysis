@@ -13,6 +13,7 @@ from complete_business_analysis_tool.reports.models import (
     Feedback,
 )
 from complete_business_analysis_tool.reports.queries import (
+    latest_category_recommendations,
     latest_category_sections,
     latest_executive_summary,
 )
@@ -30,6 +31,7 @@ class ReportView(LoginRequiredMixin, DetailView):
         form = FeedbackForm(categories=categories)
         context["executive_summary"] = latest_executive_summary(assessment)
         context["category_sections"] = latest_category_sections(assessment)
+        context["category_recommendations"] = latest_category_recommendations(assessment)
         context["feedback_form"] = form
         context["category_fields"] = [
             (cat, form[f"category_{cat.pk}"]) for cat in categories
@@ -57,6 +59,9 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         context["assessment"] = self.assessment
         context["executive_summary"] = latest_executive_summary(self.assessment)
         context["category_sections"] = latest_category_sections(self.assessment)
+        context["category_recommendations"] = latest_category_recommendations(
+            self.assessment,
+        )
         context["feedback_form"] = form
         context["category_fields"] = [
             (cat, form[f"category_{cat.pk}"]) for cat in self.categories

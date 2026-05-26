@@ -40,6 +40,11 @@ def _make_report(assessment, monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall narrative",
     )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks"
+        ".generate_category_recommendations",
+        lambda **kwargs: ["r1", "r2", "r3", "r4", "r5", "r6", "r7"],
+    )
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
     return analysis
@@ -155,3 +160,17 @@ def test_report_view_shows_latest_section_per_category(monkeypatch):
     earliest = CategorySection.objects.get(analysis=analysis1, category=category)
     assert latest.overview in content
     assert earliest.overview not in content
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_category_recommendations(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert "category_recommendations" in response.context
+    recs = response.context["category_recommendations"]
+    assert len(recs) == 1
+    assert recs[0].recommendations == ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]

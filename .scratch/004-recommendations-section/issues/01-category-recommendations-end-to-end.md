@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # CategoryRecommendations end-to-end
 
@@ -30,19 +30,19 @@ The prompt must:
 
 ## Acceptance criteria
 
-- [ ] `CategoryRecommendations` model exists with `analysis` FK, `category` FK (non-nullable), `recommendations` JSONField, and `unique_together = [["analysis", "category"]]`
-- [ ] Migration runs cleanly
-- [ ] `generate_category_recommendations` returns a list of exactly 7 non-empty strings given valid inputs and a stub client
-- [ ] Prompt passed to the LLM includes the Q&A answer text, the CategorySection content, and third-person instructions; does not instruct the model to emit raw numeric scores
-- [ ] `_run_analysis_work` creates one `CategoryRecommendations` record per category after CategorySections are generated
-- [ ] Re-running the task on an existing Analysis does not create duplicate `CategoryRecommendations` records (idempotency)
-- [ ] Partial re-analysis (feedback on one category) creates a new `CategoryRecommendations` only for in-scope categories; out-of-scope categories reuse their prior record
-- [ ] `latest_category_recommendations` returns exactly one record per category (the most recent across all Analysis runs), ordered by category name
-- [ ] Report view passes `category_recommendations` to the template context
-- [ ] Report template renders each category's 7 recommendations as a numbered list after all CategorySections
-- [ ] Unit tests for `generate_category_recommendations` (return shape, prompt content) using the injectable stub pattern
-- [ ] Integration tests for the orchestrator (creates correct records, idempotency, partial regeneration) following prior art in `test_report_generation.py`
-- [ ] Query tests for `latest_category_recommendations` following prior art in the existing query tests
+- [x] `CategoryRecommendations` model exists with `analysis` FK, `category` FK (non-nullable), `recommendations` JSONField, and `unique_together = [["analysis", "category"]]`
+- [x] Migration runs cleanly
+- [x] `generate_category_recommendations` returns a list of exactly 7 non-empty strings given valid inputs and a stub client
+- [x] Prompt passed to the LLM includes the Q&A answer text, the CategorySection content, and third-person instructions; does not instruct the model to emit raw numeric scores
+- [x] `_run_analysis_work` creates one `CategoryRecommendations` record per category after CategorySections are generated
+- [x] Re-running the task on an existing Analysis does not create duplicate `CategoryRecommendations` records (idempotency)
+- [x] Partial re-analysis (feedback on one category) creates a new `CategoryRecommendations` only for in-scope categories; out-of-scope categories reuse their prior record
+- [x] `latest_category_recommendations` returns exactly one record per category (the most recent across all Analysis runs), ordered by category name
+- [x] Report view passes `category_recommendations` to the template context
+- [x] Report template renders each category's 7 recommendations as a numbered list after all CategorySections
+- [x] Unit tests for `generate_category_recommendations` (return shape, prompt content) using the injectable stub pattern
+- [x] Integration tests for the orchestrator (creates correct records, idempotency, partial regeneration) following prior art in `test_report_generation.py`
+- [x] Query tests for `latest_category_recommendations` following prior art in the existing query tests
 
 ## Blocked by
 

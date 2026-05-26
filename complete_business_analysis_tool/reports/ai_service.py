@@ -10,6 +10,34 @@ if TYPE_CHECKING:
     from decimal import Decimal
 
 
+RECOMMENDATION_STRENGTH_THRESHOLD = 0.75
+RECOMMENDATION_MODERATE_THRESHOLD = 0.5
+
+
+def generate_category_recommendations(  # noqa: PLR0913
+    answers: list[dict],
+    section_text: str,
+    score: Decimal,
+    max_score: Decimal,
+    business_name: str,
+    prior_recommendations: list[str] | None = None,
+    feedback_text: str | None = None,
+    llm_client: Callable[[str], list] | None = None,
+) -> list[str]:
+    if llm_client is None:
+        llm_client = _default_category_recommendations_client()
+    prompt = _build_category_recommendations_prompt(
+        answers,
+        section_text,
+        score,
+        max_score,
+        business_name,
+        prior_recommendations,
+        feedback_text,
+    )
+    return llm_client(prompt)
+
+
 def generate_executive_summary(  # noqa: PLR0913
     category_sections: dict[str, str],
     category_scores: dict[str, Decimal],
@@ -191,6 +219,112 @@ def _default_category_section_client() -> Callable[[str], dict]:
             tool_choice={"type": "tool", "name": "record_category_section"},
         )
         return message.content[0].input
+
+    return call
+
+
+def _build_category_recommendations_prompt(  # noqa: PLR0913
+    answers: list[dict],
+    section_text: str,
+    score: Decimal,
+    max_score: Decimal,
+    business_name: str,
+    prior_recommendations: list[str] | None = None,
+    feedback_text: str | None = None,
+) -> str:
+    ratio = float(score) / float(max_score) if max_score else 0.0
+    if ratio >= RECOMMENDATION_STRENGTH_THRESHOLD:
+        weight_guidance = (
+            "This category is a strength. Weight the recommendations toward"
+            " continuation — emphasize what to keep doing and build on."
+        )
+    elif ratio >= RECOMMENDATION_MODERATE_THRESHOLD:
+        weight_guidance = (
+            "This category is performing at a moderate level. Balance the"
+            " recommendations evenly across what to start, stop, and continue."
+        )
+    else:
+        weight_guidance = (
+            "This category needs significant improvement. Weight the recommendations"
+            " toward change — emphasize what to start and what to stop."
+        )
+
+    lines = [
+        "You are a business advisor writing recommendations for a section of a"
+        " business analysis report.",
+        f"Write in third person, referring to the business as {business_name}."
+        f" Use {business_name} instead of 'you' or 'your'.",
+        "",
+        "Internal context — category performance signal (do not cite raw numeric"
+        " scores in your output):",
+        f"  {weight_guidance}",
+        "",
+        "Analysis section for this category:",
+        section_text,
+        "",
+        "Assessment answers for this category:",
+    ]
+    for answer in answers:
+        question = answer["question_snapshot"]
+        option = answer["option_snapshot"]
+        option_text = option.get("text", "") if isinstance(option, dict) else str(option)
+        lines.append(f"  Q: {question}")
+        lines.append(f"  A: {option_text}")
+
+    if prior_recommendations:
+        lines.append("")
+        lines.append("Prior recommendations to revise:")
+        for i, rec in enumerate(prior_recommendations, 1):
+            lines.append(f"  {i}. {rec}")
+
+    if feedback_text:
+        lines.append("")
+        lines.append(f"Advisor feedback to incorporate: {feedback_text}")
+
+    lines.extend(
+        [
+            "",
+            "Write exactly 7 specific, actionable recommendations for this category."
+            " Each recommendation should be 1-3 complete sentences. Consider what"
+            f" {business_name} should start doing, stop doing, and continue doing —"
+            " with the balance weighted as indicated above — but do not label"
+            " individual recommendations as start/stop/continue.",
+        ],
+    )
+    return "\n".join(lines)
+
+
+_CATEGORY_RECOMMENDATIONS_TOOL: dict = {
+    "name": "record_category_recommendations",
+    "description": "Record the 7 actionable recommendations for this business category.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "recommendations": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 7,
+                "maxItems": 7,
+                "description": "Exactly 7 actionable recommendations.",
+            },
+        },
+        "required": ["recommendations"],
+    },
+}
+
+
+def _default_category_recommendations_client() -> Callable[[str], list]:
+    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+
+    def call(prompt: str) -> list:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+            tools=[_CATEGORY_RECOMMENDATIONS_TOOL],
+            tool_choice={"type": "tool", "name": "record_category_recommendations"},
+        )
+        return message.content[0].input["recommendations"]
 
     return call
 

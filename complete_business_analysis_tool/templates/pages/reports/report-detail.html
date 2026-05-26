@@ -52,6 +52,19 @@
             </div>
           </div>
         {% endfor %}
+        {% if category_recommendations %}
+          <div class="box mb-5">
+            <h2 class="title is-4">Recommendations</h2>
+            <hr />
+            {# RecommendationsOverview will be inserted here #}
+            {% for rec in category_recommendations %}
+              <h3 class="title is-5 has-text-primary mt-5">{{ rec.category.name }}</h3>
+              <ol>
+                {% for item in rec.recommendations %}<li class="mb-2">{{ item }}</li>{% endfor %}
+              </ol>
+            {% endfor %}
+          </div>
+        {% endif %}
         <div class="box mt-6">
           <h2 class="title is-4">Submit Feedback</h2>
           <p class="subtitle is-6">

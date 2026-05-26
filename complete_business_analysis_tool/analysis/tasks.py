@@ -8,10 +8,12 @@ from complete_business_analysis_tool.analysis.scope import resolve_scope
 from complete_business_analysis_tool.analysis.scoring import compute_scores
 from complete_business_analysis_tool.assessments.models import Category
 from complete_business_analysis_tool.reports.ai_service import (
+    generate_category_recommendations,
     generate_category_section,
     generate_executive_summary,
 )
 from complete_business_analysis_tool.reports.models import (
+    CategoryRecommendations,
     CategorySection,
     ExecutiveSummary,
 )
@@ -57,7 +59,7 @@ def _build_section_text(section: CategorySection) -> str:
     return "\n\n".join(parts)
 
 
-def _run_analysis_work(analysis: Analysis) -> None:
+def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
 
     business_name = analysis.assessment.client.business_name
     answer_dicts = _build_answer_dicts(analysis.assessment)
@@ -153,6 +155,52 @@ def _run_analysis_work(analysis: Analysis) -> None:
         )
 
     all_current_sections = latest_category_sections(analysis.assessment)
+    sections_by_category_id = {str(s.category_id): s for s in all_current_sections}
+
+    for category in categories:
+        cat_id = str(category.pk)
+
+        if CategoryRecommendations.objects.filter(
+            analysis=analysis,
+            category=category,
+        ).exists():
+            continue
+
+        section = sections_by_category_id.get(cat_id)
+        section_text = _build_section_text(section) if section else ""
+
+        category_score = result.category_scores.get(cat_id)
+        category_max_score = result.category_max_scores.get(cat_id)
+
+        prior_recs = (
+            CategoryRecommendations.objects.filter(
+                analysis__assessment=analysis.assessment,
+                category=category,
+            )
+            .order_by("-analysis__created_at")
+            .first()
+        )
+
+        feedback_parts = [
+            t for t in [overall_feedback, category_feedback_by_id.get(cat_id)] if t
+        ]
+        combined_feedback = "\n\n".join(feedback_parts) or None
+
+        recommendations = generate_category_recommendations(
+            answers=answers_by_category.get(cat_id, []),
+            section_text=section_text,
+            score=category_score,
+            max_score=category_max_score,
+            business_name=business_name,
+            prior_recommendations=prior_recs.recommendations if prior_recs else None,
+            feedback_text=combined_feedback,
+        )
+        CategoryRecommendations.objects.create(
+            analysis=analysis,
+            category=category,
+            recommendations=recommendations,
+        )
+
     category_sections_dict = {
         s.category.name: _build_section_text(s) for s in all_current_sections
     }
