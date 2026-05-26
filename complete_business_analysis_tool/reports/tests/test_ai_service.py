@@ -22,7 +22,11 @@ def test_generate_category_section_returns_dict_with_three_keys():
             "option_snapshot": {"text": "Very strong", "rank": 5},
         },
     ]
-    result = generate_category_section(answers=answers, llm_client=stub)
+    result = generate_category_section(
+        answers=answers,
+        business_name="Acme Corp",
+        llm_client=stub,
+    )
     assert isinstance(result, dict)
     assert isinstance(result["overview"], str)
     assert result["overview"]
@@ -41,6 +45,7 @@ def test_generate_category_section_includes_prior_overview_when_provided():
 
     generate_category_section(
         answers=[],
+        business_name="Acme Corp",
         prior_overview="Your cash flow is currently strong.",
         llm_client=capturing_client,
     )
@@ -56,6 +61,7 @@ def test_generate_category_section_includes_prior_impact_when_provided():
 
     generate_category_section(
         answers=[],
+        business_name="Acme Corp",
         prior_impact="This limits your growth potential.",
         llm_client=capturing_client,
     )
@@ -71,6 +77,7 @@ def test_generate_category_section_includes_prior_path_forward_when_provided():
 
     generate_category_section(
         answers=[],
+        business_name="Acme Corp",
         prior_path_forward="You should invest in automation.",
         llm_client=capturing_client,
     )
@@ -84,7 +91,11 @@ def test_generate_category_section_prompt_specifies_five_to_eight_sentences():
         captured["prompt"] = prompt
         return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
-    generate_category_section(answers=[], llm_client=capturing_client)
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     assert "5-8 sentences" in captured["prompt"]
 
 
@@ -95,7 +106,11 @@ def test_generate_category_section_prompt_instructs_json_with_three_keys():
         captured["prompt"] = prompt
         return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
-    generate_category_section(answers=[], llm_client=capturing_client)
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     prompt = captured["prompt"]
     assert '"overview"' in prompt
     assert '"impact"' in prompt
@@ -116,7 +131,11 @@ def test_generate_category_section_prompt_contains_no_numeric_scores():
             "option_snapshot": {"text": "Strong", "rank": 7},
         },
     ]
-    generate_category_section(answers=answers, llm_client=capturing_client)
+    generate_category_section(
+        answers=answers,
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     prompt = captured["prompt"]
     assert "score" not in prompt.lower()
     assert "7" not in prompt
@@ -129,20 +148,28 @@ def test_generate_category_section_prompt_contains_no_section_header():
         captured["prompt"] = prompt
         return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
-    generate_category_section(answers=[], llm_client=capturing_client)
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     assert "Section:" not in captured["prompt"]
 
 
-def test_generate_category_section_prompt_instructs_second_person():
+def test_generate_category_section_prompt_instructs_third_person():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
         captured["prompt"] = prompt
         return '{"overview": "o", "impact": "i", "path_forward": "p"}'
 
-    generate_category_section(answers=[], llm_client=capturing_client)
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     prompt = captured["prompt"]
-    assert "second person" in prompt.lower() or "your business" in prompt.lower()
+    assert "third person" in prompt.lower() or "Acme Corp" in prompt
 
 
 def test_generate_category_section_includes_qa_answers_in_prompt():
@@ -158,7 +185,11 @@ def test_generate_category_section_includes_qa_answers_in_prompt():
             "option_snapshot": {"text": "Value-based pricing", "rank": 3},
         },
     ]
-    generate_category_section(answers=answers, llm_client=capturing_client)
+    generate_category_section(
+        answers=answers,
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
     assert "Describe your pricing strategy." in captured["prompt"]
     assert "Value-based pricing" in captured["prompt"]
 
@@ -172,6 +203,7 @@ def test_generate_category_section_includes_feedback_when_provided():
 
     generate_category_section(
         answers=[],
+        business_name="Acme Corp",
         feedback_text="Emphasise the supply chain risks.",
         llm_client=capturing_client,
     )
@@ -187,6 +219,7 @@ def test_generate_executive_summary_returns_non_empty_string():
         category_sections={"Finance": "Your cash flow is strong."},
         category_scores={"Finance": Decimal("8.0")},
         category_max_scores={"Finance": Decimal("10.0")},
+        business_name="Acme Corp",
         llm_client=stub,
     )
     assert isinstance(result, str)
@@ -204,6 +237,7 @@ def test_generate_executive_summary_includes_prior_content_when_provided():
         category_sections={},
         category_scores={},
         category_max_scores={},
+        business_name="Acme Corp",
         prior_content="Your business has strong fundamentals.",
         llm_client=capturing_client,
     )
@@ -221,13 +255,14 @@ def test_generate_executive_summary_includes_feedback_when_provided():
         category_sections={},
         category_scores={},
         category_max_scores={},
+        business_name="Acme Corp",
         feedback_text="Focus more on operational dependencies.",
         llm_client=capturing_client,
     )
     assert "Focus more on operational dependencies." in captured["prompt"]
 
 
-def test_generate_executive_summary_prompt_instructs_second_person():
+def test_generate_executive_summary_prompt_instructs_third_person():
     captured = {}
 
     def capturing_client(prompt: str) -> str:
@@ -238,10 +273,11 @@ def test_generate_executive_summary_prompt_instructs_second_person():
         category_sections={},
         category_scores={},
         category_max_scores={},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     prompt_lower = captured["prompt"].lower()
-    assert "second person" in prompt_lower or "your business" in prompt_lower
+    assert "third person" in prompt_lower or "Acme Corp" in captured["prompt"]
 
 
 def test_generate_executive_summary_prompt_does_not_contain_sequencing_language():
@@ -255,6 +291,7 @@ def test_generate_executive_summary_prompt_does_not_contain_sequencing_language(
         category_sections={},
         category_scores={},
         category_max_scores={},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     prompt_lower = captured["prompt"].lower()
@@ -275,6 +312,7 @@ def test_generate_executive_summary_prompt_instructs_four_to_five_paragraph_synt
         category_sections={},
         category_scores={},
         category_max_scores={},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     assert "4-5 paragraph" in captured["prompt"]
@@ -291,6 +329,7 @@ def test_generate_executive_summary_prompt_prohibits_citing_raw_scores():
         category_sections={},
         category_scores={"Finance": Decimal("6.0")},
         category_max_scores={"Finance": Decimal("10.0")},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     prompt_lower = captured["prompt"].lower()
@@ -308,6 +347,7 @@ def test_generate_executive_summary_prompt_contains_category_scores_with_max():
         category_sections={"Finance": "Text."},
         category_scores={"Finance": Decimal("7.5")},
         category_max_scores={"Finance": Decimal("10.0")},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     assert "Finance" in captured["prompt"]
@@ -328,6 +368,7 @@ def test_generate_executive_summary_prompt_contains_all_category_section_texts()
         },
         category_scores={"Finance": Decimal("8.0"), "Marketing": Decimal("4.0")},
         category_max_scores={"Finance": Decimal("10.0"), "Marketing": Decimal("10.0")},
+        business_name="Acme Corp",
         llm_client=capturing_client,
     )
     assert "Your cash flow is strong." in captured["prompt"]

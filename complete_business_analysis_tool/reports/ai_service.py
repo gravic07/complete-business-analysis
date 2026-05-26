@@ -15,6 +15,7 @@ def generate_executive_summary(  # noqa: PLR0913
     category_sections: dict[str, str],
     category_scores: dict[str, Decimal],
     category_max_scores: dict[str, Decimal],
+    business_name: str,
     prior_content: str | None = None,
     feedback_text: str | None = None,
     llm_client: Callable[[str], str] | None = None,
@@ -25,6 +26,7 @@ def generate_executive_summary(  # noqa: PLR0913
         category_sections,
         category_scores,
         category_max_scores,
+        business_name,
         prior_content,
         feedback_text,
     )
@@ -33,6 +35,7 @@ def generate_executive_summary(  # noqa: PLR0913
 
 def generate_category_section(  # noqa: PLR0913
     answers: list[dict],
+    business_name: str,
     prior_overview: str | None = None,
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
@@ -43,6 +46,7 @@ def generate_category_section(  # noqa: PLR0913
         llm_client = _default_llm_client()
     prompt = _build_category_prompt(
         answers,
+        business_name,
         prior_overview,
         prior_impact,
         prior_path_forward,
@@ -51,8 +55,9 @@ def generate_category_section(  # noqa: PLR0913
     return json.loads(llm_client(prompt))
 
 
-def _build_category_prompt(
+def _build_category_prompt(  # noqa: PLR0913
     answers: list[dict],
+    business_name: str,
     prior_overview: str | None = None,
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
@@ -60,8 +65,8 @@ def _build_category_prompt(
 ) -> str:
     lines = [
         "You are a business advisor writing a section of a business analysis report.",
-        "Write in second person, addressing the client directly"
-        " (use 'your business', 'you are currently', etc.).",
+        f"Write in third person, referring to the business as {business_name}."
+        f" Use {business_name} instead of 'you' or 'your'.",
         "",
         "Assessment answers:",
     ]
@@ -93,28 +98,29 @@ def _build_category_prompt(
             "",
             "Respond with valid JSON only. The JSON must have exactly three keys:",
             '  "overview": current state of this business area (5-8 sentences, '
-            "second person)",
+            "third person)",
             '  "impact": how the current state affects the business (5-8 sentences, '
-            "second person)",
-            '  "path_forward": changes needed to improve (5-8 sentences, second person)',
+            "third person)",
+            '  "path_forward": changes needed to improve (5-8 sentences, third person)',
             "Do not include any text outside the JSON object.",
         ],
     )
     return "\n".join(lines)
 
 
-def _build_overall_prompt(
+def _build_overall_prompt(  # noqa: PLR0913
     category_sections: dict[str, str],
     category_scores: dict[str, Decimal],
     category_max_scores: dict[str, Decimal],
+    business_name: str,
     prior_content: str | None = None,
     feedback_text: str | None = None,
 ) -> str:
     lines = [
         "You are a business advisor writing the Overall section of a business "
         "analysis report.",
-        "Write in second person, addressing the client directly"
-        " (use 'your business', 'you are currently', etc.).",
+        f"Write in third person, referring to the business as {business_name}."
+        f" Use {business_name} instead of 'you' or 'your'.",
         "",
         "Internal context — category scores (do not cite raw numeric scores in "
         "your output):",
@@ -142,7 +148,8 @@ def _build_overall_prompt(
             "Write the Executive Summary in 4-5 paragraphs. Weave the category sections"
             " above into a coherent, holistic picture of the business. Focus on synthesis"
             " only — the individual category sections already cover what to act on and"
-            " when. Write entirely in second person, addressing the client directly.",
+            " when. Write entirely in third person, referring to the business "
+            f"as {business_name}.",
         ],
     )
     return "\n".join(lines)

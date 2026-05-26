@@ -55,6 +55,7 @@ def _build_section_text(section: CategorySection) -> str:
 
 def _run_analysis_work(analysis: Analysis) -> None:
 
+    business_name = analysis.assessment.client.business_name
     answer_dicts = _build_answer_dicts(analysis.assessment)
     result = compute_scores(answer_dicts)
     all_category_ids = set(result.category_scores.keys())
@@ -133,6 +134,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
 
         content = generate_category_section(
             answers=answers_by_category.get(cat_id, []),
+            business_name=business_name,
             feedback_text=combined_feedback,
             prior_overview=prior_section.overview if prior_section else None,
             prior_impact=prior_section.impact if prior_section else None,
@@ -160,6 +162,7 @@ def _run_analysis_work(analysis: Analysis) -> None:
             category_sections=category_sections_dict,
             category_scores=category_score_by_name,
             category_max_scores=category_max_scores_by_name,
+            business_name=business_name,
             prior_content=prior_overall.content if prior_overall else None,
             feedback_text=overall_feedback,
         )

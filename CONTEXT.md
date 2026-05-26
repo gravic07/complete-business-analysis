@@ -11,7 +11,7 @@ A single run of the scoring and AI-generation process against an Assessment. Sto
 ### Report
 A live view assembled at render time from the latest ReportSection per Category across all Analysis runs for an Assessment. Not stored as a monolithic document — it is always the most current section per category. Advisors submit Feedback against the Report, which triggers a new Analysis run covering only the categories that received feedback.
 
-**Report audience:** The Report is written directly to the Client in second person ("you", "your business") — not about the Client in third person ("the client is currently..."). Advisors review the Report for accuracy before delivering it to the Client and assisting with implementation, but the Client is the intended reader of the final document.
+**Report audience:** The Report is written in third person, referring to the Client by their business name ("Acme Corp is currently...", "Acme Corp's approach...") — not in second person ("you", "your business"). Advisors review the Report for accuracy before delivering it to the Client and assisting with implementation, but the Client is the intended reader of the final document.
 
 ### CategorySection
 The atomic unit of a category-level Report. Belongs to one Analysis run and covers one specific Category. Structured as three sub-sections: Overview (current state summary, 5-8 sentences), Impact (how the current state affects the business, 5-8 sentences), and Path Forward (short description of changes needed, 5-8 sentences). When re-analysis runs for a single category, only a new CategorySection is created for that category; unchanged sections from prior Analysis runs are reused.
@@ -100,4 +100,4 @@ The ExecutiveSummary regenerates whenever any CategorySection changes — not on
 ## Prompt Design Rules
 - Category section prompts contain no numeric scores — severity is communicated through qualitative answer content only.
 - The ExecutiveSummary prompt receives scores as silent context; the model is instructed not to cite raw numbers in output.
-- All generated content is written directly to the Client in second person ("your business", "you are currently...") — never in third person ("the client is..."). Advisors review Reports before delivery but the Client is the intended reader.
+- All generated content is written in third person, referring to the business by name ("Acme Corp is currently...", "Acme Corp's approach...") — never in second person ("your business", "you are currently..."). The business name is passed to every generation call from `Client.business_name`.
