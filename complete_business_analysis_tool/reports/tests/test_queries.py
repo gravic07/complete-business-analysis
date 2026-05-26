@@ -13,10 +13,12 @@ from complete_business_analysis_tool.assessments.factories import (
 from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
+    RecommendationsOverview,
 )
 from complete_business_analysis_tool.reports.queries import (
     latest_category_sections,
     latest_executive_summary,
+    latest_recommendations_overview,
 )
 
 
@@ -142,3 +144,26 @@ def test_latest_executive_summary_returns_most_recent():
 
     assert result is not None
     assert result.content == "second"
+
+
+@pytest.mark.django_db
+def test_latest_recommendations_overview_returns_none_when_none_exist():
+    assessment = AssessmentFactory()
+
+    result = latest_recommendations_overview(assessment)
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_latest_recommendations_overview_returns_most_recent():
+    assessment = AssessmentFactory()
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    analysis2 = Analysis.objects.create(assessment=assessment)
+    RecommendationsOverview.objects.create(analysis=analysis1, content="first overview")
+    RecommendationsOverview.objects.create(analysis=analysis2, content="second overview")
+
+    result = latest_recommendations_overview(assessment)
+
+    assert result is not None
+    assert result.content == "second overview"

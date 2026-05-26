@@ -57,6 +57,18 @@ class ExecutiveSummary(BaseModel):
         unique_together = [["analysis"]]
 
 
+class RecommendationsOverview(BaseModel):
+    analysis = models.ForeignKey(
+        "analysis.Analysis",
+        on_delete=models.CASCADE,
+        related_name="recommendations_overviews",
+    )
+    content = models.TextField()
+
+    class Meta(BaseModel.Meta):
+        unique_together = [["analysis"]]
+
+
 class CategoryRecommendations(BaseModel):
     analysis = models.ForeignKey(
         "analysis.Analysis",

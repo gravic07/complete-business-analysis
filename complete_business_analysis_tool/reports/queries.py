@@ -4,6 +4,7 @@ from complete_business_analysis_tool.reports.models import (
     CategoryRecommendations,
     CategorySection,
     ExecutiveSummary,
+    RecommendationsOverview,
 )
 
 
@@ -51,6 +52,15 @@ def latest_executive_summary(assessment) -> ExecutiveSummary | None:
     """Return the latest ExecutiveSummary across all Analysis runs, or None."""
     return (
         ExecutiveSummary.objects.filter(analysis__assessment=assessment)
+        .order_by("-analysis__created_at")
+        .first()
+    )
+
+
+def latest_recommendations_overview(assessment) -> RecommendationsOverview | None:
+    """Return the latest RecommendationsOverview across all Analysis runs, or None."""
+    return (
+        RecommendationsOverview.objects.filter(analysis__assessment=assessment)
         .order_by("-analysis__created_at")
         .first()
     )

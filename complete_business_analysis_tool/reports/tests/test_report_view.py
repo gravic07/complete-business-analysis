@@ -14,7 +14,10 @@ from complete_business_analysis_tool.assessments.factories import (
     QuestionFactory,
     QuestionOptionFactory,
 )
-from complete_business_analysis_tool.reports.models import CategorySection
+from complete_business_analysis_tool.reports.models import (
+    CategorySection,
+    RecommendationsOverview,
+)
 from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
@@ -44,6 +47,11 @@ def _make_report(assessment, monkeypatch):
         "complete_business_analysis_tool.analysis.tasks"
         ".generate_category_recommendations",
         lambda **kwargs: ["r1", "r2", "r3", "r4", "r5", "r6", "r7"],
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks"
+        ".generate_recommendations_overview",
+        lambda **kwargs: "recommendations overview narrative",
     )
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -144,6 +152,14 @@ def test_report_view_shows_latest_section_per_category(monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "overall",
     )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_recommendations",
+        lambda **kwargs: ["r1", "r2", "r3", "r4", "r5", "r6", "r7"],
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_recommendations_overview",
+        lambda **kwargs: "overview",
+    )
 
     assessment, category = _make_assessment_with_category()
 
@@ -174,3 +190,72 @@ def test_report_view_context_has_category_recommendations(monkeypatch):
     recs = response.context["category_recommendations"]
     assert len(recs) == 1
     assert recs[0].recommendations == ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_recommendations_overview(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert "recommendations_overview" in response.context
+    overview = response.context["recommendations_overview"]
+    assert isinstance(overview, RecommendationsOverview)
+    assert overview.content == "recommendations overview narrative"
+
+
+@pytest.mark.django_db
+def test_report_view_recommendations_overview_none_when_no_analysis():
+    assessment = AssessmentFactory()
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["recommendations_overview"] is None
+
+
+@pytest.mark.django_db
+def test_report_view_renders_recommendations_overview_before_category_lists(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    overview_pos = content.index("recommendations overview narrative")
+    rec_pos = content.index("r1")
+    assert overview_pos < rec_pos
+
+
+@pytest.mark.django_db
+def test_report_view_suppresses_recommendations_section_when_overview_is_none(
+    monkeypatch,
+):
+    assessment, _ = _make_assessment_with_category()
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        lambda **kwargs: {"overview": "o", "impact": "i", "path_forward": "p"},
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_recommendations",
+        lambda **kwargs: ["r1", "r2", "r3", "r4", "r5", "r6", "r7"],
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_recommendations_overview",
+        lambda **kwargs: "overview text",
+    )
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+    RecommendationsOverview.objects.filter(analysis=analysis).delete()
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "Recommendations" not in content

@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # RecommendationsOverview end-to-end
 
@@ -30,20 +30,20 @@ The prompt must:
 
 ## Acceptance criteria
 
-- [ ] `RecommendationsOverview` model exists with `analysis` FK, `content` TextField, and `unique_together = [["analysis"]]`
-- [ ] Migration runs cleanly
-- [ ] `generate_recommendations_overview` returns a non-empty string given valid inputs and a stub client
-- [ ] Prompt passed to the LLM includes all category recommendation text, instructs action-focused third-person synthesis, and does not instruct the model to emit raw numeric scores
-- [ ] `_run_analysis_work` creates one `RecommendationsOverview` record per Analysis run, after all CategoryRecommendations are written
-- [ ] Re-running the task on an existing Analysis does not create a duplicate `RecommendationsOverview` (idempotency)
-- [ ] Any re-analysis run (partial or full) that produces new CategoryRecommendations also produces a new `RecommendationsOverview`
-- [ ] `latest_recommendations_overview` returns the most recent `RecommendationsOverview` across all Analysis runs, or `None` if none exists
-- [ ] Report view passes `recommendations_overview` to the template context
-- [ ] Report template renders `recommendations_overview.content` before the per-category recommendation lists
-- [ ] Recommendations section (header + overview + per-category lists) is suppressed entirely when `recommendations_overview` is `None`
-- [ ] Unit tests for `generate_recommendations_overview` (return type, prompt content) using the injectable stub pattern — prior art: `generate_executive_summary` tests in `test_ai_service.py`
-- [ ] Integration tests for the orchestrator (creates correct record, idempotency, regenerates after any CategoryRecommendations change)
-- [ ] Query tests for `latest_recommendations_overview`
+- [x] `RecommendationsOverview` model exists with `analysis` FK, `content` TextField, and `unique_together = [["analysis"]]`
+- [x] Migration runs cleanly
+- [x] `generate_recommendations_overview` returns a non-empty string given valid inputs and a stub client
+- [x] Prompt passed to the LLM includes all category recommendation text, instructs action-focused third-person synthesis, and does not instruct the model to emit raw numeric scores
+- [x] `_run_analysis_work` creates one `RecommendationsOverview` record per Analysis run, after all CategoryRecommendations are written
+- [x] Re-running the task on an existing Analysis does not create a duplicate `RecommendationsOverview` (idempotency)
+- [x] Any re-analysis run (partial or full) that produces new CategoryRecommendations also produces a new `RecommendationsOverview`
+- [x] `latest_recommendations_overview` returns the most recent `RecommendationsOverview` across all Analysis runs, or `None` if none exists
+- [x] Report view passes `recommendations_overview` to the template context
+- [x] Report template renders `recommendations_overview.content` before the per-category recommendation lists
+- [x] Recommendations section (header + overview + per-category lists) is suppressed entirely when `recommendations_overview` is `None`
+- [x] Unit tests for `generate_recommendations_overview` (return type, prompt content) using the injectable stub pattern — prior art: `generate_executive_summary` tests in `test_ai_service.py`
+- [x] Integration tests for the orchestrator (creates correct record, idempotency, regenerates after any CategoryRecommendations change)
+- [x] Query tests for `latest_recommendations_overview`
 
 ## Blocked by
 

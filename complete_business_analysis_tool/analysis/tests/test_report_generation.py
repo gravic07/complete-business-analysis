@@ -17,6 +17,7 @@ from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
     Feedback,
+    RecommendationsOverview,
 )
 
 
@@ -383,7 +384,7 @@ def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
 
 
 def _patch_ai(monkeypatch, cat_recs_return=None):
-    """Monkeypatch both AI functions; returns a list that collects rec calls."""
+    """Monkeypatch all AI functions; returns a list that collects rec calls."""
     if cat_recs_return is None:
         cat_recs_return = ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
     rec_calls = []
@@ -403,6 +404,10 @@ def _patch_ai(monkeypatch, cat_recs_return=None):
     monkeypatch.setattr(
         "complete_business_analysis_tool.analysis.tasks.generate_category_recommendations",
         capture_recs,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_recommendations_overview",
+        lambda **kwargs: "recommendations overview",
     )
     return rec_calls
 
@@ -475,3 +480,39 @@ def test_orchestrator_partial_reanalysis_creates_recommendations_only_for_in_sco
         analysis=analysis2,
         category=cat_b,
     ).exists()
+
+
+# --- RecommendationsOverview orchestrator tests ---
+
+
+@pytest.mark.django_db
+def test_orchestrator_creates_one_recommendations_overview_per_analysis(monkeypatch):
+    _patch_ai(monkeypatch)
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    assert RecommendationsOverview.objects.filter(analysis=analysis).count() == 1
+
+
+@pytest.mark.django_db
+def test_orchestrator_recommendations_overview_idempotent(monkeypatch):
+    _patch_ai(monkeypatch)
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+    run_analysis(analysis.pk)
+
+    assert RecommendationsOverview.objects.filter(analysis=analysis).count() == 1

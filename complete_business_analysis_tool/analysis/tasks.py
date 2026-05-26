@@ -11,15 +11,19 @@ from complete_business_analysis_tool.reports.ai_service import (
     generate_category_recommendations,
     generate_category_section,
     generate_executive_summary,
+    generate_recommendations_overview,
 )
 from complete_business_analysis_tool.reports.models import (
     CategoryRecommendations,
     CategorySection,
     ExecutiveSummary,
+    RecommendationsOverview,
 )
 from complete_business_analysis_tool.reports.queries import (
+    latest_category_recommendations,
     latest_category_sections,
     latest_executive_summary,
+    latest_recommendations_overview,
 )
 
 logger = logging.getLogger(__name__)
@@ -201,12 +205,32 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
             recommendations=recommendations,
         )
 
-    category_sections_dict = {
-        s.category.name: _build_section_text(s) for s in all_current_sections
-    }
     category_max_scores_by_name = {
         category_names[cat_id]: result.category_max_scores[cat_id]
         for cat_id in result.category_scores
+    }
+
+    all_current_recommendations = latest_category_recommendations(analysis.assessment)
+    recommendations_dict = {
+        r.category.name: r.recommendations for r in all_current_recommendations
+    }
+    prior_overview = latest_recommendations_overview(analysis.assessment)
+    if not RecommendationsOverview.objects.filter(analysis=analysis).exists():
+        overview_content = generate_recommendations_overview(
+            category_recommendations=recommendations_dict,
+            category_scores=category_score_by_name,
+            category_max_scores=category_max_scores_by_name,
+            business_name=business_name,
+            prior_content=prior_overview.content if prior_overview else None,
+            feedback_text=overall_feedback,
+        )
+        RecommendationsOverview.objects.create(
+            analysis=analysis,
+            content=overview_content,
+        )
+
+    category_sections_dict = {
+        s.category.name: _build_section_text(s) for s in all_current_sections
     }
     prior_overall = latest_executive_summary(analysis.assessment)
     if not ExecutiveSummary.objects.filter(analysis=analysis).exists():

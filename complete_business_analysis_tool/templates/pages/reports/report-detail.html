@@ -52,11 +52,11 @@
             </div>
           </div>
         {% endfor %}
-        {% if category_recommendations %}
+        {% if recommendations_overview or category_recommendations %}
           <div class="box mb-5">
             <h2 class="title is-4">Recommendations</h2>
             <hr />
-            {# RecommendationsOverview will be inserted here #}
+            <div class="content">{{ recommendations_overview.content|linebreaksbr }}</div>
             {% for rec in category_recommendations %}
               <h3 class="title is-5 has-text-primary mt-5">{{ rec.category.name }}</h3>
               <ol>

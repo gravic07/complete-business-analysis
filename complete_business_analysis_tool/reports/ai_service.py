@@ -38,6 +38,28 @@ def generate_category_recommendations(  # noqa: PLR0913
     return llm_client(prompt)
 
 
+def generate_recommendations_overview(  # noqa: PLR0913
+    category_recommendations: dict[str, list[str]],
+    category_scores: dict[str, Decimal],
+    category_max_scores: dict[str, Decimal],
+    business_name: str,
+    prior_content: str | None = None,
+    feedback_text: str | None = None,
+    llm_client: Callable[[str], str] | None = None,
+) -> str:
+    if llm_client is None:
+        llm_client = _default_llm_client()
+    prompt = _build_recommendations_overview_prompt(
+        category_recommendations,
+        category_scores,
+        category_max_scores,
+        business_name,
+        prior_content,
+        feedback_text,
+    )
+    return llm_client(prompt)
+
+
 def generate_executive_summary(  # noqa: PLR0913
     category_sections: dict[str, str],
     category_scores: dict[str, Decimal],
@@ -175,6 +197,56 @@ def _build_overall_prompt(  # noqa: PLR0913
             " above into a coherent, holistic picture of the business. Focus on synthesis"
             " only — the individual category sections already cover what to act on and"
             " when. Write entirely in third person, referring to the business "
+            f"as {business_name}.",
+        ],
+    )
+    return "\n".join(lines)
+
+
+def _build_recommendations_overview_prompt(  # noqa: PLR0913
+    category_recommendations: dict[str, list[str]],
+    category_scores: dict[str, Decimal],
+    category_max_scores: dict[str, Decimal],
+    business_name: str,
+    prior_content: str | None = None,
+    feedback_text: str | None = None,
+) -> str:
+    lines = [
+        "You are a business advisor writing the Recommendations Overview section of a"
+        " business analysis report.",
+        f"Write in third person, referring to the business as {business_name}."
+        f" Use {business_name} instead of 'you' or 'your'.",
+        "",
+        "Internal context — category scores (do not cite raw numeric scores in"
+        " your output):",
+    ]
+    for category, score in category_scores.items():
+        max_score = category_max_scores.get(category, score)
+        lines.append(f"  - {category}: {score} / {max_score}")
+
+    lines.append("")
+    lines.append("Category recommendations:")
+    for category, recs in category_recommendations.items():
+        lines.append(f"\n## {category}")
+        for i, rec in enumerate(recs, 1):
+            lines.append(f"  {i}. {rec}")
+
+    if prior_content:
+        lines.append("")
+        lines.append(f"Current Recommendations Overview to revise:\n{prior_content}")
+
+    if feedback_text:
+        lines.append("")
+        lines.append(f"Advisor feedback to incorporate: {feedback_text}")
+
+    lines.extend(
+        [
+            "",
+            "Write the Recommendations Overview in approximately 300-500 words."
+            " Orient the client to where the biggest gaps are and what the"
+            f" recommendations collectively aim to address. Be prescriptive and"
+            " forward-looking — this section should motivate action, not analyse."
+            " Write entirely in third person, referring to the business "
             f"as {business_name}.",
         ],
     )
