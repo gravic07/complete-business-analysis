@@ -230,7 +230,7 @@ def test_report_view_renders_recommendations_overview_before_category_lists(monk
 
 
 @pytest.mark.django_db
-def test_report_view_suppresses_recommendations_section_when_overview_is_none(
+def test_report_view_does_not_render_overview_content_when_overview_is_none(
     monkeypatch,
 ):
     assessment, _ = _make_assessment_with_category()
@@ -258,4 +258,4 @@ def test_report_view_suppresses_recommendations_section_when_overview_is_none(
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     content = _authed_client().get(url).content.decode()
 
-    assert "Recommendations" not in content
+    assert "overview text" not in content
