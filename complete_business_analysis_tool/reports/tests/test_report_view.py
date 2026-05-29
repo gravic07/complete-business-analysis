@@ -17,6 +17,7 @@ from complete_business_analysis_tool.assessments.factories import (
 from complete_business_analysis_tool.reports.models import (
     CategorySection,
     RecommendationsOverview,
+    Roadmap,
 )
 from complete_business_analysis_tool.users.tests.factories import UserFactory
 
@@ -52,6 +53,22 @@ def _make_report(assessment, monkeypatch):
         "complete_business_analysis_tool.analysis.tasks"
         ".generate_recommendations_overview",
         lambda **kwargs: "recommendations overview narrative",
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_roadmap",
+        lambda **kwargs: {
+            "months": [
+                {
+                    "goals": [f"goal {i}" for i in range(1, 6)],
+                    "action_items": [f"action {i}" for i in range(1, 6)],
+                    "challenges": [f"challenge {i}" for i in range(1, 6)],
+                }
+                for _ in range(12)
+            ],
+            "potential_challenges": ["potential challenge 1", "potential challenge 2"],
+            "post_implementation_outcomes": ["outcome 1", "outcome 2"],
+            "closing_reflections": ["reflection 1", "reflection 2"],
+        },
     )
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -259,3 +276,131 @@ def test_report_view_does_not_render_overview_content_when_overview_is_none(
     content = _authed_client().get(url).content.decode()
 
     assert "overview text" not in content
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_roadmap(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert "roadmap" in response.context
+    assert isinstance(response.context["roadmap"], Roadmap)
+
+
+@pytest.mark.django_db
+def test_report_view_roadmap_none_when_no_analysis():
+    assessment = AssessmentFactory()
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["roadmap"] is None
+
+
+@pytest.mark.django_db
+def test_report_view_renders_roadmap_section_when_roadmap_exists(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "12-Month Roadmap" in content
+
+
+@pytest.mark.django_db
+def test_report_view_does_not_render_roadmap_section_when_no_roadmap():
+    assessment = AssessmentFactory()
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "12-Month Roadmap" not in content
+
+
+@pytest.mark.django_db
+def test_report_view_renders_static_roadmap_overview(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "12-month roadmap is designed to guide" in content
+
+
+@pytest.mark.django_db
+def test_report_view_renders_twelve_monthly_plan_blocks(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    for n in range(1, 13):
+        assert f"Month {n}" in content
+
+
+@pytest.mark.django_db
+def test_report_view_renders_goals_action_items_challenges_per_month(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert content.count("Goals") == 12  # noqa: PLR2004
+    assert content.count("Action Items") == 12  # noqa: PLR2004
+    assert content.count("Challenges") >= 12  # noqa: PLR2004
+
+
+@pytest.mark.django_db
+def test_report_view_renders_roadmap_after_recommendations(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    rec_pos = content.index("Recommendations")
+    roadmap_pos = content.index("12-Month Roadmap")
+    assert rec_pos < roadmap_pos
+
+
+@pytest.mark.django_db
+def test_report_view_renders_potential_challenges(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "potential challenge 1" in content
+    assert "potential challenge 2" in content
+
+
+@pytest.mark.django_db
+def test_report_view_renders_post_implementation_outcomes(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "outcome 1" in content
+    assert "outcome 2" in content
+
+
+@pytest.mark.django_db
+def test_report_view_renders_closing_reflections(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "reflection 1" in content
+    assert "reflection 2" in content

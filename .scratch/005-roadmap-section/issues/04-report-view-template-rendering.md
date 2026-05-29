@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Report view and template: Roadmap section rendering
 
@@ -22,14 +22,14 @@ The view passes `roadmap` as a single context variable (the `Roadmap` instance o
 
 ## Acceptance criteria
 
-- [ ] Report view passes `roadmap` (result of `latest_roadmap(assessment)`) to the template context
-- [ ] Roadmap section is rendered after the Recommendations section when a `Roadmap` exists
-- [ ] Roadmap section is not rendered (no empty placeholder) when no `Roadmap` exists
-- [ ] Static Overview renders as three paragraphs; the text is a constant in code, not stored in the database
-- [ ] Monthly Plans render 12 blocks labelled "Month 1" through "Month 12" in order
-- [ ] Each monthly block shows three labelled lists — Goals, Action Items, Challenges — each with 5 items
-- [ ] Potential Challenges, Post-Implementation Outcomes, and Closing Reflections each render as sequential paragraphs from their respective JSON arrays
-- [ ] All Roadmap content is written in third person (enforced at generation time, but confirmed visible in the rendered output)
+- [x] Report view passes `roadmap` (result of `latest_roadmap(assessment)`) to the template context
+- [x] Roadmap section is rendered after the Recommendations section when a `Roadmap` exists
+- [x] Roadmap section is not rendered (no empty placeholder) when no `Roadmap` exists
+- [x] Static Overview renders as three paragraphs; the text is a constant in code, not stored in the database
+- [x] Monthly Plans render 12 blocks labelled "Month 1" through "Month 12" in order
+- [x] Each monthly block shows three labelled lists — Goals, Action Items, Challenges — each with 5 items
+- [x] Potential Challenges, Post-Implementation Outcomes, and Closing Reflections each render as sequential paragraphs from their respective JSON arrays
+- [x] All Roadmap content is written in third person (enforced at generation time, but confirmed visible in the rendered output)
 
 ## Blocked by
 

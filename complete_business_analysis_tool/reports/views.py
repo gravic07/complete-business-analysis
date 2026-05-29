@@ -17,6 +17,28 @@ from complete_business_analysis_tool.reports.queries import (
     latest_category_sections,
     latest_executive_summary,
     latest_recommendations_overview,
+    latest_roadmap,
+)
+
+_ROADMAP_OVERVIEW = (
+    "This 12-month roadmap is designed to guide your business through a structured "
+    "implementation of the key improvements identified in the assessment and "
+    "recommendations. The plan focuses on actionable, prioritized goals that address the "
+    "most critical areas of opportunity — including strategy, people, processes, "
+    "personal development, and technology adoption.\n\n"
+    "Each month contains clear goals and specific action items, enabling the business to "
+    "track progress effectively and build sustainable momentum. The roadmap encourages "
+    "selecting at least five foundational recommendations to pursue initially, ensuring "
+    "improvements are manageable and measurable. These selections emphasize establishing "
+    "disciplined strategic routines, enhancing team recruitment and development, "
+    "streamlining operational processes, strengthening leadership capabilities, and "
+    "modernizing systems where appropriate.\n\n"
+    "Potential challenges such as resistance to change, limited resources, time "
+    "constraints, and the need for new skills are acknowledged throughout, with the "
+    "roadmap designed to mitigate these through incremental steps and clear milestones. "
+    "By following this plan, the business can transform reactive management into "
+    "proactive leadership, foster a capable and engaged workforce, optimize operations "
+    "for efficiency, and leverage technology for competitive advantage."
 )
 
 
@@ -34,6 +56,8 @@ class ReportView(LoginRequiredMixin, DetailView):
         context["category_sections"] = latest_category_sections(assessment)
         context["category_recommendations"] = latest_category_recommendations(assessment)
         context["recommendations_overview"] = latest_recommendations_overview(assessment)
+        context["roadmap"] = latest_roadmap(assessment)
+        context["roadmap_overview"] = _ROADMAP_OVERVIEW
         context["feedback_form"] = form
         context["category_fields"] = [
             (cat, form[f"category_{cat.pk}"]) for cat in categories

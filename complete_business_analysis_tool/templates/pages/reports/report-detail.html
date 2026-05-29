@@ -65,6 +65,36 @@
             {% endfor %}
           </div>
         {% endif %}
+        {% if roadmap %}
+          <div class="box mb-5">
+            <h2 class="title is-4">12-Month Roadmap</h2>
+            <hr />
+            <div class="content">{{ roadmap_overview|linebreaksbr }}</div>
+            {% for month in roadmap.months %}
+              <div class="mt-5">
+                <h3 class="title is-5 has-text-primary">Month {{ forloop.counter }}</h3>
+                <h4 class="title is-6">Goals</h4>
+                <ul>
+                  {% for item in month.goals %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                </ul>
+                <h4 class="title is-6">Action Items</h4>
+                <ul>
+                  {% for item in month.action_items %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                </ul>
+                <h4 class="title is-6">Challenges</h4>
+                <ul>
+                  {% for item in month.challenges %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                </ul>
+              </div>
+            {% endfor %}
+            <h3 class="title is-5 mt-5">Potential Challenges</h3>
+            {% for item in roadmap.potential_challenges %}<p>{{ item }}</p>{% endfor %}
+            <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
+            {% for item in roadmap.post_implementation_outcomes %}<p>{{ item }}</p>{% endfor %}
+            <h3 class="title is-5 mt-5">Closing Reflections</h3>
+            {% for item in roadmap.closing_reflections %}<p>{{ item }}</p>{% endfor %}
+          </div>
+        {% endif %}
         <div class="box mt-6">
           <h2 class="title is-4">Submit Feedback</h2>
           <p class="subtitle is-6">
