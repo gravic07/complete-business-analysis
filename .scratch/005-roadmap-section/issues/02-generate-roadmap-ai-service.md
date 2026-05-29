@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # `generate_roadmap` AI service function
 
@@ -35,13 +35,13 @@ The prompt must:
 
 ## Acceptance criteria
 
-- [ ] `generate_roadmap` function exists in the AI service and accepts the inputs described above
-- [ ] Uses tool calling (`tool_choice`) with a `record_roadmap` tool; schema enforces 12 months and 5 items per monthly sub-array
-- [ ] Dedicated LLM client uses `max_tokens=8192`; the shared `_default_llm_client()` is not used for this call
-- [ ] Unit test: given stub inputs and an injectable stub client, the return value is a dict with `months` (list of 12 items, each with `goals`, `action_items`, `challenges` lists of 5 strings), `potential_challenges` (non-empty list), `post_implementation_outcomes` (non-empty list), `closing_reflections` (non-empty list)
-- [ ] Unit test: prompt contains the category recommendations text and category section text
-- [ ] Unit test: prompt instructs third-person voice using the business name
-- [ ] No raw numeric scores appear in the prompt or output
+- [x] `generate_roadmap` function exists in the AI service and accepts the inputs described above
+- [x] Uses tool calling (`tool_choice`) with a `record_roadmap` tool; schema enforces 12 months and 5 items per monthly sub-array
+- [x] Dedicated LLM client uses `max_tokens=8192`; the shared `_default_llm_client()` is not used for this call
+- [x] Unit test: given stub inputs and an injectable stub client, the return value is a dict with `months` (list of 12 items, each with `goals`, `action_items`, `challenges` lists of 5 strings), `potential_challenges` (non-empty list), `post_implementation_outcomes` (non-empty list), `closing_reflections` (non-empty list)
+- [x] Unit test: prompt contains the category recommendations text and category section text
+- [x] Unit test: prompt instructs third-person voice using the business name
+- [x] No raw numeric scores appear in the prompt or output
 
 ## Blocked by
 

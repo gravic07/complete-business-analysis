@@ -414,3 +414,129 @@ def _default_llm_client() -> Callable[[str], str]:
         return message.content[0].text
 
     return call
+
+
+_ROADMAP_TOOL = {
+    "name": "record_roadmap",
+    "description": "Record the structured 12-month roadmap.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "months": {
+                "type": "array",
+                "minItems": 12,
+                "maxItems": 12,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "goals": {
+                            "type": "array",
+                            "minItems": 5,
+                            "maxItems": 5,
+                            "items": {"type": "string"},
+                        },
+                        "action_items": {
+                            "type": "array",
+                            "minItems": 5,
+                            "maxItems": 5,
+                            "items": {"type": "string"},
+                        },
+                        "challenges": {
+                            "type": "array",
+                            "minItems": 5,
+                            "maxItems": 5,
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "required": ["goals", "action_items", "challenges"],
+                },
+            },
+            "potential_challenges": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 7,
+                "items": {"type": "string"},
+            },
+            "post_implementation_outcomes": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 7,
+                "items": {"type": "string"},
+            },
+            "closing_reflections": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+        },
+        "required": [
+            "months",
+            "potential_challenges",
+            "post_implementation_outcomes",
+            "closing_reflections",
+        ],
+    },
+}
+
+
+def _default_roadmap_client() -> Callable[[str], dict]:
+    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+
+    def call(prompt: str) -> dict:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=8192,
+            messages=[{"role": "user", "content": prompt}],
+            tools=[_ROADMAP_TOOL],
+            tool_choice={"type": "tool", "name": "record_roadmap"},
+        )
+        return message.content[0].input
+
+    return call
+
+
+def _build_roadmap_prompt(
+    category_recommendations: dict[str, list[str]],
+    category_sections: dict[str, str],
+    business_name: str,
+) -> str:
+    lines = [
+        f"You are writing a 12-month implementation roadmap for {business_name}.",
+        f"Write in third person, referring to the business as {business_name} "
+        "throughout.",
+        "",
+        "Use the following category assessments and recommendations as context.",
+        "Do not include raw numeric scores anywhere in your response.",
+        "Severity and priority are already encoded in the Path Forward content below.",
+        "",
+        "Early months should address foundational areas; later months build on them.",
+        "Each month must be comprehensive across all categories, though one category",
+        "may be prioritized when it is a prerequisite for others.",
+        "",
+        "## Category Recommendations",
+    ]
+    for category, recommendations in category_recommendations.items():
+        lines.append(f"\n### {category}")
+        lines.extend(f"- {rec}" for rec in recommendations)
+
+    lines.append("\n## Category Sections")
+    for category, section_text in category_sections.items():
+        lines.append(f"\n### {category}")
+        lines.append(section_text)
+
+    return "\n".join(lines)
+
+
+def generate_roadmap(
+    category_recommendations: dict[str, list[str]],
+    category_sections: dict[str, str],
+    business_name: str,
+    llm_client: Callable[[str], dict] | None = None,
+) -> dict:
+    if llm_client is None:
+        llm_client = _default_roadmap_client()
+    prompt = _build_roadmap_prompt(
+        category_recommendations,
+        category_sections,
+        business_name,
+    )
+    return llm_client(prompt)
