@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CategoryFeedback, CategorySection, ExecutiveSummary, Feedback
+from .models import CategoryFeedback, CategorySection, ExecutiveSummary, Feedback, Roadmap
 
 
 class CategorySectionInline(admin.TabularInline):
@@ -43,6 +43,24 @@ class ExecutiveSummaryAdmin(admin.ModelAdmin):
     list_display = ("analysis", "created_at")
     readonly_fields = ("analysis", "content", "created_at", "updated_at")
     search_fields = ("analysis__assessment__client__business_name", "content")
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(Roadmap)
+class RoadmapAdmin(admin.ModelAdmin):
+    list_display = ("analysis", "created_at")
+    readonly_fields = (
+        "analysis",
+        "months",
+        "potential_challenges",
+        "post_implementation_outcomes",
+        "closing_reflections",
+        "created_at",
+        "updated_at",
+    )
+    search_fields = ("analysis__assessment__client__business_name",)
 
     def has_add_permission(self, request):
         return False

@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Roadmap model, migration, and query function
 
@@ -23,11 +23,11 @@ The `latest_roadmap(assessment)` query returns the most recent `Roadmap` for an 
 
 ## Acceptance criteria
 
-- [ ] `Roadmap` model exists in the `reports` app with `analysis` FK (unique), `months` JSONField, `potential_challenges` JSONField, `post_implementation_outcomes` JSONField, and `closing_reflections` JSONField
-- [ ] Migration created and applies cleanly
-- [ ] `latest_roadmap(assessment)` query function returns the most recent `Roadmap` for an Assessment, or `None`
-- [ ] Given an Assessment with two Analysis runs each producing a `Roadmap`, `latest_roadmap` returns the record from the second run
-- [ ] `Roadmap` appears in the `reports` app model layout consistent with `ExecutiveSummary` and `RecommendationsOverview`
+- [x] `Roadmap` model exists in the `reports` app with `analysis` FK (unique), `months` JSONField, `potential_challenges` JSONField, `post_implementation_outcomes` JSONField, and `closing_reflections` JSONField
+- [x] Migration created and applies cleanly
+- [x] `latest_roadmap(assessment)` query function returns the most recent `Roadmap` for an Assessment, or `None`
+- [x] Given an Assessment with two Analysis runs each producing a `Roadmap`, `latest_roadmap` returns the record from the second run
+- [x] `Roadmap` appears in the `reports` app model layout consistent with `ExecutiveSummary` and `RecommendationsOverview`
 
 ## Blocked by
 

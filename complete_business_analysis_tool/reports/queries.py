@@ -5,6 +5,7 @@ from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
     RecommendationsOverview,
+    Roadmap,
 )
 
 
@@ -61,6 +62,15 @@ def latest_recommendations_overview(assessment) -> RecommendationsOverview | Non
     """Return the latest RecommendationsOverview across all Analysis runs, or None."""
     return (
         RecommendationsOverview.objects.filter(analysis__assessment=assessment)
+        .order_by("-analysis__created_at")
+        .first()
+    )
+
+
+def latest_roadmap(assessment) -> Roadmap | None:
+    """Return the latest Roadmap across all Analysis runs, or None."""
+    return (
+        Roadmap.objects.filter(analysis__assessment=assessment)
         .order_by("-analysis__created_at")
         .first()
     )

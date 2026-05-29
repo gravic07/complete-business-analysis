@@ -69,6 +69,19 @@ class RecommendationsOverview(BaseModel):
         unique_together = [["analysis"]]
 
 
+class Roadmap(BaseModel):
+    analysis = models.ForeignKey(
+        "analysis.Analysis",
+        on_delete=models.CASCADE,
+        related_name="roadmaps",
+        unique=True,
+    )
+    months = models.JSONField()
+    potential_challenges = models.JSONField()
+    post_implementation_outcomes = models.JSONField()
+    closing_reflections = models.JSONField()
+
+
 class CategoryRecommendations(BaseModel):
     analysis = models.ForeignKey(
         "analysis.Analysis",

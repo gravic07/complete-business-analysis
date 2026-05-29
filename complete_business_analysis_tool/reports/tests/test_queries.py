@@ -14,11 +14,13 @@ from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
     RecommendationsOverview,
+    Roadmap,
 )
 from complete_business_analysis_tool.reports.queries import (
     latest_category_sections,
     latest_executive_summary,
     latest_recommendations_overview,
+    latest_roadmap,
 )
 
 
@@ -167,3 +169,38 @@ def test_latest_recommendations_overview_returns_most_recent():
 
     assert result is not None
     assert result.content == "second overview"
+
+
+@pytest.mark.django_db
+def test_latest_roadmap_returns_none_when_none_exist():
+    assessment = AssessmentFactory()
+
+    result = latest_roadmap(assessment)
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_latest_roadmap_returns_most_recent():
+    assessment = AssessmentFactory()
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    analysis2 = Analysis.objects.create(assessment=assessment)
+    Roadmap.objects.create(
+        analysis=analysis1,
+        months=[],
+        potential_challenges=["first"],
+        post_implementation_outcomes=[],
+        closing_reflections=[],
+    )
+    Roadmap.objects.create(
+        analysis=analysis2,
+        months=[],
+        potential_challenges=["second"],
+        post_implementation_outcomes=[],
+        closing_reflections=[],
+    )
+
+    result = latest_roadmap(assessment)
+
+    assert result is not None
+    assert result.potential_challenges == ["second"]
