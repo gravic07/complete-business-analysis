@@ -63,9 +63,9 @@ A 12-month implementation plan synthesized from all CategoryRecommendations and 
 Structured as five sections:
 - **Overview** — Static 3-paragraph template explaining what the Roadmap is and how to use it. Not LLM-generated; identical across all clients.
 - **Monthly Plans** — 12 monthly plans numbered Month 1 through Month 12 (relative, not calendar-based). Each contains exactly 5 Goals, 5 Action Items, and 5 Challenges. Months are comprehensive across all categories but may focus a specific category when that category is a prerequisite for later months.
-- **Potential Challenges** — 4–7 paragraphs describing obstacles to implementing the roadmap.
-- **Post-Implementation Outcomes** — 4–7 paragraphs describing the business after recommendations are applied, with specific reference to each addressed weakness.
-- **Closing Reflections** — Encourages ongoing progress, monthly tracking meetings, and continued iteration even when not all roadmap items are completed.
+- **Potential Challenges** — 3–4 paragraphs describing obstacles to implementing the roadmap. Stored as a plain string with `\n\n`-separated paragraphs.
+- **Post-Implementation Outcomes** — 3–4 paragraphs describing the business after recommendations are applied, with specific reference to each addressed weakness. Stored as a plain string with `\n\n`-separated paragraphs.
+- **Closing Reflections** — 4–6 paragraphs encouraging ongoing progress, monthly tracking meetings, and continued iteration even when not all roadmap items are completed. Stored as a plain string with `\n\n`-separated paragraphs.
 
 ### Analysis Status
 An Analysis moves through states: `pending → processing → complete` or `pending → processing → failed`. Status is stored on the Analysis record. Processing is handled asynchronously via Celery so the UI can show a processing state without blocking.
@@ -110,7 +110,7 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 | `ExecutiveSummary` | `analysis` FK, `content` TextField |
 | `CategoryRecommendations` | `analysis` FK, `category` FK, `recommendations` JSONField (list of 7 strings) |
 | `RecommendationsOverview` | `analysis` FK, `content` TextField |
-| `Roadmap` | `analysis` FK, `months` JSONField (list of 12 objects with `goals`, `action_items`, `challenges` — each a list of 5 strings), `potential_challenges` JSONField (list of strings), `post_implementation_outcomes` JSONField (list of strings), `closing_reflections` JSONField (list of strings) |
+| `Roadmap` | `analysis` FK, `months` JSONField (list of 12 objects with `goals`, `action_items`, `challenges` — each a list of 5 strings), `potential_challenges` TextField, `post_implementation_outcomes` TextField, `closing_reflections` TextField |
 | `Feedback` | `assessment` FK, `report_feedback` (nullable) |
 | `CategoryFeedback` | `feedback` FK, `category` FK, `text` TextField |
 

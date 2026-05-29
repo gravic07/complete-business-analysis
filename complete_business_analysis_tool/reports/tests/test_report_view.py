@@ -65,9 +65,9 @@ def _make_report(assessment, monkeypatch):
                 }
                 for _ in range(12)
             ],
-            "potential_challenges": ["potential challenge 1", "potential challenge 2"],
-            "post_implementation_outcomes": ["outcome 1", "outcome 2"],
-            "closing_reflections": ["reflection 1", "reflection 2"],
+            "potential_challenges": "potential challenge 1\n\npotential challenge 2",
+            "post_implementation_outcomes": "outcome 1\n\noutcome 2",
+            "closing_reflections": "reflection 1\n\nreflection 2",
         },
     )
     analysis = Analysis.objects.create(assessment=assessment)
@@ -378,8 +378,8 @@ def test_report_view_renders_potential_challenges(monkeypatch):
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     content = _authed_client().get(url).content.decode()
 
-    assert "potential challenge 1" in content
-    assert "potential challenge 2" in content
+    assert "<p>potential challenge 1</p>" in content
+    assert "<p>potential challenge 2</p>" in content
 
 
 @pytest.mark.django_db
@@ -390,8 +390,8 @@ def test_report_view_renders_post_implementation_outcomes(monkeypatch):
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     content = _authed_client().get(url).content.decode()
 
-    assert "outcome 1" in content
-    assert "outcome 2" in content
+    assert "<p>outcome 1</p>" in content
+    assert "<p>outcome 2</p>" in content
 
 
 @pytest.mark.django_db
@@ -402,5 +402,5 @@ def test_report_view_renders_closing_reflections(monkeypatch):
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     content = _authed_client().get(url).content.decode()
 
-    assert "reflection 1" in content
-    assert "reflection 2" in content
+    assert "<p>reflection 1</p>" in content
+    assert "<p>reflection 2</p>" in content

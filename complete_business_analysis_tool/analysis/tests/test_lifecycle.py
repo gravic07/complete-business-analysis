@@ -533,9 +533,9 @@ def test_preexisting_roadmap_is_skipped_on_retry(monkeypatch):
                 {"goals": ["g"], "action_items": ["a"], "challenges": ["c"]}
                 for _ in range(12)
             ],
-            "potential_challenges": ["p"],
-            "post_implementation_outcomes": ["o"],
-            "closing_reflections": ["r"],
+            "potential_challenges": "p",
+            "post_implementation_outcomes": "o",
+            "closing_reflections": "r",
         }
 
     monkeypatch.setattr(
@@ -557,9 +557,9 @@ def test_preexisting_roadmap_is_skipped_on_retry(monkeypatch):
             {"goals": ["pre-existing"], "action_items": [], "challenges": []}
             for _ in range(12)
         ],
-        potential_challenges=[],
-        post_implementation_outcomes=[],
-        closing_reflections=[],
+        potential_challenges="",
+        post_implementation_outcomes="",
+        closing_reflections="",
     )
 
     run_analysis(analysis.pk)

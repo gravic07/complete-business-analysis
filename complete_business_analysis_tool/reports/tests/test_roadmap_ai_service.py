@@ -11,9 +11,9 @@ def _stub_roadmap_client(prompt: str) -> dict:
             }
             for _ in range(12)
         ],
-        "potential_challenges": ["pc1", "pc2", "pc3", "pc4"],
-        "post_implementation_outcomes": ["pio1", "pio2", "pio3", "pio4"],
-        "closing_reflections": ["cr1", "cr2"],
+        "potential_challenges": "pc1\n\npc2\n\npc3\n\npc4",
+        "post_implementation_outcomes": "pio1\n\npio2\n\npio3\n\npio4",
+        "closing_reflections": "cr1\n\ncr2",
     }
 
 
@@ -44,19 +44,19 @@ def test_generate_roadmap_returns_12_months_with_5_items_each():
         assert all(isinstance(item, str) for item in month["challenges"])
 
 
-def test_generate_roadmap_returns_non_empty_supplementary_lists():
+def test_generate_roadmap_returns_prose_strings_for_supplementary_fields():
     result = generate_roadmap(
         category_recommendations={"Finance": ["Rec 1"]},
         category_sections={"Finance": "Overview:\nSome text."},
         business_name="Acme Corp",
         llm_client=_stub_roadmap_client,
     )
+    assert isinstance(result["potential_challenges"], str)
     assert len(result["potential_challenges"]) > 0
-    assert all(isinstance(item, str) for item in result["potential_challenges"])
+    assert isinstance(result["post_implementation_outcomes"], str)
     assert len(result["post_implementation_outcomes"]) > 0
-    assert all(isinstance(item, str) for item in result["post_implementation_outcomes"])
+    assert isinstance(result["closing_reflections"], str)
     assert len(result["closing_reflections"]) > 0
-    assert all(isinstance(item, str) for item in result["closing_reflections"])
 
 
 def test_generate_roadmap_prompt_includes_category_recommendations():
@@ -104,3 +104,29 @@ def test_generate_roadmap_prompt_instructs_third_person_with_business_name():
     )
     assert "third person" in captured["prompt"].lower()
     assert "Pinnacle Logistics" in captured["prompt"]
+
+
+def test_generate_roadmap_prompt_instructs_prose_paragraphs():
+    client, captured = _capturing_client()
+    generate_roadmap(
+        category_recommendations={"Finance": ["Rec 1."]},
+        category_sections={"Finance": "Overview:\nText."},
+        business_name="Acme Corp",
+        llm_client=client,
+    )
+    prompt = captured["prompt"]
+    assert "3-4 paragraphs" in prompt
+    assert "4-6 paragraphs" in prompt
+    assert "\\n\\n" in prompt or r"\n\n" in prompt
+
+
+def test_generate_roadmap_prompt_forbids_bullets_in_prose_fields():
+    client, captured = _capturing_client()
+    generate_roadmap(
+        category_recommendations={"Finance": ["Rec 1."]},
+        category_sections={"Finance": "Overview:\nText."},
+        business_name="Acme Corp",
+        llm_client=client,
+    )
+    prompt = captured["prompt"].lower()
+    assert "bullet" in prompt or "no list" in prompt or "no bullet" in prompt

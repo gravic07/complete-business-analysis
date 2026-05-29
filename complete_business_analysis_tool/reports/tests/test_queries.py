@@ -188,19 +188,19 @@ def test_latest_roadmap_returns_most_recent():
     Roadmap.objects.create(
         analysis=analysis1,
         months=[],
-        potential_challenges=["first"],
-        post_implementation_outcomes=[],
-        closing_reflections=[],
+        potential_challenges="first",
+        post_implementation_outcomes="",
+        closing_reflections="",
     )
     Roadmap.objects.create(
         analysis=analysis2,
         months=[],
-        potential_challenges=["second"],
-        post_implementation_outcomes=[],
-        closing_reflections=[],
+        potential_challenges="second",
+        post_implementation_outcomes="",
+        closing_reflections="",
     )
 
     result = latest_roadmap(assessment)
 
     assert result is not None
-    assert result.potential_challenges == ["second"]
+    assert result.potential_challenges == "second"

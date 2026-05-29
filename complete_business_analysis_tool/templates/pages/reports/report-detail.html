@@ -88,11 +88,11 @@
               </div>
             {% endfor %}
             <h3 class="title is-5 mt-5">Potential Challenges</h3>
-            {% for item in roadmap.potential_challenges %}<p>{{ item }}</p>{% endfor %}
+            {{ roadmap.potential_challenges|linebreaks }}
             <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
-            {% for item in roadmap.post_implementation_outcomes %}<p>{{ item }}</p>{% endfor %}
+            {{ roadmap.post_implementation_outcomes|linebreaks }}
             <h3 class="title is-5 mt-5">Closing Reflections</h3>
-            {% for item in roadmap.closing_reflections %}<p>{{ item }}</p>{% endfor %}
+            {{ roadmap.closing_reflections|linebreaks }}
           </div>
         {% endif %}
         <div class="box mt-6">

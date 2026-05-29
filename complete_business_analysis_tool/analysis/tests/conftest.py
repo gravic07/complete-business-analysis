@@ -26,8 +26,8 @@ def _stub_ai_functions(monkeypatch) -> None:
                 {"goals": ["g"], "action_items": ["a"], "challenges": ["c"]}
                 for _ in range(12)
             ],
-            "potential_challenges": ["p"],
-            "post_implementation_outcomes": ["o"],
-            "closing_reflections": ["r"],
+            "potential_challenges": "p",
+            "post_implementation_outcomes": "o",
+            "closing_reflections": "r",
         },
     )

@@ -451,22 +451,9 @@ _ROADMAP_TOOL = {
                     "required": ["goals", "action_items", "challenges"],
                 },
             },
-            "potential_challenges": {
-                "type": "array",
-                "minItems": 4,
-                "maxItems": 7,
-                "items": {"type": "string"},
-            },
-            "post_implementation_outcomes": {
-                "type": "array",
-                "minItems": 4,
-                "maxItems": 7,
-                "items": {"type": "string"},
-            },
-            "closing_reflections": {
-                "type": "array",
-                "items": {"type": "string"},
-            },
+            "potential_challenges": {"type": "string"},
+            "post_implementation_outcomes": {"type": "string"},
+            "closing_reflections": {"type": "string"},
         },
         "required": [
             "months",
@@ -511,6 +498,12 @@ def _build_roadmap_prompt(
         "Early months should address foundational areas; later months build on them.",
         "Each month must be comprehensive across all categories, though one category",
         "may be prioritized when it is a prerequisite for others.",
+        "",
+        "For the three prose fields, write flowing narrative — no bullet points or list",
+        "formatting of any kind. Separate paragraphs with \\n\\n.",
+        "- potential_challenges: 3-4 paragraphs",
+        "- post_implementation_outcomes: 3-4 paragraphs",
+        "- closing_reflections: 4-6 paragraphs",
         "",
         "## Category Recommendations",
     ]

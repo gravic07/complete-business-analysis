@@ -77,9 +77,9 @@ class Roadmap(BaseModel):
         unique=True,
     )
     months = models.JSONField()
-    potential_challenges = models.JSONField()
-    post_implementation_outcomes = models.JSONField()
-    closing_reflections = models.JSONField()
+    potential_challenges = models.TextField()
+    post_implementation_outcomes = models.TextField()
+    closing_reflections = models.TextField()
 
 
 class CategoryRecommendations(BaseModel):
