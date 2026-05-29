@@ -19,3 +19,15 @@ def _stub_ai_functions(monkeypatch) -> None:
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "",
     )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_roadmap",
+        lambda **kwargs: {
+            "months": [
+                {"goals": ["g"], "action_items": ["a"], "challenges": ["c"]}
+                for _ in range(12)
+            ],
+            "potential_challenges": ["p"],
+            "post_implementation_outcomes": ["o"],
+            "closing_reflections": ["r"],
+        },
+    )

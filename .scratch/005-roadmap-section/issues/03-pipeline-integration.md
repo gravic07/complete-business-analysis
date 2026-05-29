@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Pipeline integration: Roadmap generation step
 
@@ -20,12 +20,12 @@ The Roadmap regenerates in every Analysis run without exception — there is no 
 
 ## Acceptance criteria
 
-- [ ] `_run_analysis_work` creates exactly one `Roadmap` record per Analysis run as its final step
-- [ ] Integration test: running the analysis task for a new Assessment creates a `Roadmap` with a `months` list of 12 items, each containing non-empty `goals`, `action_items`, and `challenges` lists
-- [ ] Integration test: running a second Analysis run (feedback-triggered) creates a new `Roadmap` record; `latest_roadmap` returns the second run's record
-- [ ] Integration test: a partial re-analysis (single category feedback) still produces a new `Roadmap` in the new Analysis run
-- [ ] Idempotency: if a `Roadmap` already exists for the Analysis (simulated retry), no duplicate record is created
-- [ ] The Roadmap generation step does not run before `RecommendationsOverview` and `ExecutiveSummary` are complete
+- [x] `_run_analysis_work` creates exactly one `Roadmap` record per Analysis run as its final step
+- [x] Integration test: running the analysis task for a new Assessment creates a `Roadmap` with a `months` list of 12 items, each containing non-empty `goals`, `action_items`, and `challenges` lists
+- [x] Integration test: running a second Analysis run (feedback-triggered) creates a new `Roadmap` record; `latest_roadmap` returns the second run's record
+- [x] Integration test: a partial re-analysis (single category feedback) still produces a new `Roadmap` in the new Analysis run
+- [x] Idempotency: if a `Roadmap` already exists for the Analysis (simulated retry), no duplicate record is created
+- [x] The Roadmap generation step does not run before `RecommendationsOverview` and `ExecutiveSummary` are complete
 
 ## Blocked by
 

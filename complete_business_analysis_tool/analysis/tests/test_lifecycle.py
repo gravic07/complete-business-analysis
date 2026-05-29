@@ -17,7 +17,9 @@ from complete_business_analysis_tool.reports.models import (
     CategorySection,
     ExecutiveSummary,
     Feedback,
+    Roadmap,
 )
+from complete_business_analysis_tool.reports.queries import latest_roadmap
 
 
 @pytest.mark.django_db
@@ -435,3 +437,135 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
     assert (
         ExecutiveSummary.objects.get(analysis=analysis).content == "overall pre-existing"
     )
+
+
+# ---------------------------------------------------------------------------
+# Roadmap pipeline integration
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_run_analysis_creates_roadmap():
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+    assert Roadmap.objects.filter(analysis=analysis).count() == 1
+
+
+@pytest.mark.django_db
+def test_roadmap_has_twelve_months_with_non_empty_lists():
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    roadmap = Roadmap.objects.get(analysis=analysis)
+    assert len(roadmap.months) == 12  # noqa: PLR2004
+    for month in roadmap.months:
+        assert month["goals"]
+        assert month["action_items"]
+        assert month["challenges"]
+
+
+@pytest.mark.django_db
+def test_second_analysis_run_creates_new_roadmap():
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+
+    analysis1.status = Analysis.Status.COMPLETE
+    analysis1.save(update_fields=["status"])
+
+    feedback = Feedback.objects.create(assessment=assessment, report_feedback="Redo it.")
+    analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
+    run_analysis(analysis2.pk)
+
+    assert Roadmap.objects.filter(analysis=analysis1).exists()
+    assert Roadmap.objects.filter(analysis=analysis2).exists()
+    assert latest_roadmap(assessment).analysis_id == analysis2.pk
+
+
+@pytest.mark.django_db
+def test_partial_reanalysis_creates_roadmap():
+    assessment, cat_a, _cat_b = _make_two_category_assessment()
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+    analysis1.status = Analysis.Status.COMPLETE
+    analysis1.save(update_fields=["status"])
+
+    # Feedback only on one category — partial re-analysis scope
+    feedback = Feedback.objects.create(assessment=assessment)
+    CategoryFeedback.objects.create(feedback=feedback, category=cat_a, text="Focus here.")
+    analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
+    run_analysis(analysis2.pk)
+
+    analysis2.refresh_from_db()
+    assert analysis2.status == Analysis.Status.COMPLETE
+    assert Roadmap.objects.filter(analysis=analysis2).exists()
+
+
+@pytest.mark.django_db
+def test_preexisting_roadmap_is_skipped_on_retry(monkeypatch):
+    roadmap_calls = []
+
+    def capture_roadmap(**kwargs):
+        roadmap_calls.append(kwargs)
+        return {
+            "months": [
+                {"goals": ["g"], "action_items": ["a"], "challenges": ["c"]}
+                for _ in range(12)
+            ],
+            "potential_challenges": ["p"],
+            "post_implementation_outcomes": ["o"],
+            "closing_reflections": ["r"],
+        }
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_roadmap",
+        capture_roadmap,
+    )
+
+    category = CategoryFactory()
+    question = QuestionFactory(category=category)
+    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory()
+    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    # Simulate retry: Roadmap already written before the crash
+    Roadmap.objects.create(
+        analysis=analysis,
+        months=[
+            {"goals": ["pre-existing"], "action_items": [], "challenges": []}
+            for _ in range(12)
+        ],
+        potential_challenges=[],
+        post_implementation_outcomes=[],
+        closing_reflections=[],
+    )
+
+    run_analysis(analysis.pk)
+
+    analysis.refresh_from_db()
+    assert analysis.status == Analysis.Status.COMPLETE
+    assert Roadmap.objects.filter(analysis=analysis).count() == 1
+    assert len(roadmap_calls) == 0
+    assert Roadmap.objects.get(analysis=analysis).months[0]["goals"] == ["pre-existing"]

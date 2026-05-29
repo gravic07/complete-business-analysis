@@ -12,12 +12,14 @@ from complete_business_analysis_tool.reports.ai_service import (
     generate_category_section,
     generate_executive_summary,
     generate_recommendations_overview,
+    generate_roadmap,
 )
 from complete_business_analysis_tool.reports.models import (
     CategoryRecommendations,
     CategorySection,
     ExecutiveSummary,
     RecommendationsOverview,
+    Roadmap,
 )
 from complete_business_analysis_tool.reports.queries import (
     latest_category_recommendations,
@@ -246,6 +248,14 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
             analysis=analysis,
             content=overall_content,
         )
+
+    if not Roadmap.objects.filter(analysis=analysis).exists():
+        roadmap_data = generate_roadmap(
+            category_recommendations=recommendations_dict,
+            category_sections=category_sections_dict,
+            business_name=business_name,
+        )
+        Roadmap.objects.create(analysis=analysis, **roadmap_data)
 
 
 @shared_task()
