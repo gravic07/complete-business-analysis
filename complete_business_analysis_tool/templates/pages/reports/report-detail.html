@@ -40,9 +40,23 @@
         {% endif %}
         {% for section in category_sections %}
           <div class="box mb-5">
-            <h2 class="title is-4 has-text-primary">{{ section.category.name }}</h2>
+            <div class="level mb-2">
+              <div class="level-left">
+                <h2 class="title is-4 has-text-primary level-item mb-0">{{ section.category.name }}</h2>
+              </div>
+              <div class="level-right">
+                <div class="level-item">
+                  <div class="buttons has-addons js-tab-group">
+                    <button class="button is-small is-primary js-tab-btn"
+                            data-panel="analysis-{{ forloop.counter }}">Analysis</button>
+                    <button class="button is-small js-tab-btn"
+                            data-panel="recommendations-{{ forloop.counter }}">Recommendations</button>
+                  </div>
+                </div>
+              </div>
+            </div>
             <hr />
-            <div class="content">
+            <div id="analysis-{{ forloop.counter }}" class="content js-tab-panel">
               <h3 class="title is-6">Overview</h3>
               {{ section.overview|linebreaksbr }}
               <h3 class="title is-6">Impact</h3>
@@ -50,21 +64,18 @@
               <h3 class="title is-6">Path Forward</h3>
               {{ section.path_forward|linebreaksbr }}
             </div>
+            <div id="recommendations-{{ forloop.counter }}"
+                 class="content js-tab-panel is-hidden">
+              {% if section.recommendations %}
+                <ol>
+                  {% for item in section.recommendations %}<li class="mb-2">{{ item }}</li>{% endfor %}
+                </ol>
+              {% else %}
+                <p class="has-text-grey">No recommendations generated yet.</p>
+              {% endif %}
+            </div>
           </div>
         {% endfor %}
-        {% if recommendations_overview or category_recommendations %}
-          <div class="box mb-5">
-            <h2 class="title is-4">Recommendations</h2>
-            <hr />
-            <div class="content">{{ recommendations_overview.content|linebreaksbr }}</div>
-            {% for rec in category_recommendations %}
-              <h3 class="title is-5 has-text-primary mt-5">{{ rec.category.name }}</h3>
-              <ol>
-                {% for item in rec.recommendations %}<li class="mb-2">{{ item }}</li>{% endfor %}
-              </ol>
-            {% endfor %}
-          </div>
-        {% endif %}
         {% if roadmap %}
           <div class="box mb-5">
             <h2 class="title is-4">12-Month Roadmap</h2>

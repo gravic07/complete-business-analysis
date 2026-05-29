@@ -451,9 +451,21 @@ _ROADMAP_TOOL = {
                     "required": ["goals", "action_items", "challenges"],
                 },
             },
-            "potential_challenges": {"type": "string"},
-            "post_implementation_outcomes": {"type": "string"},
-            "closing_reflections": {"type": "string"},
+            "potential_challenges": {
+                "type": "string",
+                "minLength": 450,
+                "maxLength": 2000,
+            },
+            "post_implementation_outcomes": {
+                "type": "string",
+                "minLength": 450,
+                "maxLength": 2000,
+            },
+            "closing_reflections": {
+                "type": "string",
+                "minLength": 600,
+                "maxLength": 3000,
+            },
         },
         "required": [
             "months",

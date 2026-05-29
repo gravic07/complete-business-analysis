@@ -14,6 +14,23 @@ document.querySelectorAll(".modal-background, .modal-close, .modal button.delete
   });
 });
 
+// Report category tabs — toggle between Analysis and Recommendations panels
+document.querySelectorAll(".js-tab-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var panelId = btn.dataset.panel;
+    var group = btn.closest(".js-tab-group");
+    var box = btn.closest(".box");
+    group.querySelectorAll(".js-tab-btn").forEach(function (b) {
+      b.classList.remove("is-primary");
+    });
+    box.querySelectorAll(".js-tab-panel").forEach(function (p) {
+      p.classList.add("is-hidden");
+    });
+    btn.classList.add("is-primary");
+    document.getElementById(panelId).classList.remove("is-hidden");
+  });
+});
+
 // Ranked radio widget — highlight selected option row
 document.querySelectorAll("[data-ranked-radio]").forEach(function (container) {
   container.querySelectorAll('input[type="radio"]').forEach(function (input) {

@@ -53,8 +53,10 @@ class ReportView(LoginRequiredMixin, DetailView):
         categories = _assessment_categories(assessment)
         form = FeedbackForm(categories=categories)
         context["executive_summary"] = latest_executive_summary(assessment)
-        context["category_sections"] = latest_category_sections(assessment)
-        context["category_recommendations"] = latest_category_recommendations(assessment)
+        context["category_sections"] = _merge_sections_and_recs(
+            latest_category_sections(assessment),
+            latest_category_recommendations(assessment),
+        )
         context["recommendations_overview"] = latest_recommendations_overview(assessment)
         context["roadmap"] = latest_roadmap(assessment)
         context["roadmap_overview"] = _ROADMAP_OVERVIEW
@@ -84,9 +86,9 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         form = context["form"]
         context["assessment"] = self.assessment
         context["executive_summary"] = latest_executive_summary(self.assessment)
-        context["category_sections"] = latest_category_sections(self.assessment)
-        context["category_recommendations"] = latest_category_recommendations(
-            self.assessment,
+        context["category_sections"] = _merge_sections_and_recs(
+            latest_category_sections(self.assessment),
+            latest_category_recommendations(self.assessment),
         )
         context["recommendations_overview"] = latest_recommendations_overview(
             self.assessment,
@@ -124,6 +126,20 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         analysis.save()
         run_analysis.delay(str(analysis.pk))
         return super().form_valid(form)
+
+
+def _merge_sections_and_recs(sections, recs):
+    rec_by_cat = {r.category_id: r.recommendations for r in recs}
+    return [
+        {
+            "category": s.category,
+            "overview": s.overview,
+            "impact": s.impact,
+            "path_forward": s.path_forward,
+            "recommendations": rec_by_cat.get(s.category_id, []),
+        }
+        for s in sections
+    ]
 
 
 def _assessment_categories(assessment: Assessment):
