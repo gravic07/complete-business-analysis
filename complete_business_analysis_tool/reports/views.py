@@ -61,9 +61,9 @@ class ReportView(LoginRequiredMixin, DetailView):
         context["roadmap"] = latest_roadmap(assessment)
         context["roadmap_overview"] = _ROADMAP_OVERVIEW
         context["feedback_form"] = form
-        context["category_fields"] = [
-            (cat, form[f"category_{cat.pk}"]) for cat in categories
-        ]
+        category_field_map = {cat.pk: form[f"category_{cat.pk}"] for cat in categories}
+        for section in context["category_sections"]:
+            section["feedback_field"] = category_field_map.get(section["category"].pk)
         return context
 
 
@@ -94,9 +94,11 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
             self.assessment,
         )
         context["feedback_form"] = form
-        context["category_fields"] = [
-            (cat, form[f"category_{cat.pk}"]) for cat in self.categories
-        ]
+        category_field_map = {
+            cat.pk: form[f"category_{cat.pk}"] for cat in self.categories
+        }
+        for section in context["category_sections"]:
+            section["feedback_field"] = category_field_map.get(section["category"].pk)
         return context
 
     def get_success_url(self):

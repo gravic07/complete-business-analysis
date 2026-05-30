@@ -31,111 +31,126 @@
         </div>
       </div>
       {% if executive_summary or category_sections %}
-        {% if executive_summary %}
-          <div class="box mb-5">
-            <h2 class="title is-4">Executive Summary</h2>
-            <hr />
-            <div class="content">{{ executive_summary.content|linebreaksbr }}</div>
-          </div>
-        {% endif %}
-        {% for section in category_sections %}
-          <div class="box mb-5">
-            <div class="level mb-2">
-              <div class="level-left">
-                <h2 class="title is-4 has-text-primary level-item mb-0">{{ section.category.name }}</h2>
-              </div>
-              <div class="level-right">
-                <div class="level-item">
-                  <div class="buttons has-addons js-tab-group">
-                    <button class="button is-small is-primary js-tab-btn"
-                            data-panel="analysis-{{ forloop.counter }}">Analysis</button>
-                    <button class="button is-small js-tab-btn"
-                            data-panel="recommendations-{{ forloop.counter }}">Recommendations</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <hr />
-            <div id="analysis-{{ forloop.counter }}" class="content js-tab-panel">
-              <h3 class="title is-6">Overview</h3>
-              {{ section.overview|linebreaksbr }}
-              <h3 class="title is-6">Impact</h3>
-              {{ section.impact|linebreaksbr }}
-              <h3 class="title is-6">Path Forward</h3>
-              {{ section.path_forward|linebreaksbr }}
-            </div>
-            <div id="recommendations-{{ forloop.counter }}"
-                 class="content js-tab-panel is-hidden">
-              {% if section.recommendations %}
-                <ol>
-                  {% for item in section.recommendations %}<li class="mb-2">{{ item }}</li>{% endfor %}
-                </ol>
-              {% else %}
-                <p class="has-text-grey">No recommendations generated yet.</p>
-              {% endif %}
-            </div>
-          </div>
-        {% endfor %}
-        {% if roadmap %}
-          <div class="box mb-5">
-            <h2 class="title is-4">12-Month Roadmap</h2>
-            <hr />
-            <div class="content">{{ roadmap_overview|linebreaksbr }}</div>
-            {% for month in roadmap.months %}
-              <div class="mt-5">
-                <h3 class="title is-5 has-text-primary">Month {{ forloop.counter }}</h3>
-                <h4 class="title is-6">Goals</h4>
-                <ul>
-                  {% for item in month.goals %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                </ul>
-                <h4 class="title is-6">Action Items</h4>
-                <ul>
-                  {% for item in month.action_items %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                </ul>
-                <h4 class="title is-6">Challenges</h4>
-                <ul>
-                  {% for item in month.challenges %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                </ul>
-              </div>
-            {% endfor %}
-            <h3 class="title is-5 mt-5">Potential Challenges</h3>
-            {{ roadmap.potential_challenges|linebreaks }}
-            <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
-            {{ roadmap.post_implementation_outcomes|linebreaks }}
-            <h3 class="title is-5 mt-5">Closing Reflections</h3>
-            {{ roadmap.closing_reflections|linebreaks }}
-          </div>
-        {% endif %}
-        <div class="box mt-6">
-          <h2 class="title is-4">Submit Feedback</h2>
-          <p class="subtitle is-6">
-            Provide feedback to refine the report. Leave fields blank to skip re-analysis for that section.
-          </p>
+        <form method="post"
+              action="{% url 'reports:submit_feedback' assessment.pk %}">
+          {% csrf_token %}
           {% if feedback_form.non_field_errors %}
-            <div class="notification is-danger">
+            <div class="notification is-danger mb-5">
               {% for error in feedback_form.non_field_errors %}{{ error }}{% endfor %}
             </div>
           {% endif %}
-          <form method="post"
-                action="{% url 'reports:submit_feedback' assessment.pk %}">
-            {% csrf_token %}
-            <div class="field">
-              <label class="label">{{ feedback_form.report_feedback.label }}</label>
-              <div class="control">{{ feedback_form.report_feedback }}</div>
-            </div>
-            {% for category, field in category_fields %}
-              <div class="field">
-                <label class="label">{{ category.name }}</label>
-                <div class="control">{{ field }}</div>
+          {% if executive_summary %}
+            <div class="box mb-5">
+              <div class="level mb-2">
+                <div class="level-left">
+                  <h2 class="title is-4 level-item mb-0">Executive Summary</h2>
+                </div>
+                <div class="level-right">
+                  <div class="level-item">
+                    <div class="buttons has-addons js-tab-group">
+                      <button type="button"
+                              class="button is-small is-primary js-tab-btn"
+                              data-panel="analysis-exec">Analysis</button>
+                      <button type="button"
+                              class="button is-small js-tab-btn"
+                              data-panel="recommendations-exec">Recommendations</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            {% endfor %}
+              <hr />
+              <div id="analysis-exec" class="content js-tab-panel">{{ executive_summary.content|linebreaksbr }}</div>
+              <div id="recommendations-exec" class="content js-tab-panel is-hidden">
+                {% if recommendations_overview %}
+                  {{ recommendations_overview.content|linebreaksbr }}
+                {% else %}
+                  <p class="has-text-grey">No recommendations overview generated yet.</p>
+                {% endif %}
+              </div>
+              <hr />
+              {% include 'snippets/input-area.html' with field=feedback_form.report_feedback column=0 %}
+            </div>
+          {% endif %}
+          {% for section in category_sections %}
+            <div class="box mb-5">
+              <div class="level mb-2">
+                <div class="level-left">
+                  <h2 class="title is-4 has-text-primary level-item mb-0">{{ section.category.name }}</h2>
+                </div>
+                <div class="level-right">
+                  <div class="level-item">
+                    <div class="buttons has-addons js-tab-group">
+                      <button type="button"
+                              class="button is-small is-primary js-tab-btn"
+                              data-panel="analysis-{{ forloop.counter }}">Analysis</button>
+                      <button type="button"
+                              class="button is-small js-tab-btn"
+                              data-panel="recommendations-{{ forloop.counter }}">Recommendations</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div id="analysis-{{ forloop.counter }}" class="content js-tab-panel">
+                <h3 class="title is-6">Overview</h3>
+                {{ section.overview|linebreaksbr }}
+                <h3 class="title is-6">Impact</h3>
+                {{ section.impact|linebreaksbr }}
+                <h3 class="title is-6">Path Forward</h3>
+                {{ section.path_forward|linebreaksbr }}
+              </div>
+              <div id="recommendations-{{ forloop.counter }}"
+                   class="content js-tab-panel is-hidden">
+                {% if section.recommendations %}
+                  <ol>
+                    {% for item in section.recommendations %}<li class="mb-2">{{ item }}</li>{% endfor %}
+                  </ol>
+                {% else %}
+                  <p class="has-text-grey">No recommendations generated yet.</p>
+                {% endif %}
+              </div>
+              <hr />
+              {% include 'snippets/input-area.html' with field=section.feedback_field column=0 %}
+            </div>
+          {% endfor %}
+          {% if roadmap %}
+            <div class="box mb-5">
+              <h2 class="title is-4">12-Month Roadmap</h2>
+              <hr />
+              <div class="content">{{ roadmap_overview|linebreaksbr }}</div>
+              {% for month in roadmap.months %}
+                <div class="mt-5">
+                  <h3 class="title is-5 has-text-primary">Month {{ forloop.counter }}</h3>
+                  <h4 class="title is-6">Goals</h4>
+                  <ul>
+                    {% for item in month.goals %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                  </ul>
+                  <h4 class="title is-6">Action Items</h4>
+                  <ul>
+                    {% for item in month.action_items %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                  </ul>
+                  <h4 class="title is-6">Challenges</h4>
+                  <ul>
+                    {% for item in month.challenges %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                  </ul>
+                </div>
+              {% endfor %}
+              <h3 class="title is-5 mt-5">Potential Challenges</h3>
+              {{ roadmap.potential_challenges|linebreaks }}
+              <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
+              {{ roadmap.post_implementation_outcomes|linebreaks }}
+              <h3 class="title is-5 mt-5">Closing Reflections</h3>
+              {{ roadmap.closing_reflections|linebreaks }}
+            </div>
+          {% endif %}
+          <div class="box mt-6">
             <div class="field">
               <div class="control">
                 <button type="submit" class="button is-primary">Submit Feedback &amp; Reanalyse</button>
               </div>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       {% else %}
         <div class="notification is-warning">No report has been generated for this assessment yet.</div>
       {% endif %}

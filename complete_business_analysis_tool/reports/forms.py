@@ -4,7 +4,7 @@ from django import forms
 class FeedbackForm(forms.Form):
     report_feedback = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"rows": 4}),
+        widget=forms.Textarea(attrs={"rows": 4, "class": "textarea"}),
         label="Overall Feedback",
     )
 
@@ -13,8 +13,8 @@ class FeedbackForm(forms.Form):
         for category in categories or []:
             self.fields[f"category_{category.pk}"] = forms.CharField(
                 required=False,
-                widget=forms.Textarea(attrs={"rows": 3}),
-                label=category.name,
+                widget=forms.Textarea(attrs={"rows": 3, "class": "textarea"}),
+                label=f"{category.name} Feedback",
             )
 
     def clean(self):
