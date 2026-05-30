@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
@@ -14,6 +16,7 @@ from complete_business_analysis_tool.reports.models import (
 )
 from complete_business_analysis_tool.reports.queries import (
     latest_category_recommendations,
+    latest_category_scores,
     latest_category_sections,
     latest_executive_summary,
     latest_recommendations_overview,
@@ -60,6 +63,7 @@ class ReportView(LoginRequiredMixin, DetailView):
         context["recommendations_overview"] = latest_recommendations_overview(assessment)
         context["roadmap"] = latest_roadmap(assessment)
         context["roadmap_overview"] = _ROADMAP_OVERVIEW
+        context["chart_data"] = _build_chart_data(assessment)
         context["feedback_form"] = form
         category_field_map = {cat.pk: form[f"category_{cat.pk}"] for cat in categories}
         for section in context["category_sections"]:
@@ -93,6 +97,7 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         context["recommendations_overview"] = latest_recommendations_overview(
             self.assessment,
         )
+        context["chart_data"] = _build_chart_data(self.assessment)
         context["feedback_form"] = form
         category_field_map = {
             cat.pk: form[f"category_{cat.pk}"] for cat in self.categories
@@ -128,6 +133,26 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         analysis.save()
         run_analysis.delay(str(analysis.pk))
         return super().form_valid(form)
+
+
+def _build_chart_data(assessment) -> str | None:
+    scores = latest_category_scores(assessment)
+    if not scores:
+        return None
+    data = sorted(
+        [
+            {
+                "category": s.category.name,
+                "pct": round(float(s.score / s.max_possible_score * 100), 1)
+                if s.max_possible_score
+                else 0.0,
+            }
+            for s in scores
+        ],
+        key=lambda x: x["pct"],
+        reverse=True,
+    )
+    return json.dumps(data)
 
 
 def _merge_sections_and_recs(sections, recs):

@@ -1,5 +1,6 @@
 from django.db.models import Subquery
 
+from complete_business_analysis_tool.analysis.models import CategoryScore
 from complete_business_analysis_tool.reports.models import (
     CategoryRecommendations,
     CategorySection,
@@ -39,6 +40,25 @@ def latest_category_recommendations(assessment) -> list[CategoryRecommendations]
                 CategoryRecommendations.objects.filter(
                     analysis__assessment=assessment,
                 )
+                .order_by("category_id", "-analysis__created_at")
+                .distinct("category_id")
+                .values("pk"),
+            ),
+        )
+        .select_related("category")
+        .order_by("category__name"),
+    )
+
+
+def latest_category_scores(assessment) -> list[CategoryScore]:
+    """
+    Return the latest CategoryScore per category across all Analysis runs,
+    ordered by category name.
+    """
+    return list(
+        CategoryScore.objects.filter(
+            pk__in=Subquery(
+                CategoryScore.objects.filter(analysis__assessment=assessment)
                 .order_by("category_id", "-analysis__created_at")
                 .distinct("category_id")
                 .values("pk"),

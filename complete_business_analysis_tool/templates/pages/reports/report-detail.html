@@ -30,6 +30,18 @@
           </div>
         </div>
       </div>
+      {% if chart_data %}
+        <div class="box mb-5">
+          <div class="columns is-vcentered">
+            <div class="column">
+              <div id="chart-bar"></div>
+            </div>
+            <div class="column">
+              <div id="chart-radar"></div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
       {% if executive_summary or category_sections %}
         <form method="post"
               action="{% url 'reports:submit_feedback' assessment.pk %}">
@@ -121,33 +133,43 @@
               {% for month in roadmap.months %}
                 <div class="mt-5">
                   <h3 class="title is-5 has-text-primary">Month {{ forloop.counter }}</h3>
-                  <h4 class="title is-6">Goals</h4>
-                  <ul>
-                    {% for item in month.goals %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                  </ul>
-                  <h4 class="title is-6">Action Items</h4>
-                  <ul>
-                    {% for item in month.action_items %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                  </ul>
-                  <h4 class="title is-6">Challenges</h4>
-                  <ul>
-                    {% for item in month.challenges %}<li class="mb-1">{{ item }}</li>{% endfor %}
-                  </ul>
+                  <div class="content">
+                    <h4 class="title is-6 mb-2">Goals</h4>
+                    <ul>
+                      {% for item in month.goals %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                    </ul>
+                  </div>
+                  <div class="content">
+                    <h4 class="title is-6 mb-2">Action Items</h4>
+                    <ul>
+                      {% for item in month.action_items %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                    </ul>
+                  </div>
+                  <div class="content">
+                    <h4 class="title is-6 mb-2">Challenges</h4>
+                    <ul>
+                      {% for item in month.challenges %}<li class="mb-1">{{ item }}</li>{% endfor %}
+                    </ul>
+                  </div>
                 </div>
               {% endfor %}
-              <h3 class="title is-5 mt-5">Potential Challenges</h3>
-              {{ roadmap.potential_challenges|linebreaks }}
-              <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
-              {{ roadmap.post_implementation_outcomes|linebreaks }}
-              <h3 class="title is-5 mt-5">Closing Reflections</h3>
-              {{ roadmap.closing_reflections|linebreaks }}
+              <div class="content">
+                <h3 class="title is-5 mt-5">Potential Challenges</h3>
+                {{ roadmap.potential_challenges|linebreaks }}
+              </div>
+              <div class="content">
+                <h3 class="title is-5 mt-5">Post-Implementation Outcomes</h3>
+                {{ roadmap.post_implementation_outcomes|linebreaks }}
+              </div>
+              <div class="content">
+                <h3 class="title is-5 mt-5">Closing Reflections</h3>
+                {{ roadmap.closing_reflections|linebreaks }}
+              </div>
             </div>
           {% endif %}
-          <div class="box mt-6">
-            <div class="field">
-              <div class="control">
-                <button type="submit" class="button is-primary">Submit Feedback &amp; Reanalyse</button>
-              </div>
+          <div class="field mt-6">
+            <div class="control">
+              <button type="submit" class="button is-primary">Submit Feedback &amp; Reanalyse</button>
             </div>
           </div>
         </form>
@@ -157,3 +179,45 @@
     </div>
   </section>
 {% endblock content %}
+{% if chart_data %}
+  {% block inline_javascript %}
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+      (function () {
+        const data = {{ chart_data|safe }};
+        const labels = data.map(function (d) { return d.category; });
+        const values = data.map(function (d) { return d.pct; });
+        const primary = '#8a4d76';
+
+        new ApexCharts(document.getElementById('chart-bar'), {
+          chart: { type: 'bar', height: 320, toolbar: { show: false } },
+          series: [{ name: 'Score', data: values }],
+          xaxis: { categories: labels },
+          yaxis: {
+            min: 0,
+            max: 100,
+            labels: { formatter: function (v) { return v + '%'; } },
+          },
+          colors: [primary],
+          title: { text: 'Category Scores', align: 'center' },
+          plotOptions: { bar: { borderRadius: 4 } },
+          dataLabels: { enabled: false },
+          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
+        }).render();
+
+        new ApexCharts(document.getElementById('chart-radar'), {
+          chart: { type: 'radar', height: 450, toolbar: { show: false } },
+          series: [{ name: 'Score', data: values }],
+          xaxis: { categories: labels },
+          yaxis: { show: false, max: 100 },
+          fill: { opacity: 0.3 },
+          colors: [primary],
+          stroke: { width: 2 },
+          markers: { size: 4 },
+          title: { text: 'Holistic Business Visualization', align: 'center' },
+          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
+        }).render();
+      }());
+    </script>
+  {% endblock inline_javascript %}
+{% endif %}
