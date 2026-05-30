@@ -14,7 +14,13 @@ from complete_business_analysis_tool.assessments.models import (
     AssessmentTemplate,
     TemplateQuestion,
 )
-from complete_business_analysis_tool.clients.models import Client, IndustryType
+from complete_business_analysis_tool.clients.models import (
+    Client,
+    CompanySize,
+    CorporateStyle,
+    IndustryType,
+    RevenueRange,
+)
 
 
 def _pick_rank(rating: int, available_ranks: list[int]) -> int:
@@ -71,6 +77,9 @@ class Command(BaseCommand):
         last_name = _prompt("Last name")
         title = _prompt("Title / role")
         industry = _prompt_choice("Industry", IndustryType.choices)
+        company_size = _prompt_choice("Company Size (Employees)", CompanySize.choices)
+        revenue = _prompt_choice("Revenue", RevenueRange.choices)
+        corporate_style = _prompt_choice("Corporate Style", CorporateStyle.choices)
 
         # --- Step 2: template selection ---
         templates = list(AssessmentTemplate.objects.order_by("title"))
@@ -93,6 +102,9 @@ class Command(BaseCommand):
                 last_name=last_name,
                 title=title,
                 industry=industry,
+                company_size=company_size,
+                revenue=revenue,
+                corporate_style=corporate_style,
             )
             assessment = Assessment.objects.create(template=template, client=client)
 

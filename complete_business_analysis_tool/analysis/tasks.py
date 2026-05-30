@@ -68,6 +68,7 @@ def _build_section_text(section: CategorySection) -> str:
 def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
 
     business_name = analysis.assessment.client.business_name
+    business_profile = analysis.assessment.client.business_profile_context()
     answer_dicts = _build_answer_dicts(analysis.assessment)
     result = compute_scores(answer_dicts)
     all_category_ids = set(result.category_scores.keys())
@@ -147,6 +148,7 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
         content = generate_category_section(
             answers=answers_by_category.get(cat_id, []),
             business_name=business_name,
+            business_profile=business_profile,
             feedback_text=combined_feedback,
             prior_overview=prior_section.overview if prior_section else None,
             prior_impact=prior_section.impact if prior_section else None,
@@ -198,6 +200,7 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
             score=category_score,
             max_score=category_max_score,
             business_name=business_name,
+            business_profile=business_profile,
             prior_recommendations=prior_recs.recommendations if prior_recs else None,
             feedback_text=combined_feedback,
         )

@@ -1,5 +1,7 @@
-<div class="field{% if column != 0 %} column{% if column %} is-{{ column }}{% endif %}{% endif %}{% if hidden %} is-hidden{% endif %}"
-     {% if field_id %}id="{{ field_id }}"{% endif %}>
+{% if column != 0 %}
+  <div class="column{% if column %} is-{{ column }}{% endif %}{% if hidden %} is-hidden{% endif %}">
+{% endif %}
+<div class="field"{% if field_id %} id="{{ field_id }}"{% endif %}>
   {% block label %}
     <label class="label{% if field.field.required %} required{% endif %}"
            for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -33,3 +35,6 @@
   {% block extra %}
   {% endblock extra %}
 </div>
+{% if column != 0 %}
+  </div>
+{% endif %}

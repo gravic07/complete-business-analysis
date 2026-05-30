@@ -20,6 +20,7 @@ def generate_category_recommendations(  # noqa: PLR0913
     score: Decimal,
     max_score: Decimal,
     business_name: str,
+    business_profile: str | None = None,
     prior_recommendations: list[str] | None = None,
     feedback_text: str | None = None,
     llm_client: Callable[[str], list] | None = None,
@@ -32,6 +33,7 @@ def generate_category_recommendations(  # noqa: PLR0913
         score,
         max_score,
         business_name,
+        business_profile,
         prior_recommendations,
         feedback_text,
     )
@@ -85,6 +87,7 @@ def generate_executive_summary(  # noqa: PLR0913
 def generate_category_section(  # noqa: PLR0913
     answers: list[dict],
     business_name: str,
+    business_profile: str | None = None,
     prior_overview: str | None = None,
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
@@ -96,6 +99,7 @@ def generate_category_section(  # noqa: PLR0913
     prompt = _build_category_prompt(
         answers,
         business_name,
+        business_profile,
         prior_overview,
         prior_impact,
         prior_path_forward,
@@ -107,6 +111,7 @@ def generate_category_section(  # noqa: PLR0913
 def _build_category_prompt(  # noqa: PLR0913
     answers: list[dict],
     business_name: str,
+    business_profile: str | None = None,
     prior_overview: str | None = None,
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
@@ -116,9 +121,15 @@ def _build_category_prompt(  # noqa: PLR0913
         "You are a business advisor writing a section of a business analysis report.",
         f"Write in third person, referring to the business as {business_name}."
         f" Use {business_name} instead of 'you' or 'your'.",
-        "",
-        "Assessment answers:",
     ]
+    if business_profile:
+        lines.append(f"Business Profile: {business_profile}.")
+    lines.extend(
+        [
+            "",
+            "Assessment answers:",
+        ],
+    )
     for answer in answers:
         question = answer["question_snapshot"]
         option = answer["option_snapshot"]
@@ -301,6 +312,7 @@ def _build_category_recommendations_prompt(  # noqa: PLR0913
     score: Decimal,
     max_score: Decimal,
     business_name: str,
+    business_profile: str | None = None,
     prior_recommendations: list[str] | None = None,
     feedback_text: str | None = None,
 ) -> str:
@@ -326,16 +338,22 @@ def _build_category_recommendations_prompt(  # noqa: PLR0913
         " business analysis report.",
         f"Write in third person, referring to the business as {business_name}."
         f" Use {business_name} instead of 'you' or 'your'.",
-        "",
-        "Internal context — category performance signal (do not cite raw numeric"
-        " scores in your output):",
-        f"  {weight_guidance}",
-        "",
-        "Analysis section for this category:",
-        section_text,
-        "",
-        "Assessment answers for this category:",
     ]
+    if business_profile:
+        lines.append(f"Business Profile: {business_profile}.")
+    lines.extend(
+        [
+            "",
+            "Internal context — category performance signal (do not cite raw numeric"
+            " scores in your output):",
+            f"  {weight_guidance}",
+            "",
+            "Analysis section for this category:",
+            section_text,
+            "",
+            "Assessment answers for this category:",
+        ],
+    )
     for answer in answers:
         question = answer["question_snapshot"]
         option = answer["option_snapshot"]

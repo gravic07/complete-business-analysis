@@ -1,7 +1,16 @@
-{% include 'snippets/input-text.html' with field=form.business_name icon="fa-buildings" column=0 %}
+<h3 class="title is-4">Company Details</h3>
+<div class="columns">{% include 'snippets/input-text.html' with field=form.business_name icon="fa-buildings" %}</div>
+<div class="columns">
+  {% include 'snippets/input-select.html' with field=form.company_size icon="fa-users" fullwidth=1 %}
+  {% include 'snippets/input-select.html' with field=form.revenue icon="fa-circle-dollar" fullwidth=1 %}
+  {% include 'snippets/input-select.html' with field=form.corporate_style icon="fa-building-columns" fullwidth=1 %}
+</div>
+<div class="columns">
+  {% include 'snippets/input-select.html' with field=form.industry icon="fa-industry-windows" fullwidth=1 column=4 %}
+</div>
+<h3 class="title is-4">Principal Details</h3>
 <div class="columns">
   {% include 'snippets/input-text.html' with field=form.first_name icon="fa-user-hair" %}
   {% include 'snippets/input-text.html' with field=form.last_name icon="fa-user-hair" %}
 </div>
-{% include 'snippets/input-text.html' with field=form.title icon="fa-id-card-clip" column=0 %}
-{% include 'snippets/input-select.html' with field=form.industry icon="fa-industry-windows" column=0 %}
+<div class="columns">{% include 'snippets/input-text.html' with field=form.title icon="fa-id-card-clip" %}</div>

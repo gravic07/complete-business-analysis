@@ -67,6 +67,15 @@ Structured as five sections:
 - **Post-Implementation Outcomes** — 3–4 paragraphs describing the business after recommendations are applied, with specific reference to each addressed weakness. Stored as a plain string with `\n\n`-separated paragraphs.
 - **Closing Reflections** — 4–6 paragraphs encouraging ongoing progress, monthly tracking meetings, and continued iteration even when not all roadmap items are completed. Stored as a plain string with `\n\n`-separated paragraphs.
 
+### Business Profile
+Three required fields on a Client that describe the organizational shape of the business — distinct from contact info (`first_name`, `last_name`, `title`) and classification (`industry`):
+
+- **Company Size** — headcount band: 1–4, 5–19, 20–49, 50–100, 101+
+- **Revenue** — annual revenue band: $1M or less, $1M–$2.5M, $2.5M–$10M, $10M–$50M, $50M+
+- **Corporate Style** — ownership and governance structure: Family-Owned, Sole Proprietorship, Board-governed / Corporate, Partnership
+
+Business Profile fields are injected as qualitative context into category-level generation calls (CategorySection and CategoryRecommendations) only. The ExecutiveSummary and RecommendationsOverview inherit this context implicitly, because they are generated from the outputs of those leaf-level calls — not from raw Client data directly.
+
 ### Analysis Status
 An Analysis moves through states: `pending → processing → complete` or `pending → processing → failed`. Status is stored on the Analysis record. Processing is handled asynchronously via Celery so the UI can show a processing state without blocking.
 
@@ -97,6 +106,11 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 
 ## Model Layout
 
+### `clients` app
+| Model | Key Fields |
+|---|---|
+| `Client` | `business_name`, `first_name`, `last_name`, `title`, `industry` (choice), `company_size` (choice), `revenue` (choice), `corporate_style` (choice) |
+
 ### `analysis` app
 | Model | Key Fields |
 |---|---|
@@ -126,3 +140,4 @@ The ExecutiveSummary regenerates whenever any CategorySection changes — not on
 - The ExecutiveSummary prompt receives scores as silent context; the model is instructed not to cite raw numbers in output.
 - All generated content is written in third person, referring to the business by name ("Acme Corp is currently...", "Acme Corp's approach...") — never in second person ("your business", "you are currently..."). The business name is passed to every generation call from `Client.business_name`.
 - CategoryRecommendations prompts use a start/stop/continue lens as a soft generative guide — not a structural label. The model is instructed to consider what the business should start doing, stop doing, and continue doing, with the balance weighted by category performance. High-scoring categories emphasise continuation; low-scoring categories emphasise change. Every set of 7 must include all three types of guidance.
+- Business Profile (company size, revenue, corporate style) is injected as qualitative context into CategorySection and CategoryRecommendations prompts only — the leaf-level generation calls. The ExecutiveSummary and RecommendationsOverview inherit this context implicitly through the content they synthesize.
