@@ -50,7 +50,7 @@ def generate_recommendations_overview(  # noqa: PLR0913
     llm_client: Callable[[str], str] | None = None,
 ) -> str:
     if llm_client is None:
-        llm_client = _default_llm_client()
+        llm_client = _default_recommendations_overview_client()
     prompt = _build_recommendations_overview_prompt(
         category_recommendations,
         category_scores,
@@ -72,7 +72,7 @@ def generate_executive_summary(  # noqa: PLR0913
     llm_client: Callable[[str], str] | None = None,
 ) -> str:
     if llm_client is None:
-        llm_client = _default_llm_client()
+        llm_client = _default_executive_summary_client()
     prompt = _build_overall_prompt(
         category_sections,
         category_scores,
@@ -419,8 +419,23 @@ def _default_category_recommendations_client() -> Callable[[str], list]:
     return call
 
 
-def _default_llm_client() -> Callable[[str], str]:
+_EXECUTIVE_SUMMARY_TOOL: dict = {
+    "name": "record_executive_summary",
+    "description": "Record the executive summary content.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "content": {
+                "type": "string",
+                "description": "The executive summary, 4-5 paragraphs, no heading.",
+            },
+        },
+        "required": ["content"],
+    },
+}
 
+
+def _default_executive_summary_client() -> Callable[[str], str]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> str:
@@ -428,8 +443,42 @@ def _default_llm_client() -> Callable[[str], str]:
             model="claude-sonnet-4-6",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
+            tools=[_EXECUTIVE_SUMMARY_TOOL],
+            tool_choice={"type": "tool", "name": "record_executive_summary"},
         )
-        return message.content[0].text
+        return message.content[0].input["content"]
+
+    return call
+
+
+_RECOMMENDATIONS_OVERVIEW_TOOL: dict = {
+    "name": "record_recommendations_overview",
+    "description": "Record the recommendations overview content.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "content": {
+                "type": "string",
+                "description": "The recommendations overview, no heading.",
+            },
+        },
+        "required": ["content"],
+    },
+}
+
+
+def _default_recommendations_overview_client() -> Callable[[str], str]:
+    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+
+    def call(prompt: str) -> str:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+            tools=[_RECOMMENDATIONS_OVERVIEW_TOOL],
+            tool_choice={"type": "tool", "name": "record_recommendations_overview"},
+        )
+        return message.content[0].input["content"]
 
     return call
 

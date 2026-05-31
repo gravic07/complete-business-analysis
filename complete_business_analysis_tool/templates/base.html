@@ -15,7 +15,13 @@
     <meta name="description"
           content="Complete Business Analysis Tool for understanding strength and weakness of business and creating a plan for success." />
     <meta name="author" content="Grant Vickers" />
-    <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+
+    <link rel="icon" type="image/png" href="{% static 'images/favicons/favicon-96x96.png' %}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicons/favicon.svg' %}" />
+    <link rel="shortcut icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicons/apple-touch-icon.png' %}" />
+    <meta name="apple-mobile-web-app-title" content="CBA" />
+    <link rel="manifest" href="{% static 'images/favicons/site.webmanifest' %}" />
     {% block css %}
       <link href="{% static 'css/project.min.css' %}" rel="stylesheet" />
     {% endblock css %}

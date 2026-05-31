@@ -187,7 +187,7 @@
         const data = {{ chart_data|safe }};
         const labels = data.map(function (d) { return d.category; });
         const values = data.map(function (d) { return d.pct; });
-        const primary = '#8a4d76';
+        const primary = '#00294f';
 
         new ApexCharts(document.getElementById('chart-bar'), {
           chart: { type: 'bar', height: 320, toolbar: { show: false } },

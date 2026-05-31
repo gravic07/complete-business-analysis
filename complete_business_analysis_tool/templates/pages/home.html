@@ -1,3 +1,55 @@
 {% extends "base.html" %}
 
-
+{% block title %}
+  Dashboard
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="mb-6">
+        <h1 class="title">Consultative Business Assessment</h1>
+        <p class="subtitle has-text-grey">Overview of your clients, assessments, and analyses.</p>
+      </div>
+      <div class="columns">
+        <div class="column">
+          <div class="box has-text-centered">
+            <p class="heading">Clients</p>
+            <p class="title is-2">{{ client_count }}</p>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box has-text-centered">
+            <p class="heading">Assessment Templates</p>
+            <p class="title is-2">{{ template_count }}</p>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box has-text-centered">
+            <p class="heading">Assessments</p>
+            <p class="title is-2">{{ assessment_count }}</p>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box has-text-centered">
+            <p class="heading">Analyses</p>
+            <p class="title is-2">{{ analysis_count }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="buttons mt-4">
+        <a href="{% url 'clients:list' %}" class="button is-primary">
+          <span class="icon">
+            <i class="fa-duotone fa-regular fa-users"></i>
+          </span>
+          <span>Clients</span>
+        </a>
+        <a href="{% url 'assessments:list' %}" class="button is-light">
+          <span class="icon">
+            <i class="fa-duotone fa-regular fa-clipboard-list"></i>
+          </span>
+          <span>Assessments</span>
+        </a>
+      </div>
+    </div>
+  </section>
+{% endblock content %}
