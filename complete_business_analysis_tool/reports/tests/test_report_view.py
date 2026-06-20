@@ -196,17 +196,16 @@ def test_report_view_shows_latest_section_per_category(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_report_view_context_has_category_recommendations(monkeypatch):
+def test_report_view_category_sections_include_recommendations(monkeypatch):
     assessment, _ = _make_assessment_with_category()
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = _authed_client().get(url)
 
-    assert "category_recommendations" in response.context
-    recs = response.context["category_recommendations"]
-    assert len(recs) == 1
-    assert recs[0].recommendations == ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
+    sections = response.context["category_sections"]
+    assert len(sections) == 1
+    assert sections[0]["recommendations"] == ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
 
 
 @pytest.mark.django_db
