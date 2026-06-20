@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # PDF template and view
 
@@ -31,18 +31,18 @@ The template is verifiable by visiting the URL directly in a browser with a logg
 
 ## Acceptance criteria
 
-- [ ] URL `reports/<uuid>/pdf/` renders the full PDF template without error for an Assessment with a complete Analysis
-- [ ] Cover page displays logo, cover image, client name, Assessment name, and formatted date
-- [ ] Table of Contents lists all sections with the correct page numbers from the ToC calculator
-- [ ] Score Overview displays the total CBA score and per-category scores
-- [ ] `categories-pie-chart.png` appears on the Score Overview page
-- [ ] ApexCharts bar and radar charts render on the Visualizations page
-- [ ] All category Analysis sections appear (Executive Summary first, then one per category)
-- [ ] All category Recommendations sections appear (Overview first, then one per category)
-- [ ] All 12 Roadmap months appear, each with Goals, Action Items, and Challenges
-- [ ] Potential Challenges, Post-Implementation Outcomes, and Closing Reflections appear
-- [ ] No navigation, feedback form, or non-PDF chrome appears in the template
-- [ ] CSS page breaks are present between sections
+- [x] URL `reports/<uuid>/pdf/` renders the full PDF template without error for an Assessment with a complete Analysis
+- [x] Cover page displays logo, cover image, client name, Assessment name, and formatted date
+- [x] Table of Contents lists all sections with the correct page numbers from the ToC calculator
+- [x] Score Overview displays the total CBA score and per-category scores
+- [x] `categories-pie-chart.png` appears on the Score Overview page
+- [x] ApexCharts bar and radar charts render on the Visualizations page
+- [x] All category Analysis sections appear (Executive Summary first, then one per category)
+- [x] All category Recommendations sections appear (Overview first, then one per category)
+- [x] All 12 Roadmap months appear, each with Goals, Action Items, and Challenges
+- [x] Potential Challenges, Post-Implementation Outcomes, and Closing Reflections appear
+- [x] No navigation, feedback form, or non-PDF chrome appears in the template
+- [x] CSS page breaks are present between sections
 
 ## Blocked by
 

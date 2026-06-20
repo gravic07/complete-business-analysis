@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -21,6 +22,9 @@ from complete_business_analysis_tool.reports.queries import (
     latest_executive_summary,
     latest_recommendations_overview,
     latest_roadmap,
+)
+from complete_business_analysis_tool.reports.utils.toc_calculator import (
+    calculate_toc_page_numbers,
 )
 
 _ROADMAP_OVERVIEW = (
@@ -133,6 +137,42 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         analysis.save()
         run_analysis.delay(str(analysis.pk))
         return super().form_valid(form)
+
+
+class PDFTemplateView(DetailView):
+    model = Assessment
+    template_name = "pages/reports/report-pdf.html"
+    context_object_name = "assessment"
+
+    def dispatch(self, request, *args, **kwargs):
+        if (
+            request.META.get("REMOTE_ADDR") == "127.0.0.1"
+            or request.user.is_authenticated
+        ):
+            return super().dispatch(request, *args, **kwargs)
+
+        return redirect_to_login(request.get_full_path())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        assessment = self.object
+        sections = latest_category_sections(assessment)
+        category_names = [s.category.name for s in sections]
+        context["executive_summary"] = latest_executive_summary(assessment)
+        context["category_sections"] = _merge_sections_and_recs(
+            sections,
+            latest_category_recommendations(assessment),
+        )
+        context["recommendations_overview"] = latest_recommendations_overview(assessment)
+        context["roadmap"] = latest_roadmap(assessment)
+        context["roadmap_overview"] = _ROADMAP_OVERVIEW
+        context["chart_data"] = _build_chart_data(assessment)
+        context["category_scores"] = latest_category_scores(assessment)
+        context["toc_page_numbers"] = calculate_toc_page_numbers(
+            category_names,
+            assessment.name,
+        )
+        return context
 
 
 def _build_chart_data(assessment) -> str | None:
