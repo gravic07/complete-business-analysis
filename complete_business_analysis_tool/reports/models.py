@@ -82,6 +82,26 @@ class Roadmap(BaseModel):
     closing_reflections = models.TextField()
 
 
+class PDFExport(BaseModel):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        COMPLETE = "complete", "Complete"
+        FAILED = "failed", "Failed"
+
+    assessment = models.ForeignKey(
+        "assessments.Assessment",
+        on_delete=models.CASCADE,
+        related_name="pdf_exports",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    file = models.FileField(upload_to="pdf_exports/", null=True, blank=True)
+
+
 class CategoryRecommendations(BaseModel):
     analysis = models.ForeignKey(
         "analysis.Analysis",

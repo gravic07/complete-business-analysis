@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Schema foundation: Assessment.name and PDFExport model
 
@@ -20,12 +20,12 @@ Include migrations for both changes.
 
 ## Acceptance criteria
 
-- [ ] `Assessment.name` field exists with default `"Initial Report"` and max_length 100
-- [ ] `PDFExport` model exists in the `reports` app with `assessment` FK, `status` choices, and nullable `file` FileField
-- [ ] Both changes have migrations that apply cleanly
-- [ ] Unit test asserts `Assessment.name` defaults to `"Initial Report"` on a new instance
-- [ ] Unit test asserts `PDFExport.status` choices are exactly `pending`, `processing`, `complete`, `failed`
-- [ ] `PDFExport` is registered in the Django admin
+- [x] `Assessment.name` field exists with default `"Initial Report"` and max_length 100
+- [x] `PDFExport` model exists in the `reports` app with `assessment` FK, `status` choices, and nullable `file` FileField
+- [x] Both changes have migrations that apply cleanly
+- [x] Unit test asserts `Assessment.name` defaults to `"Initial Report"` on a new instance
+- [x] Unit test asserts `PDFExport.status` choices are exactly `pending`, `processing`, `complete`, `failed`
+- [x] `PDFExport` is registered in the Django admin
 
 ## Blocked by
 

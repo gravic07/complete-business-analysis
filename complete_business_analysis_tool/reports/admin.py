@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import CategoryFeedback, CategorySection, ExecutiveSummary, Feedback, Roadmap
+from .models import (
+    CategoryFeedback,
+    CategorySection,
+    ExecutiveSummary,
+    Feedback,
+    PDFExport,
+    Roadmap,
+)
 
 
 class CategorySectionInline(admin.TabularInline):
@@ -72,6 +79,16 @@ class CategoryFeedbackInline(admin.TabularInline):
     readonly_fields = ("category", "text")
     extra = 0
     can_delete = False
+
+
+@admin.register(PDFExport)
+class PDFExportAdmin(admin.ModelAdmin):
+    list_display = ("assessment", "status", "created_at")
+    list_filter = ("status",)
+    readonly_fields = ("assessment", "status", "file", "created_at", "updated_at")
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(Feedback)

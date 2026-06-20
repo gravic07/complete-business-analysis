@@ -91,6 +91,7 @@ class TemplateQuestion(BaseModel):
 class Assessment(BaseModel):
     """A completed or in-progress instance of an assessment template."""
 
+    name = models.CharField(max_length=100, default="Initial Report")
     template = models.ForeignKey(
         "AssessmentTemplate",
         on_delete=models.PROTECT,

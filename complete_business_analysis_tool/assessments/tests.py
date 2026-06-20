@@ -8,6 +8,12 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 @pytest.mark.django_db
+def test_assessment_name_defaults_to_initial_report():
+    assessment = AssessmentFactory()
+    assert assessment.name == "Initial Report"
+
+
+@pytest.mark.django_db
 def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
     assessment = AssessmentFactory()
     analysis1 = Analysis.objects.create(
