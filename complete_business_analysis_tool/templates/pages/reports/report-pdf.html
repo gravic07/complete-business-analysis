@@ -1,223 +1,223 @@
 {% load static %}<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>{{ assessment.name }} — {{ assessment.client.business_name }}</title>
-<style>
-  @page { size: letter; margin: 1in 0.75in 1in 0.75in; }
-  @page :first { margin: 0; }
-  body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
-  .page-break { page-break-before: always; }
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ assessment.name }} — {{ assessment.client.business_name }}</title>
+    <style>
+      @page { size: letter; margin: 1in 0.75in 1in 0.75in; }
+      @page :first { margin: 0; }
+      body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
+      .page-break { page-break-before: always; }
 
-  /* Cover */
-  .cover {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background-image: url("{% static 'images/cover-bg-img.jpg' %}");
-    background-size: cover;
-    background-position: center;
-    color: #fff;
-  }
-  .cover-logo { width: 200px; margin-bottom: 2rem; }
-  .cover-title { font-size: 32pt; font-weight: bold; margin-bottom: 1rem; }
-  .cover-client { font-size: 20pt; margin-bottom: 0.5rem; }
-  .cover-assessment { font-size: 14pt; margin-bottom: 0.5rem; }
-  .cover-date { font-size: 11pt; opacity: 0.85; }
-  .cover-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 0;
-  }
-  .cover-content { position: relative; z-index: 1; padding: 2rem; }
+      /* Cover */
+      .cover {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-image: url("{% static 'images/cover-bg-img.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        color: #fff;
+      }
+      .cover-logo { width: 200px; margin-bottom: 2rem; }
+      .cover-title { font-size: 32pt; font-weight: bold; margin-bottom: 1rem; }
+      .cover-client { font-size: 20pt; margin-bottom: 0.5rem; }
+      .cover-assessment { font-size: 14pt; margin-bottom: 0.5rem; }
+      .cover-date { font-size: 11pt; opacity: 0.85; }
+      .cover-overlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 0;
+      }
+      .cover-content { position: relative; z-index: 1; padding: 2rem; }
 
-  /* TOC */
-  .toc-entry { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
-  .toc-dots { flex: 1; border-bottom: 1px dotted #999; margin: 0 0.5rem 4px; }
+      /* TOC */
+      .toc-entry { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+      .toc-dots { flex: 1; border-bottom: 1px dotted #999; margin: 0 0.5rem 4px; }
 
-  /* Sections */
-  h1 { font-size: 22pt; color: #1a3a5c; }
-  h2 { font-size: 16pt; color: #1a3a5c; }
-  h3 { font-size: 13pt; color: #1a3a5c; }
-  .section-label { font-size: 10pt; text-transform: uppercase; color: #555; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
-  .score-big { font-size: 48pt; font-weight: bold; color: #1a3a5c; }
-  .score-row { display: flex; justify-content: space-between; border-bottom: 1px solid #e0e0e0; padding: 0.3rem 0; }
-  ul.recs { padding-left: 1.2rem; }
-  ul.recs li { margin-bottom: 0.4rem; }
-  img.pie-chart { max-width: 400px; display: block; margin: 1rem auto; }
-</style>
-</head>
-<body>
+      /* Sections */
+      h1 { font-size: 22pt; color: #1a3a5c; }
+      h2 { font-size: 16pt; color: #1a3a5c; }
+      h3 { font-size: 13pt; color: #1a3a5c; }
+      .section-label { font-size: 10pt; text-transform: uppercase; color: #555; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+      .score-big { font-size: 48pt; font-weight: bold; color: #1a3a5c; }
+      .score-row { display: flex; justify-content: space-between; border-bottom: 1px solid #e0e0e0; padding: 0.3rem 0; }
+      ul.recs { padding-left: 1.2rem; }
+      ul.recs li { margin-bottom: 0.4rem; }
+      img.pie-chart { max-width: 400px; display: block; margin: 1rem auto; }
+    </style>
+  </head>
+  <body>
 
-{# ── 1. Cover ─────────────────────────────────────────────────────────────── #}
-<div class="cover">
-  <div class="cover-overlay"></div>
-  <div class="cover-content">
-    <img src="{% static 'images/company-logo.png' %}" alt="Peak Performance Partners" class="cover-logo" />
-    <div class="cover-title">Complete Business Report</div>
-    <div class="cover-client">{{ assessment.client.business_name }}</div>
-    <div class="cover-assessment">{{ assessment.name }}</div>
-    <div class="cover-date">Prepared: {{ assessment.created_at|date:"F j, Y" }}</div>
-  </div>
-</div>
+    {# ── 1. Cover ─────────────────────────────────────────────────────────────── #}
+    <div class="cover">
+      <div class="cover-overlay"></div>
+      <div class="cover-content">
+        <img src="{% static 'images/company-logo.png' %}" alt="Peak Performance Partners" class="cover-logo" />
+        <div class="cover-title">Complete Business Report</div>
+        <div class="cover-client">{{ assessment.client.business_name }}</div>
+        <div class="cover-assessment">{{ assessment.name }}</div>
+        <div class="cover-date">Prepared: {{ assessment.created_at|date:"F j, Y" }}</div>
+      </div>
+    </div>
 
-{# ── 2. Table of Contents ──────────────────────────────────────────────────── #}
-<div class="page-break">
-  <h1>Table of Contents</h1>
-  {% for section_name, page_num in toc_page_numbers.items %}
-    {% if not section_name|slice:":8" == "analysis" and not section_name|slice:":15" == "recommendations" %}
-      <div class="toc-entry">
-        <span>{{ section_name }}</span>
-        <span class="toc-dots"></span>
-        <span>{{ page_num }}</span>
+    {# ── 2. Table of Contents ──────────────────────────────────────────────────── #}
+    <div class="page-break">
+      <h1>Table of Contents</h1>
+      {% for section_name, page_num in toc_page_numbers.items %}
+        {% if not section_name|slice:":8" == "analysis" and not section_name|slice:":15" == "recommendations" %}
+          <div class="toc-entry">
+            <span>{{ section_name }}</span>
+            <span class="toc-dots"></span>
+            <span>{{ page_num }}</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {# ── 3. Score Overview ────────────────────────────────────────────────────── #}
+    <div class="page-break">
+      <h1>CBA Score</h1>
+      <img src="{% static 'images/categories-pie-chart.png' %}" alt="Category Scores" class="pie-chart" />
+      {% if category_scores %}
+        {% for score in category_scores %}
+          <div class="score-row">
+            <span>{{ score.category.name }}</span>
+            <span>
+              {% if score.max_possible_score %}
+                {{ score.score|floatformat:0 }} / {{ score.max_possible_score|floatformat:0 }}
+                ({% widthratio score.score score.max_possible_score 100 %}%)
+              {% else %}
+                {{ score.score }}
+              {% endif %}
+            </span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    {# ── 4. Visualizations ────────────────────────────────────────────────────── #}
+    <div class="page-break">
+      <h1>Visualizations</h1>
+      {% if chart_data %}
+        <div id="chart-bar"></div>
+        <div id="chart-radar"></div>
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script>
+          (function() {
+            var data = {{ chart_data|safe }};
+            var categories = data.map(function(d) { return d.category; });
+            var values = data.map(function(d) { return d.pct; });
+
+            new ApexCharts(document.querySelector("#chart-bar"), {
+              chart: { type: "bar", height: 300 },
+              series: [{ name: "Score (%)", data: values }],
+              xaxis: { categories: categories }
+            }).render();
+
+            new ApexCharts(document.querySelector("#chart-radar"), {
+              chart: { type: "radar", height: 300 },
+              series: [{ name: "Score (%)", data: values }],
+              xaxis: { categories: categories }
+            }).render();
+          })();
+        </script>
+      {% endif %}
+    </div>
+
+    {# ── 5. Analysis: Executive Summary ──────────────────────────────────────── #}
+    {% if executive_summary %}
+      <div class="page-break">
+        <h1>Analysis for {{ assessment.name }}</h1>
+        <h2>Executive Summary</h2>
+        <div class="content">{{ executive_summary.content|linebreaksbr }}</div>
       </div>
     {% endif %}
-  {% endfor %}
-</div>
 
-{# ── 3. Score Overview ────────────────────────────────────────────────────── #}
-<div class="page-break">
-  <h1>CBA Score</h1>
-  <img src="{% static 'images/categories-pie-chart.png' %}" alt="Category Scores" class="pie-chart" />
-  {% if category_scores %}
-    {% for score in category_scores %}
-      <div class="score-row">
-        <span>{{ score.category.name }}</span>
-        <span>
-          {% if score.max_possible_score %}
-            {{ score.score|floatformat:0 }} / {{ score.max_possible_score|floatformat:0 }}
-            ({% widthratio score.score score.max_possible_score 100 %}%)
-          {% else %}
-            {{ score.score }}
-          {% endif %}
-        </span>
+    {# ── 6. Analysis: per category ────────────────────────────────────────────── #}
+    {% for section in category_sections %}
+      <div class="page-break">
+        <h2>{{ section.category.name }}</h2>
+        <h3>Overview</h3>
+        <p>{{ section.overview }}</p>
+        <h3>Impact</h3>
+        <p>{{ section.impact }}</p>
+        <h3>Path Forward</h3>
+        <p>{{ section.path_forward }}</p>
       </div>
     {% endfor %}
-  {% endif %}
-</div>
 
-{# ── 4. Visualizations ────────────────────────────────────────────────────── #}
-<div class="page-break">
-  <h1>Visualizations</h1>
-  {% if chart_data %}
-    <div id="chart-bar"></div>
-    <div id="chart-radar"></div>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script>
-      (function() {
-        var data = {{ chart_data|safe }};
-        var categories = data.map(function(d) { return d.category; });
-        var values = data.map(function(d) { return d.pct; });
+    {# ── 7. Recommendations: Overview ─────────────────────────────────────────── #}
+    {% if recommendations_overview %}
+      <div class="page-break">
+        <h1>Recommendations</h1>
+        <div class="content">{{ recommendations_overview.content|linebreaksbr }}</div>
+      </div>
+    {% endif %}
 
-        new ApexCharts(document.querySelector("#chart-bar"), {
-          chart: { type: "bar", height: 300 },
-          series: [{ name: "Score (%)", data: values }],
-          xaxis: { categories: categories }
-        }).render();
+    {# ── 8. Recommendations: per category ────────────────────────────────────── #}
+    {% for section in category_sections %}
+      {% if section.recommendations %}
+        <div class="page-break">
+          <h2>{{ section.category.name }}</h2>
+          <ul class="recs">
+            {% for rec in section.recommendations %}
+              <li>{{ rec }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endfor %}
 
-        new ApexCharts(document.querySelector("#chart-radar"), {
-          chart: { type: "radar", height: 300 },
-          series: [{ name: "Score (%)", data: values }],
-          xaxis: { categories: categories }
-        }).render();
-      })();
-    </script>
-  {% endif %}
-</div>
+    {# ── 9. Roadmap: Overview ─────────────────────────────────────────────────── #}
+    {% if roadmap %}
+      <div class="page-break">
+        <h1>12-Month Roadmap</h1>
+        <div class="content">{{ roadmap_overview|linebreaksbr }}</div>
+      </div>
 
-{# ── 5. Analysis: Executive Summary ──────────────────────────────────────── #}
-{% if executive_summary %}
-  <div class="page-break">
-    <h1>Analysis for {{ assessment.name }}</h1>
-    <h2>Executive Summary</h2>
-    <div class="content">{{ executive_summary.content|linebreaksbr }}</div>
-  </div>
-{% endif %}
+      {# ── 10. Roadmap: Month 1–12 ────────────────────────────────────────────── #}
+      {% for month in roadmap.months %}
+        <div class="page-break">
+          <h2>Month {{ forloop.counter }}</h2>
+          <h3>Goals</h3>
+          <ul>
+            {% for goal in month.goals %}<li>{{ goal }}</li>{% endfor %}
+          </ul>
+          <h3>Action Items</h3>
+          <ul>
+            {% for item in month.action_items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+          <h3>Challenges</h3>
+          <ul>
+            {% for challenge in month.challenges %}<li>{{ challenge }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
 
-{# ── 6. Analysis: per category ────────────────────────────────────────────── #}
-{% for section in category_sections %}
-  <div class="page-break">
-    <h2>{{ section.category.name }}</h2>
-    <h3>Overview</h3>
-    <p>{{ section.overview }}</p>
-    <h3>Impact</h3>
-    <p>{{ section.impact }}</p>
-    <h3>Path Forward</h3>
-    <p>{{ section.path_forward }}</p>
-  </div>
-{% endfor %}
+      {# ── 11. Potential Challenges ──────────────────────────────────────────── #}
+      <div class="page-break">
+        <h1>Potential Challenges</h1>
+        <div class="content">{{ roadmap.potential_challenges|linebreaksbr }}</div>
+      </div>
 
-{# ── 7. Recommendations: Overview ─────────────────────────────────────────── #}
-{% if recommendations_overview %}
-  <div class="page-break">
-    <h1>Recommendations</h1>
-    <div class="content">{{ recommendations_overview.content|linebreaksbr }}</div>
-  </div>
-{% endif %}
+      {# ── 12. Post-Implementation Outcomes ──────────────────────────────────── #}
+      <div class="page-break">
+        <h1>Post-Implementation Outcomes</h1>
+        <div class="content">{{ roadmap.post_implementation_outcomes|linebreaksbr }}</div>
+      </div>
 
-{# ── 8. Recommendations: per category ────────────────────────────────────── #}
-{% for section in category_sections %}
-  {% if section.recommendations %}
-    <div class="page-break">
-      <h2>{{ section.category.name }}</h2>
-      <ul class="recs">
-        {% for rec in section.recommendations %}
-          <li>{{ rec }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
-{% endfor %}
+      {# ── 13. Closing Reflections ───────────────────────────────────────────── #}
+      <div class="page-break">
+        <h1>Closing Reflections</h1>
+        <div class="content">{{ roadmap.closing_reflections|linebreaksbr }}</div>
+      </div>
+    {% endif %}
 
-{# ── 9. Roadmap: Overview ─────────────────────────────────────────────────── #}
-{% if roadmap %}
-  <div class="page-break">
-    <h1>12-Month Roadmap</h1>
-    <div class="content">{{ roadmap_overview|linebreaksbr }}</div>
-  </div>
-
-  {# ── 10. Roadmap: Month 1–12 ────────────────────────────────────────────── #}
-  {% for month in roadmap.months %}
-    <div class="page-break">
-      <h2>Month {{ forloop.counter }}</h2>
-      <h3>Goals</h3>
-      <ul>
-        {% for goal in month.goals %}<li>{{ goal }}</li>{% endfor %}
-      </ul>
-      <h3>Action Items</h3>
-      <ul>
-        {% for item in month.action_items %}<li>{{ item }}</li>{% endfor %}
-      </ul>
-      <h3>Challenges</h3>
-      <ul>
-        {% for challenge in month.challenges %}<li>{{ challenge }}</li>{% endfor %}
-      </ul>
-    </div>
-  {% endfor %}
-
-  {# ── 11. Potential Challenges ──────────────────────────────────────────── #}
-  <div class="page-break">
-    <h1>Potential Challenges</h1>
-    <div class="content">{{ roadmap.potential_challenges|linebreaksbr }}</div>
-  </div>
-
-  {# ── 12. Post-Implementation Outcomes ──────────────────────────────────── #}
-  <div class="page-break">
-    <h1>Post-Implementation Outcomes</h1>
-    <div class="content">{{ roadmap.post_implementation_outcomes|linebreaksbr }}</div>
-  </div>
-
-  {# ── 13. Closing Reflections ───────────────────────────────────────────── #}
-  <div class="page-break">
-    <h1>Closing Reflections</h1>
-    <div class="content">{{ roadmap.closing_reflections|linebreaksbr }}</div>
-  </div>
-{% endif %}
-
-</body>
+  </body>
 </html>
