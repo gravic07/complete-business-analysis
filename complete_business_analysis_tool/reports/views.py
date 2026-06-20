@@ -1,8 +1,9 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, FormView
@@ -145,13 +146,19 @@ class PDFTemplateView(DetailView):
     context_object_name = "assessment"
 
     def dispatch(self, request, *args, **kwargs):
-        if (
-            request.META.get("REMOTE_ADDR") == "127.0.0.1"
-            or request.user.is_authenticated
-        ):
+        if request.user.is_authenticated:
             return super().dispatch(request, *args, **kwargs)
 
-        return redirect_to_login(request.get_full_path())
+        token = request.GET.get("token", "")
+        try:
+            value = TimestampSigner().unsign(token, max_age=60)
+        except BadSignature, SignatureExpired:
+            return HttpResponseForbidden()
+
+        if str(value) != str(kwargs.get("pk", "")):
+            return HttpResponseForbidden()
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

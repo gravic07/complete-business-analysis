@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: ready-for-human
 
 # PDF service module and Celery task
 
@@ -32,15 +32,15 @@ Add `playwright` (Python package) and `chromium` browser binary to project depen
 
 ## Acceptance criteria
 
-- [ ] `playwright` is in the project dependencies and `chromium` binary is installed
-- [ ] PDF template view rejects requests without a valid signed token (returns 403)
-- [ ] PDF template view accepts requests with a valid signed token
+- [x] `playwright` is in the project dependencies and `chromium` binary is installed
+- [x] PDF template view rejects requests without a valid signed token (returns 403)
+- [x] PDF template view accepts requests with a valid signed token
 - [ ] `pdf_service.generate_pdf()` returns bytes that constitute a valid PDF (starts with `%PDF`)
 - [ ] The generated PDF is US Letter size
-- [ ] A `PDFExport` that completes successfully has status `complete` and a non-null `file`
-- [ ] A `PDFExport` whose generation raises an exception has status `failed` and a null `file`
-- [ ] An already-`complete` `PDFExport` passed to the task returns early without re-generating
-- [ ] Status transition tests use Django `TestCase` and mock `pdf_service.generate_pdf`
+- [x] A `PDFExport` that completes successfully has status `complete` and a non-null `file`
+- [x] A `PDFExport` whose generation raises an exception has status `failed` and a null `file`
+- [x] An already-`complete` `PDFExport` passed to the task returns early without re-generating
+- [x] Status transition tests use Django `TestCase` and mock `pdf_service.generate_pdf`
 
 ## Blocked by
 

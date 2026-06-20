@@ -4,6 +4,7 @@ import http
 from decimal import Decimal
 
 import pytest
+from django.core.signing import TimestampSigner
 from django.test import Client
 from django.urls import reverse
 
@@ -17,6 +18,10 @@ from complete_business_analysis_tool.assessments.factories import (
     QuestionOptionFactory,
 )
 from complete_business_analysis_tool.users.tests.factories import UserFactory
+
+
+def _signed_token(assessment_pk):
+    return TimestampSigner().sign(str(assessment_pk))
 
 
 def _make_assessment_with_category(category_name="Finance"):
@@ -90,33 +95,44 @@ def test_pdf_view_returns_200_for_authenticated_user(monkeypatch):
     assert response.status_code == http.HTTPStatus.OK
 
 
-# --- Test 2: localhost bypass ---
+# --- Test 2b: signed token accepted ---
 
 
 @pytest.mark.django_db
-def test_pdf_view_allows_unauthenticated_request_from_localhost(monkeypatch):
+def test_pdf_view_allows_request_with_valid_signed_token(monkeypatch):
     assessment, _ = _make_assessment_with_category()
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    response = Client().get(url, REMOTE_ADDR="127.0.0.1")
+    token = _signed_token(assessment.pk)
+    response = Client().get(url, {"token": token}, REMOTE_ADDR="1.2.3.4")
 
     assert response.status_code == http.HTTPStatus.OK
 
 
-# --- Test 3: auth required from non-localhost ---
+# --- Test 3: auth required, no token or bad token ---
 
 
 @pytest.mark.django_db
-def test_pdf_view_redirects_unauthenticated_request_from_external_ip(monkeypatch):
+def test_pdf_view_returns_403_for_unauthenticated_request_without_token(monkeypatch):
     assessment, _ = _make_assessment_with_category()
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
     response = Client().get(url, REMOTE_ADDR="1.2.3.4")
 
-    assert response.status_code == http.HTTPStatus.FOUND
-    assert "/accounts/" in response["Location"]
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_pdf_view_returns_403_for_invalid_signed_token(monkeypatch):
+    assessment, _ = _make_assessment_with_category()
+    _make_report(assessment, monkeypatch)
+
+    url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
+    response = Client().get(url, {"token": "not-a-valid-token"}, REMOTE_ADDR="1.2.3.4")
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 # --- Test 4: toc_page_numbers in context ---
