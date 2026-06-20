@@ -1,11 +1,13 @@
 import json
+from json import dumps as json_dumps
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.views import View
 from django.views.generic import DetailView, FormView
 
 from complete_business_analysis_tool.analysis.models import Analysis
@@ -138,6 +140,28 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         analysis.save()
         run_analysis.delay(str(analysis.pk))
         return super().form_valid(form)
+
+
+class UpdateAssessmentNameView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        assessment = get_object_or_404(Assessment, pk=pk)
+        name = request.POST.get("name", "").strip()
+        if not name:
+            return render(
+                request,
+                "snippets/reports/assessment-name.html",
+                {"assessment": assessment, "error": "Report name is required."},
+                status=422,
+            )
+        assessment.name = name
+        assessment.save(update_fields=["name"])
+        response = render(
+            request,
+            "snippets/reports/assessment-name.html",
+            {"assessment": assessment},
+        )
+        response["HX-Trigger"] = json_dumps({"showToast": "Report name saved."})
+        return response
 
 
 class PDFTemplateView(DetailView):

@@ -1,0 +1,23 @@
+<div id="assessment-name-field">
+  <form hx-post="{% url 'reports:rename' assessment.pk %}"
+        hx-target="#assessment-name-field"
+        hx-swap="outerHTML">
+    {% csrf_token %}
+    <div class="field">
+      <label class="label">Report Name</label>
+      <div class="field has-addons">
+        <div class="control is-expanded">
+          <input class="input{% if error %} is-danger{% endif %}"
+                 type="text"
+                 name="name"
+                 value="{{ assessment.name }}"
+                 required />
+        </div>
+        <div class="control">
+          <button type="submit" class="button is-primary">Save</button>
+        </div>
+      </div>
+      {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}
+    </div>
+  </form>
+</div>

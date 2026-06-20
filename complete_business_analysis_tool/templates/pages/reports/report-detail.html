@@ -30,6 +30,11 @@
           </div>
         </div>
       </div>
+      <div class="columns">
+        <div class="column">
+          {% include 'snippets/reports/assessment-name.html' %}
+        </div>
+      </div>
       {% if chart_data %}
         <div class="box mb-5">
           <div class="columns is-vcentered">
@@ -179,8 +184,10 @@
     </div>
   </section>
 {% endblock content %}
-{% if chart_data %}
-  {% block inline_javascript %}
+{% block inline_javascript %}
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/bulma-toast@2.4.4/dist/bulma-toast.min.js"></script>
+  {% if chart_data %}
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
       (function () {
@@ -219,5 +226,17 @@
         }).render();
       }());
     </script>
-  {% endblock inline_javascript %}
-{% endif %}
+  {% endif %}
+  <script>
+    document.body.addEventListener("showToast", function (e) {
+      bulmaToast.toast({
+        message: e.detail && e.detail.value ? e.detail.value : "Saved.",
+        type: "is-success",
+        duration: 3000,
+        position: "top-right",
+        dismissible: true,
+        pauseOnHover: true,
+      });
+    });
+  </script>
+{% endblock inline_javascript %}
