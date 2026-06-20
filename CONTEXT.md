@@ -61,11 +61,17 @@ Exactly 7 actionable recommendations for one Category within one Analysis run. G
 A 12-month implementation plan synthesized from all CategoryRecommendations and CategorySections for one Analysis run. The final section of a Report. Belongs to one Analysis. Regenerates whenever any CategoryRecommendations changes — mirrors the RecommendationsOverview regeneration trigger. Does not accept feedback of its own; changes only through upstream category or report-level Feedback. Generated fresh each time — no prior version is passed as context.
 
 Structured as five sections:
-- **Overview** — Static 3-paragraph template explaining what the Roadmap is and how to use it. Not LLM-generated; identical across all clients.
+- **Overview** — Static 3-paragraph template explaining what the Roadmap is and how to use it. Not LLM-generated; identical across all clients. **Planned change:** will become LLM-generated and client-specific in a future update.
 - **Monthly Plans** — 12 monthly plans numbered Month 1 through Month 12 (relative, not calendar-based). Each contains exactly 5 Goals, 5 Action Items, and 5 Challenges. Months are comprehensive across all categories but may focus a specific category when that category is a prerequisite for later months.
 - **Potential Challenges** — 3–4 paragraphs describing obstacles to implementing the roadmap. Stored as a plain string with `\n\n`-separated paragraphs.
 - **Post-Implementation Outcomes** — 3–4 paragraphs describing the business after recommendations are applied, with specific reference to each addressed weakness. Stored as a plain string with `\n\n`-separated paragraphs.
 - **Closing Reflections** — 4–6 paragraphs encouraging ongoing progress, monthly tracking meetings, and continued iteration even when not all roadmap items are completed. Stored as a plain string with `\n\n`-separated paragraphs.
+
+### Assessment Name
+A short label given to an Assessment by the advisor, displayed on the PDF cover page and (uppercased) in the PDF page header. Editable on the Report page at any time. Defaults to "Initial Report". Allows advisors to distinguish between report generations for the same client (e.g. "Initial Report", "Q2 Review").
+
+### PDFExport
+An async job record tracking the generation of a PDF for one Assessment. Belongs to one Assessment. Mirrors the Analysis status pattern: `pending → processing → complete` or `pending → processing → failed`. Stores the generated PDF file when complete. One Assessment can have many PDFExport records (one per export attempt). Triggered by the advisor from the Report page; generated server-side by Playwright hitting a dedicated PDF template URL that the advisor never navigates to directly.
 
 ### Business Profile
 Three required fields on a Client that describe the organizational shape of the business — distinct from contact info (`first_name`, `last_name`, `title`) and classification (`industry`):
@@ -111,6 +117,11 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 |---|---|
 | `Client` | `business_name`, `first_name`, `last_name`, `title`, `industry` (choice), `company_size` (choice), `revenue` (choice), `corporate_style` (choice) |
 
+### `assessments` app
+| Model | Key Fields |
+|---|---|
+| `Assessment` | `template` FK, `client` FK, `name` (short label, defaults to "Initial Report", shown on PDF cover and header) |
+
 ### `analysis` app
 | Model | Key Fields |
 |---|---|
@@ -120,6 +131,7 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 ### `reports` app
 | Model | Key Fields |
 |---|---|
+| `PDFExport` | `assessment` FK, `status` (pending/processing/complete/failed), `file` FileField (nullable until complete) |
 | `CategorySection` | `analysis` FK, `category` FK, `overview` TextField, `impact` TextField, `path_forward` TextField |
 | `ExecutiveSummary` | `analysis` FK, `content` TextField |
 | `CategoryRecommendations` | `analysis` FK, `category` FK, `recommendations` JSONField (list of 7 strings) |
