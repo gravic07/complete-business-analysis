@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Download PDF button, polling, and auto-download
 
@@ -22,17 +22,17 @@ The complete end-to-end advisor-facing PDF export flow: button → trigger → C
 
 ## Acceptance criteria
 
-- [ ] "Download PDF" button appears at the top of the Report page when at least one Analysis is complete
-- [ ] "Download PDF" button is absent when no Analysis is complete
-- [ ] Clicking the button creates a `PDFExport` record and queues the Celery task
-- [ ] A progress indicator is shown while the PDF is generating
-- [ ] The PDF downloads automatically when generation completes
-- [ ] An error message is shown and the button re-enables when generation fails
-- [ ] A "Re-download last PDF" link is shown when a complete `PDFExport` already exists
-- [ ] The trigger endpoint returns 405 for non-POST requests
-- [ ] The polling endpoint returns 404 for an unknown `PDFExport` UUID
-- [ ] Django `TestCase` asserts trigger endpoint creates `PDFExport` and calls `generate_pdf_export.delay` (mocked)
-- [ ] Django `TestCase` asserts polling endpoint returns correct JSON for `complete` and `failed` statuses
+- [x] "Download PDF" button appears at the top of the Report page when at least one Analysis is complete
+- [x] "Download PDF" button is absent when no Analysis is complete
+- [x] Clicking the button creates a `PDFExport` record and queues the Celery task
+- [x] A progress indicator is shown while the PDF is generating
+- [x] The PDF downloads automatically when generation completes
+- [x] An error message is shown and the button re-enables when generation fails
+- [x] A "Re-download last PDF" link is shown when a complete `PDFExport` already exists
+- [x] The trigger endpoint returns 405 for non-POST requests
+- [x] The polling endpoint returns 404 for an unknown `PDFExport` UUID
+- [x] Django `TestCase` asserts trigger endpoint creates `PDFExport` and calls `generate_pdf_export.delay` (mocked)
+- [x] Django `TestCase` asserts polling endpoint returns correct JSON for `complete` and `failed` statuses
 
 ## Blocked by
 

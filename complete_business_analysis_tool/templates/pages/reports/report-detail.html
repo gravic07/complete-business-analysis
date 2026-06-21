@@ -24,11 +24,33 @@
       </nav>
       <div class="level">
         <div class="level-left">
-          <div>
-            <h1 class="title">Business Analysis Report</h1>
-            <p class="subtitle">{{ assessment.client.business_name }} — {{ assessment.template.title }}</p>
+          <div class="level-item">
+            <div>
+              <h1 class="title">Business Analysis Report</h1>
+              <p class="subtitle">{{ assessment.client.business_name }} — {{ assessment.template.title }}</p>
+            </div>
           </div>
         </div>
+        {% if has_complete_analysis %}
+          <div class="level-right">
+            <div class="level-item">
+              <div id="pdf-export-controls">
+                <button id="download-pdf-btn"
+                        class="button is-primary"
+                        data-export-url="{% url 'reports:export_pdf' assessment.pk %}"
+                        data-status-url-template="{% url 'reports:pdf_export_status' '00000000-0000-0000-0000-000000000000' %}">
+                  Generate PDF
+                </button>
+                <div id="pdf-export-status" class="is-hidden ml-2"></div>
+                {% if latest_complete_pdf_export and latest_complete_pdf_export.file %}
+                  <div class="has-text-centered mt-1">
+                    <a class="is-size-7" href="{{ latest_complete_pdf_export.file.url }}">Re-download last PDF</a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
       </div>
       <div class="columns">
         <div class="column">
@@ -239,4 +261,85 @@
       });
     });
   </script>
+  {% if has_complete_analysis %}
+    <script>
+      (function () {
+        var btn = document.getElementById('download-pdf-btn');
+        var statusEl = document.getElementById('pdf-export-status');
+        if (!btn) return;
+
+        var exportUrl = btn.getAttribute('data-export-url');
+        var statusUrlTemplate = btn.getAttribute('data-status-url-template');
+        var PLACEHOLDER = '00000000-0000-0000-0000-000000000000';
+        var pollTimer = null;
+
+        function setLoading(isLoading) {
+          btn.disabled = isLoading;
+          btn.classList.toggle('is-loading', isLoading);
+        }
+
+        function showStatus(msg, isError) {
+          statusEl.textContent = msg;
+          statusEl.classList.remove('is-hidden', 'has-text-danger', 'has-text-grey');
+          statusEl.classList.add(isError ? 'has-text-danger' : 'has-text-grey');
+        }
+
+        function clearStatus() {
+          statusEl.textContent = '';
+          statusEl.classList.add('is-hidden');
+        }
+
+        function triggerDownload(url) {
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = '';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+
+        function poll(statusUrl) {
+          fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data.status === 'complete') {
+                clearStatus();
+                setLoading(false);
+                triggerDownload(data.download_url);
+              } else if (data.status === 'failed') {
+                setLoading(false);
+                showStatus('PDF generation failed — please try again', true);
+              } else {
+                pollTimer = setTimeout(function () { poll(statusUrl); }, 2000);
+              }
+            })
+            .catch(function () {
+              setLoading(false);
+              showStatus('PDF generation failed — please try again', true);
+            });
+        }
+
+        btn.addEventListener('click', function () {
+          clearStatus();
+          setLoading(true);
+          showStatus('Generating PDF…', false);
+
+          var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+          var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+          if (csrfToken) headers['X-CSRFToken'] = csrfToken.value;
+
+          fetch(exportUrl, { method: 'POST', headers: headers })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              var statusUrl = statusUrlTemplate.replace(PLACEHOLDER, data.pdf_export_id);
+              pollTimer = setTimeout(function () { poll(statusUrl); }, 2000);
+            })
+            .catch(function () {
+              setLoading(false);
+              showStatus('PDF generation failed — please try again', true);
+            });
+        });
+      }());
+    </script>
+  {% endif %}
 {% endblock inline_javascript %}

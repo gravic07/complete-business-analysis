@@ -4,128 +4,251 @@
     <meta charset="UTF-8" />
     <title>{{ assessment.name }} — {{ assessment.client.business_name }}</title>
     <style>
-      @page { size: letter; margin: 1in 0.75in 1in 0.75in; }
-      @page :first { margin: 0; }
-      body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
+      /* ── Page layout ─────────────────────────────────────────────────────────── */
+      /* Margins are set by Playwright's page.pdf() call.                         */
+      @page {
+        size: letter;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; font-size: 14pt; color: #1a1a1a; }
+
       .page-break { page-break-before: always; }
 
-      /* Cover */
+      /* ── Cover ───────────────────────────────────────────────────────────────── */
       .cover {
         position: relative;
-        width: 100%;
+        z-index: 10;
+        width: 100vw;
         height: 100vh;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        page-break-after: always;
+        overflow: hidden;
+      }
+      .cover-logo-area {
+        flex: 0 0 auto;
+        padding: 1rem 2rem;
+        background: #fff;
+        display: flex;
         justify-content: center;
-        text-align: center;
+        align-items: center;
+      }
+      .cover-logo { width: 340px; }
+      .cover-image-area {
+        flex: 1;
         background-image: url("{% static 'images/cover-bg-img.jpg' %}");
         background-size: cover;
         background-position: center;
-        color: #fff;
       }
-      .cover-logo { width: 200px; margin-bottom: 2rem; }
-      .cover-title { font-size: 32pt; font-weight: bold; margin-bottom: 1rem; }
-      .cover-client { font-size: 20pt; margin-bottom: 0.5rem; }
-      .cover-assessment { font-size: 14pt; margin-bottom: 0.5rem; }
-      .cover-date { font-size: 11pt; opacity: 0.85; }
-      .cover-overlay {
-        position: absolute; inset: 0;
-        background: rgba(0,0,0,0.45);
-        z-index: 0;
+      .cover-text-area {
+        flex: 0 0 auto;
+        padding: 1.25rem 2.5rem 1.5rem;
+        background: #e8e8e8;
       }
-      .cover-content { position: relative; z-index: 1; padding: 2rem; }
+      .cover-label      { font-size: 13pt; color: #555; margin-bottom: 0.2rem; }
+      .cover-client     { font-size: 34pt; font-weight: 300; color: #1a1a1a; line-height: 1.1; margin: 0; }
+      .cover-assessment { font-size: 16pt; color: #333; margin: 0.25rem 0 0; }
+      .cover-date       { font-size: 11pt; color: #555; margin-top: 0.4rem; }
 
-      /* TOC */
-      .toc-entry { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+      /* ── Table of Contents ───────────────────────────────────────────────────── */
+      .toc-entry {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 0.35rem;
+        font-size: 18pt;
+      }
+      .toc-sub {
+        padding-left: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-size: 16pt;
+      }
+      .toc-name { white-space: nowrap; }
       .toc-dots { flex: 1; border-bottom: 1px dotted #999; margin: 0 0.5rem 4px; }
+      .toc-page { white-space: nowrap; }
 
-      /* Sections */
-      h1 { font-size: 22pt; color: #1a3a5c; }
-      h2 { font-size: 16pt; color: #1a3a5c; }
-      h3 { font-size: 13pt; color: #1a3a5c; }
-      .section-label { font-size: 10pt; text-transform: uppercase; color: #555; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
-      .score-big { font-size: 48pt; font-weight: bold; color: #1a3a5c; }
-      .score-row { display: flex; justify-content: space-between; border-bottom: 1px solid #e0e0e0; padding: 0.3rem 0; }
-      ul.recs { padding-left: 1.2rem; }
-      ul.recs li { margin-bottom: 0.4rem; }
-      img.pie-chart { max-width: 400px; display: block; margin: 1rem auto; }
+      /* ── Headings ────────────────────────────────────────────────────────────── */
+      h1 { font-size: 36pt; color: #1a3a5c; margin: 0 0 0.5rem; }
+      h2 { font-size: 28pt; color: #1a3a5c; margin: 0.75rem 0 0.4rem; }
+      h3 { font-size: 20pt; color: #1a3a5c; margin: 0.6rem 0 0.3rem; }
+
+      /* ── CBA Score page ──────────────────────────────────────────────────────── */
+      .cba-intro   { font-size: 12pt; margin-bottom: 1.5rem; line-height: 1.5; }
+      .cba-heading { text-align: center; font-size: 28pt; font-weight: normal; color: #1a3a5c; margin: 0.5rem 0 0; }
+      .cba-total   { text-align: center; font-size: 72pt; font-weight: bold; color: #1a3a5c; line-height: 1; margin: 0.1rem 0 0.5rem; }
+      .cba-explain { font-size: 12pt; margin: 0.75rem 0; line-height: 1.5; }
+      .cba-columns { display: flex; align-items: flex-start; gap: 2rem; margin-top: 1.5rem; }
+      .cba-chart-col  { flex: 0 0 55%; }
+      .cba-scores-col { flex: 1; }
+      .cba-score-item { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.7rem; }
+      .cba-score-num  { font-size: 28pt; font-weight: bold; color: #1a3a5c; min-width: 2.5rem; text-align: right; }
+      .cba-score-name { font-size: 14pt; color: #333; }
+      img.pie-chart   { width: 100%; max-width: 380px; }
+
+      /* ── Visualizations ──────────────────────────────────────────────────────── */
+      #chart-bar   { width: 100%; height: 380px; }
+      #chart-radar { width: 100%; height: 550px; margin-top: 0.25rem; }
+
+      /* ── Body sections ───────────────────────────────────────────────────────── */
+      .content { line-height: 1.6; }
+      .content p { margin: 0 0 0.75rem; }
+      ul.recs { padding-left: 1.4rem; }
+      ul.recs li { margin-bottom: 0.45rem; line-height: 1.5; }
+      .toc-list { margin-top: 1.5rem; }
+      .viz-page { padding-top: 1rem; }
+      .chart-title { text-align: center; margin-bottom: 0.5rem; }
+      .chart-title-radar { text-align: center; margin-bottom: 0.25rem; }
     </style>
   </head>
   <body>
 
     {# ── 1. Cover ─────────────────────────────────────────────────────────────── #}
     <div class="cover">
-      <div class="cover-overlay"></div>
-      <div class="cover-content">
+      <div class="cover-logo-area">
         <img src="{% static 'images/company-logo.png' %}" alt="Peak Performance Partners" class="cover-logo" />
-        <div class="cover-title">Complete Business Report</div>
+      </div>
+      <div class="cover-image-area"></div>
+      <div class="cover-text-area">
+        <div class="cover-label">Complete Business Report</div>
         <div class="cover-client">{{ assessment.client.business_name }}</div>
         <div class="cover-assessment">{{ assessment.name }}</div>
-        <div class="cover-date">Prepared: {{ assessment.created_at|date:"F j, Y" }}</div>
+        <div class="cover-date">Date Prepared: {{ assessment.created_at|date:"F j, Y" }}</div>
       </div>
     </div>
 
     {# ── 2. Table of Contents ──────────────────────────────────────────────────── #}
     <div class="page-break">
       <h1>Table of Contents</h1>
-      {% for section_name, page_num in toc_page_numbers.items %}
-        {% if not section_name|slice:":8" == "analysis" and not section_name|slice:":15" == "recommendations" %}
-          <div class="toc-entry">
-            <span>{{ section_name }}</span>
-            <span class="toc-dots"></span>
-            <span>{{ page_num }}</span>
-          </div>
-        {% endif %}
-      {% endfor %}
+      <div class="toc-list">
+        {% for section_name, page_num in toc_page_numbers.items %}
+          {% if section_name|slice:":8" == "analysis" %}
+            <div class="toc-entry toc-sub">
+              <span class="toc-name">{{ section_name|slice:"9:" }}</span>
+              <span class="toc-dots"></span>
+              <span class="toc-page">{{ page_num }}</span>
+            </div>
+          {% elif section_name|slice:":15" == "recommendations" %}
+            <div class="toc-entry toc-sub">
+              <span class="toc-name">{{ section_name|slice:"16:" }}</span>
+              <span class="toc-dots"></span>
+              <span class="toc-page">{{ page_num }}</span>
+            </div>
+          {% elif section_name == "Visualizations" or section_name|slice:":6" == "Month " or section_name == "Potential Challenges" or section_name == "Post-Implementation Outcomes" or section_name == "Closing Reflections" %}
+            <div class="toc-entry toc-sub">
+              <span class="toc-name">{{ section_name }}</span>
+              <span class="toc-dots"></span>
+              <span class="toc-page">{{ page_num }}</span>
+            </div>
+          {% else %}
+            <div class="toc-entry">
+              <span class="toc-name">{{ section_name }}</span>
+              <span class="toc-dots"></span>
+              <span class="toc-page">{{ page_num }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
 
-    {# ── 3. Score Overview ────────────────────────────────────────────────────── #}
+    {# ── 3. CBA Score ─────────────────────────────────────────────────────────── #}
     <div class="page-break">
-      <h1>CBA Score</h1>
-      <img src="{% static 'images/categories-pie-chart.png' %}" alt="Category Scores" class="pie-chart" />
+      <p class="cba-intro">
+        Based on the information you have supplied we have compiled a detailed report which
+        takes you through the key elements of your business. The overall result is summarized
+        by the Complete Business Analysis Score.
+      </p>
+      <div class="cba-heading">CBA Score</div>
+      {% if cba_total_score is not None %}
+        <div class="cba-total">{{ cba_total_score }}</div>
+      {% endif %}
+      <p class="cba-explain">
+        The Comprehensive Business Assessment Score summarizes the assessment as one number.
+        This is a general gauge, and it gives us a reference point from which to progress,
+        and an easy way to set a goal for future growth.
+      </p>
+      <p class="cba-explain">
+        Each area of your business comprises several facets of your business in itself.
+        The areas have been individually assessed below.
+      </p>
       {% if category_scores %}
-        {% for score in category_scores %}
-          <div class="score-row">
-            <span>{{ score.category.name }}</span>
-            <span>
-              {% if score.max_possible_score %}
-                {{ score.score|floatformat:0 }} / {{ score.max_possible_score|floatformat:0 }}
-                ({% widthratio score.score score.max_possible_score 100 %}%)
-              {% else %}
-                {{ score.score }}
-              {% endif %}
-            </span>
+        <div class="cba-columns">
+          <div class="cba-chart-col">
+            <img src="{% static 'images/categories-pie-chart.png' %}" alt="Category Scores" class="pie-chart" />
           </div>
-        {% endfor %}
+          <div class="cba-scores-col">
+            {% for score in category_scores %}
+              <div class="cba-score-item">
+                <span class="cba-score-num">
+                  {% if score.max_possible_score %}
+                    {% widthratio score.score score.max_possible_score 100 %}
+                  {% else %}
+                    {{ score.score|floatformat:0 }}
+                  {% endif %}
+                </span>
+                <span class="cba-score-name">{{ score.category.name }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
       {% endif %}
     </div>
 
     {# ── 4. Visualizations ────────────────────────────────────────────────────── #}
-    <div class="page-break">
-      <h1>Visualizations</h1>
+    <div class="page-break viz-page">
       {% if chart_data %}
+        <h2 class="chart-title">Category Scores</h2>
         <div id="chart-bar"></div>
+        <h2 class="chart-title-radar">Holistic Business Visualization</h2>
         <div id="chart-radar"></div>
         <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
         <script>
-          (function() {
+          (function () {
             var data = {{ chart_data|safe }};
-            var categories = data.map(function(d) { return d.category; });
-            var values = data.map(function(d) { return d.pct; });
+            var categories = data.map(function (d) { return d.category; });
+            var values = data.map(function (d) { return d.pct; });
+            var primary = "#4a90d9";
+            var dark    = "#1a3a5c";
 
             new ApexCharts(document.querySelector("#chart-bar"), {
-              chart: { type: "bar", height: 300 },
+              chart: {
+                type: "bar",
+                height: 380,
+                toolbar: { show: false },
+                animations: { enabled: false },
+              },
               series: [{ name: "Score (%)", data: values }],
-              xaxis: { categories: categories }
+              xaxis: {
+                categories: categories,
+                labels: { rotate: -35, style: { fontSize: "10px", fontFamily: "Arial" } },
+              },
+              yaxis: {
+                min: 0,
+                max: 100,
+                labels: { formatter: function (v) { return v + "%"; } },
+              },
+              colors: [primary],
+              plotOptions: { bar: { borderRadius: 4, columnWidth: "60%" } },
+              dataLabels: { enabled: false },
+              grid: { borderColor: "#e0e0e0" },
             }).render();
 
             new ApexCharts(document.querySelector("#chart-radar"), {
-              chart: { type: "radar", height: 300 },
+              chart: {
+                type: "radar",
+                height: 550,
+                offsetX: -70,
+                toolbar: { show: false },
+                animations: { enabled: false },
+              },
               series: [{ name: "Score (%)", data: values }],
-              xaxis: { categories: categories }
+              xaxis: { categories: categories },
+              yaxis: { show: true, max: 100, tickAmount: 4 },
+              fill: { opacity: 0.3, colors: [primary] },
+              stroke: { width: 2, colors: [dark] },
+              markers: { size: 4, colors: [dark] },
             }).render();
-          })();
+          }());
         </script>
       {% endif %}
     </div>

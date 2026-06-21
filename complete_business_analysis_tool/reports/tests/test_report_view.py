@@ -16,6 +16,7 @@ from complete_business_analysis_tool.assessments.factories import (
 )
 from complete_business_analysis_tool.reports.models import (
     CategorySection,
+    PDFExport,
     RecommendationsOverview,
     Roadmap,
 )
@@ -403,3 +404,72 @@ def test_report_view_renders_closing_reflections(monkeypatch):
 
     assert "<p>reflection 1</p>" in content
     assert "<p>reflection 2</p>" in content
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_complete_analysis_true_when_complete_analysis_exists():
+    assessment = AssessmentFactory()
+    Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["has_complete_analysis"] is True
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_complete_analysis_false_when_no_complete_analysis():
+    assessment = AssessmentFactory()
+    Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["has_complete_analysis"] is False
+
+
+@pytest.mark.django_db
+def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
+    assessment = AssessmentFactory()
+    export = PDFExport.objects.create(
+        assessment=assessment,
+        status=PDFExport.Status.COMPLETE,
+    )
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["latest_complete_pdf_export"] == export
+
+
+@pytest.mark.django_db
+def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist():
+    assessment = AssessmentFactory()
+    PDFExport.objects.create(assessment=assessment, status=PDFExport.Status.PENDING)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    response = _authed_client().get(url)
+
+    assert response.context["latest_complete_pdf_export"] is None
+
+
+@pytest.mark.django_db
+def test_report_view_renders_download_pdf_button_when_complete_analysis_exists():
+    assessment = AssessmentFactory()
+    Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "Download PDF" in content
+
+
+@pytest.mark.django_db
+def test_report_view_omits_download_pdf_button_when_no_complete_analysis():
+    assessment = AssessmentFactory()
+    Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client().get(url).content.decode()
+
+    assert "Download PDF" not in content

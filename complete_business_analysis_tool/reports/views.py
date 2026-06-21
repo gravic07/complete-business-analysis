@@ -4,7 +4,7 @@ from json import dumps as json_dumps
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import View
@@ -17,6 +17,7 @@ from complete_business_analysis_tool.reports.forms import FeedbackForm
 from complete_business_analysis_tool.reports.models import (
     CategoryFeedback,
     Feedback,
+    PDFExport,
 )
 from complete_business_analysis_tool.reports.queries import (
     latest_category_recommendations,
@@ -26,6 +27,7 @@ from complete_business_analysis_tool.reports.queries import (
     latest_recommendations_overview,
     latest_roadmap,
 )
+from complete_business_analysis_tool.reports.tasks import generate_pdf_export
 from complete_business_analysis_tool.reports.utils.toc_calculator import (
     calculate_toc_page_numbers,
 )
@@ -75,6 +77,14 @@ class ReportView(LoginRequiredMixin, DetailView):
         category_field_map = {cat.pk: form[f"category_{cat.pk}"] for cat in categories}
         for section in context["category_sections"]:
             section["feedback_field"] = category_field_map.get(section["category"].pk)
+        context["has_complete_analysis"] = assessment.analyses.filter(
+            status=Analysis.Status.COMPLETE,
+        ).exists()
+        context["latest_complete_pdf_export"] = (
+            assessment.pdf_exports.filter(status=PDFExport.Status.COMPLETE)
+            .order_by("-created_at")
+            .first()
+        )
         return context
 
 
@@ -198,7 +208,9 @@ class PDFTemplateView(DetailView):
         context["roadmap"] = latest_roadmap(assessment)
         context["roadmap_overview"] = _ROADMAP_OVERVIEW
         context["chart_data"] = _build_chart_data(assessment)
-        context["category_scores"] = latest_category_scores(assessment)
+        scores = latest_category_scores(assessment)
+        context["category_scores"] = scores
+        context["cba_total_score"] = _compute_cba_total(scores)
         context["toc_page_numbers"] = calculate_toc_page_numbers(
             category_names,
             assessment.name,
@@ -246,3 +258,28 @@ def _assessment_categories(assessment: Assessment):
         .distinct()
         .order_by("name")
     )
+
+
+def _compute_cba_total(scores) -> int | None:
+    if not scores:
+        return None
+    total = sum(s.score for s in scores)
+    max_total = sum(s.max_possible_score for s in scores if s.max_possible_score)
+    if not max_total:
+        return None
+    return round(float(total / max_total * 100))
+
+
+class TriggerPDFExportView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        assessment = get_object_or_404(Assessment, pk=pk)
+        export = PDFExport.objects.create(assessment=assessment)
+        generate_pdf_export.delay(str(export.pk))
+        return JsonResponse({"pdf_export_id": str(export.pk)})
+
+
+class PDFExportStatusView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        export = get_object_or_404(PDFExport, pk=pk)
+        download_url = export.file.url if export.file else ""
+        return JsonResponse({"status": export.status, "download_url": download_url})
