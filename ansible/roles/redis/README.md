@@ -1,31 +1,21 @@
-# Role Name
+# Role: redis
 
-A brief description of the role goes here.
+Installs Redis and binds it to localhost for use as the Celery broker and cache backend.
 
-## Requirements
+## What this role does
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+1. Installs `redis-server`
+2. Sets `bind {{ redis_bind }}` in `/etc/redis/redis.conf` (restricts Redis to localhost)
+3. Ensures Redis is started and enabled
 
-## Role Variables
+## Variables (from `group_vars/all.yml`)
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+| Variable     | Description                                   |
+| ------------ | --------------------------------------------- |
+| `redis_bind` | Interface Redis listens on (`127.0.0.1`)       |
+| `redis_port` | Port Redis listens on (`6379`)                |
 
-## Dependencies
+## Notes
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-## Example Playbook
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-## License
-
-BSD
-
-## Author Information
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- No `requirepass` is set — loopback binding is the security boundary. Redis is unreachable from outside the server, so a password would add complexity without meaningful benefit.
+- Celery and Django connect via `REDIS_URL=redis://{{ redis_bind }}:{{ redis_port }}/0` (written to the app's `.env` file by the `app` role).
