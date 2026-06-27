@@ -1,20 +1,20 @@
-# Ansible — RISPIRA Server Provisioning
+# Ansible — CBA Server Provisioning
 
-Provisions and deploys the RISPIRA Django stack on a single Ubuntu server.
+Provisions and deploys the CBA Django stack on a single Ubuntu server.
 
 ## Stack
 
 | Role         | What it installs / configures                                                                                        |
 | ------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `common`     | Base packages, pyenv build deps, Neovim (snap), Node.js 22, users, SSH hardening, UFW, unattended-upgrades, dotfiles |
-| `postgresql` | PostgreSQL 16, database and user                                                                                     |
+| `postgresql` | PostgreSQL 17, database and user                                                                                     |
 | `redis`      | Redis, bound to localhost                                                                                            |
-| `app`        | pyenv, Python 3.10, pipenv deps, app repo, migrations, static files                                                  |
-| `gunicorn`   | systemd service (`gunicorn-rispira`) bound to a Unix socket                                                          |
+| `app`        | pyenv, Python 3.14, pipenv deps, app repo, migrations, static files                                                  |
+| `gunicorn`   | systemd service (`gunicorn-cba`) bound to a Unix socket                                                              |
 | `celery`     | systemd services for the worker and celery-beat scheduler                                                            |
-| `nginx`      | Reverse proxy with SSL, WebSocket support, wildcard subdomains, maintenance mode                                     |
+| `nginx`      | Reverse proxy with SSL, wildcard subdomains, maintenance mode                                                        |
 
-**Services:** gunicorn (WSGI) → nginx; daphne (ASGI/WebSocket) → nginx; celery worker + beat → Redis broker; PostgreSQL on localhost.
+**Services:** gunicorn (WSGI) → nginx; celery worker + beat → Redis broker; PostgreSQL on localhost.
 
 ---
 
@@ -37,7 +37,7 @@ Edit `inventory/production.ini` and set the real server IP and SSH port:
 
 ```ini
 [web]
-rispira-prod ansible_host=<SERVER_IP> ansible_user=admin ansible_port=22
+cba-prod ansible_host=<SERVER_IP> ansible_user=admin ansible_port=22
 ```
 
 Use port `22` for the **first run** — Ansible will harden SSH and switch the port to `2207` as part of provisioning. Subsequent runs use the hardened port.
@@ -51,7 +51,7 @@ Fill in the placeholder values before running:
 | `app_repo`                                            | SSH URL of the application repo (`git@github.com:org/repo.git`)                            |
 | `admin_ssh_pubkey`                                    | Full public key for the admin user (paste the contents of `~/.ssh/id_ed25519.pub`)         |
 | `admin_email`                                         | Email for Let's Encrypt certificate notifications                                          |
-| `domain_name`                                         | Production domain (`rispira.com`)                                                          |
+| `domain_name`                                         | Production domain (`cba.3-peak.com`)                                                       |
 | `maintenance_ip`                                      | Your IP address — bypasses the maintenance page so you can verify the site while it's down |
 | `postgres_db` / `postgres_user` / `postgres_password` | Database credentials                                                                       |
 
