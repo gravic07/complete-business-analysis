@@ -1,31 +1,41 @@
-# Role Name
+# Role: celery
 
-A brief description of the role goes here.
+Installs and starts the Celery worker and Celery Beat scheduler as systemd services.
 
-## Requirements
+## What this role does
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+1. Templates `celery-worker.service` to `/etc/systemd/system/`
+2. Templates `celery-beat.service` to `/etc/systemd/system/`
+3. Reloads systemd and enables/starts both services
 
-## Role Variables
+## Services
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+### celery-worker
+
+Runs the Celery task worker. Concurrency is auto-derived from available vCPUs.
+
+Key settings:
+- `--concurrency={{ celery_workers }}` — number of worker processes (calculated at runtime)
+- `--time-limit={{ celery_task_time_limit }}` — hard task timeout in seconds (default 300)
+- `KillMode=mixed` — on stop, SIGTERM propagates to child workers so in-flight tasks can finish; `TimeoutStopSec=60` gives them up to 60 seconds before SIGKILL
+
+### celery-beat
+
+Runs the Celery Beat scheduler using `django_celery_beat.schedulers:DatabaseScheduler`. Periodic task schedules are managed through the Django admin rather than hardcoded in settings. Beat is idle until periodic tasks are added via the admin.
+
+## Variables (from `group_vars/all.yml`)
+
+| Variable                | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `app_name`              | Celery app name (`-A {{ app_name }}`), resolves to `config` |
+| `app_user` / `app_group`| OS user/group the services run as                   |
+| `app_src`               | Working directory (`WorkingDirectory`)               |
+| `app_env_file`          | Path to `.env` file loaded by both services          |
+| `app_venv`              | Virtual environment root; binaries at `{{ app_venv }}/bin/` |
+| `app_home`              | Base path for log files (`{{ app_home }}/logs/`)     |
+| `celery_workers`        | Worker concurrency, auto-derived from vCPU count     |
+| `celery_task_time_limit`| Hard task timeout in seconds (default 300)           |
 
 ## Dependencies
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-## Example Playbook
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-## License
-
-BSD
-
-## Author Information
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Requires the `app` role to have run first — the virtual environment and `.env` file must exist before these services start.
