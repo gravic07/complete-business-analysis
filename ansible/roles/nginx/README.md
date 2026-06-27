@@ -1,31 +1,46 @@
-# Role Name
+# Role: nginx
 
-A brief description of the role goes here.
+Installs Nginx as a reverse proxy, configures SSL via Let's Encrypt, and enables maintenance mode support.
 
-## Requirements
+## What this role does
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+1. Installs `nginx`, `certbot`, and `python3-certbot-nginx`
+2. Deploys `snippets/ssl-params.conf` (TLS hardening, HSTS, security headers)
+3. Removes the default Nginx site
+4. Templates the app vhost to `/etc/nginx/sites-available/{{ project_name }}.conf` and symlinks it to `sites-enabled/`
+5. Ensures Nginx is running and enabled
+6. Obtains a Let's Encrypt certificate (skipped if cert already exists)
 
-## Role Variables
+## Vhost behaviour
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+- HTTP (port 80) → permanent 301 redirect to HTTPS, preserving subdomains
+- HTTPS (port 443) — main server block:
+  - Static files (`{{ static_url }}`) — aliased from `{{ static_root }}/`, 30-day cache headers
+  - Media files (`{{ media_url }}`) — aliased from `{{ media_root }}/`, 30-day cache headers
+  - `/favicon.ico` — served directly from `{{ static_root }}/favicon/`
+  - `/api/` and `/` — proxied to the Gunicorn Unix socket with `no-store` cache headers
+  - Maintenance mode — checked via `/etc/nginx/maintenance.flag`; `{{ maintenance_ip }}` always bypasses it
 
-## Dependencies
+## Maintenance mode
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+Nginx checks for the flag file on every request. The `maintenance-on` / `maintenance-off` scripts (installed by the `common` role) create and remove it. `deploy.yml` calls these automatically around code deploys. `{{ maintenance_ip }}` always sees the live site, not the maintenance page.
 
-## Example Playbook
+## Variables (from `group_vars/all.yml`)
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+| Variable          | Description                                                              |
+| ----------------- | ------------------------------------------------------------------------ |
+| `project_name`    | Used in vhost filename (`{{ project_name }}.conf`) and Gunicorn socket path |
+| `domain_name`     | Primary domain; used for `server_name`, SSL cert, and HSTS               |
+| `admin_email`     | Email passed to `certbot` for Let's Encrypt notifications                |
+| `gunicorn_bind`   | Upstream socket (`unix:/run/gunicorn/{{ project_name }}.sock`)           |
+| `static_url`      | URL prefix for static files (default `/assets/`)                         |
+| `static_root`     | Filesystem path Nginx aliases for static files                           |
+| `media_url`       | URL prefix for media uploads (default `/uploads/`)                       |
+| `media_root`      | Filesystem path Nginx aliases for media files                            |
+| `maintenance_ip`  | IP that bypasses the maintenance page                                    |
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+## Notes
 
-## License
-
-BSD
-
-## Author Information
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- DNS must point at the server before the first run or the Let's Encrypt ACME challenge will fail.
+- The certbot task uses `creates:` so it only runs once; subsequent deploys skip it (cert renewal is handled by certbot's own systemd timer).
+- SSL hardening (cipher suites, HSTS, OCSP stapling) lives in `ssl-params.conf.j2` and is included via `snippets/ssl-params.conf`.

@@ -35,11 +35,6 @@ server {
         set $maintenance 0;
     }
 
-    location ~ /assets/favicon/favicon.ico {
-        access_log off;
-        log_not_found off;
-    }
-
     location = /favicon.ico {
         root {{ static_root }}/favicon;
     }
