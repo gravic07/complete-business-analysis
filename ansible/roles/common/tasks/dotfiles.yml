@@ -10,6 +10,7 @@
     bare: yes
     accept_hostkey: yes
     update: yes
+    key_file: '{{ dotfiles_home }}/.ssh/id_ed25519_dotfiles'
 
 - name: Configure dotfiles bare repo for {{ dotfiles_user }}
   become_user: '{{ dotfiles_user }}'
@@ -29,3 +30,5 @@
     submodule update --init --recursive
   args:
     chdir: '{{ dotfiles_home }}'
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ dotfiles_home }}/.ssh/id_ed25519_dotfiles -o IdentitiesOnly=yes"

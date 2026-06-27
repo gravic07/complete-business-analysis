@@ -41,6 +41,22 @@
     state: started
     enabled: yes
 
+- name: Create maintenance page directory
+  file:
+    path: /var/www/maintenance
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Deploy maintenance page
+  template:
+    src: maintenance.html.j2
+    dest: /var/www/maintenance/maintenance.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
 - name: Obtain/renew Let's Encrypt cert
   command: >
     certbot --nginx --non-interactive --agree-tos

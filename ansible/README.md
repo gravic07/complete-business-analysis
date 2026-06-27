@@ -20,29 +20,52 @@ Provisions and deploys the CBA Django stack on a single Ubuntu server.
 
 ## Before First Run
 
-### 1. Deploy key
+### 1. Ansible collections
 
-Place the private key at `roles/common/files/deploy_key` (mode 600 locally). This key must have **read access on GitHub** to both the application repo and the dotfiles repo.
+Install the required Ansible collections before running any playbook:
 
 ```bash
-cp ~/.ssh/your_deploy_key ansible/roles/common/files/deploy_key
+ansible-galaxy collection install -r ansible/requirements.yml
+```
+
+### 2. Deploy keys
+
+Two separate deploy keys are required — GitHub does not allow the same public key to be registered as a deploy key on more than one repository.
+
+**App repo key** (`roles/common/files/deploy_key`) — grants read access to `gravic07/complete-business-analysis`:
+
+```bash
+ssh-keygen -t ed25519 -C "cba-app-deploy" -f ~/.ssh/cba_app_deploy_key -N ""
+# Add ~/.ssh/cba_app_deploy_key.pub → gravic07/complete-business-analysis → Settings → Deploy Keys (read-only)
+cp ~/.ssh/cba_app_deploy_key ansible/roles/common/files/deploy_key
 chmod 600 ansible/roles/common/files/deploy_key
 ```
 
-> This file is not committed — add `roles/common/files/deploy_key` to `.gitignore`.
+**Dotfiles repo key** (`roles/common/files/dotfiles_deploy_key`) — grants read access to `gravic07/dotfiles`:
 
-### 2. Inventory
-
-Edit `inventory/production.ini` and set the real server IP and SSH port:
-
-```ini
-[web]
-cba-prod ansible_host=<SERVER_IP> ansible_user=admin ansible_port=22
+```bash
+ssh-keygen -t ed25519 -C "cba-dotfiles-deploy" -f ~/.ssh/cba_dotfiles_deploy_key -N ""
+# Add ~/.ssh/cba_dotfiles_deploy_key.pub → gravic07/dotfiles → Settings → Deploy Keys (read-only)
+cp ~/.ssh/cba_dotfiles_deploy_key ansible/roles/common/files/dotfiles_deploy_key
+chmod 600 ansible/roles/common/files/dotfiles_deploy_key
 ```
 
-Use port `22` for the **first run** — Ansible will harden SSH and switch the port to `2207` as part of provisioning. Subsequent runs use the hardened port.
+> Neither file is committed — both are in `.gitignore`.
 
-### 3. `group_vars/all.yml`
+### 3. Inventory
+
+Two inventory files exist for the two distinct phases of deployment:
+
+| File | When to use |
+|------|-------------|
+| `inventory/bootstrap.ini` | **First run only** — connects as `root` on port 22 (DigitalOcean Droplet defaults) |
+| `inventory/production.ini` | **All subsequent runs** — connects as `gravic` on hardened port 2207 |
+
+Set the real server IP in **both** files (`ansible_host=<REAL_SERVER_IP>`).
+
+The `common` role creates the `admin` user, disables root login, and moves SSH to port 2207 — after that first run, `bootstrap.ini` can no longer connect.
+
+### 4. `group_vars/all/main.yml`
 
 Fill in the placeholder values before running:
 
@@ -63,9 +86,9 @@ Fill in the placeholder values before running:
 
 On an 8-vCPU server the defaults produce 2 Celery workers and 9 Gunicorn workers.
 
-### 4. Vault secrets
+### 5. Vault secrets
 
-Sensitive values are kept in an encrypted vault file rather than `all.yml`. Create `group_vars/all/vault.yml` with the following content, then encrypt it:
+Sensitive values live in `group_vars/all/vault.yml`. This file is gitignored and never committed. Populate it with the real secrets before running:
 
 ```yaml
 django_secret_key: "a-long-random-string"
@@ -77,17 +100,7 @@ mailgun_domain: "mg.cba.3-peak.com"
 claude_api_key: "sk-ant-..."
 ```
 
-```bash
-ansible-vault encrypt ansible/group_vars/all/vault.yml
-```
-
-> When restructuring to `group_vars/all/`, rename the existing `all.yml` to `group_vars/all/main.yml` so both files are loaded automatically.
-
-Store the vault password in `~/.vault_pass` (mode 600) and pass it to playbook runs:
-
-```bash
-ansible-playbook -i inventory/production.ini site.yml --vault-password-file ~/.vault_pass
-```
+The file is plain YAML (not encrypted) — keep it out of version control and off shared systems.
 
 ---
 
@@ -95,20 +108,20 @@ ansible-playbook -i inventory/production.ini site.yml --vault-password-file ~/.v
 
 ### Full provision (first time)
 
-Provisions the entire server from scratch: packages, users, database, services, nginx, SSL, app code.
+Provisions the entire server from scratch: packages, users, database, services, nginx, SSL, app code. Uses `bootstrap.ini` because root is the only user available on a fresh Droplet.
 
 ```bash
-ansible-playbook -i inventory/production.ini site.yml --vault-password-file ~/.vault_pass
+ansible-playbook -i inventory/bootstrap.ini site.yml
 ```
 
-After the first run, update `inventory/production.ini` to use the hardened SSH port (`2207`).
+After this completes, root login is disabled and SSH moves to port 2207. All subsequent runs use `production.ini`.
 
 ### Code deploy
 
 Pulls the latest app code, installs dependencies, runs migrations, collects static files, and restarts services. Puts the site into maintenance mode for the duration.
 
 ```bash
-ansible-playbook -i inventory/production.ini deploy.yml --vault-password-file ~/.vault_pass
+ansible-playbook -i inventory/production.ini deploy.yml
 ```
 
 ---
@@ -154,7 +167,7 @@ sudo maintenance-off   # brings the site back up
 
 `deploy.yml` calls these automatically around the deploy sequence. Use them manually if you need to take the site down for other reasons.
 
-The `maintenance_ip` variable in `group_vars/all.yml` is added to the nginx maintenance config so that IP always sees the live site, not the maintenance page — useful for verifying a deploy before bringing the site back up.
+The `maintenance_ip` variable in `group_vars/all/main.yml` is added to the nginx maintenance config so that IP always sees the live site, not the maintenance page — useful for verifying a deploy before bringing the site back up.
 
 ---
 

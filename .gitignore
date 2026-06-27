@@ -1,5 +1,8 @@
 ### Custom ignores
 lab.ipynb
+ansible/group_vars/all/vault.yml
+ansible/roles/common/files/deploy_key
+ansible/roles/common/files/dotfiles_deploy_key
 
 ### Python template
 # Byte-compiled / optimized / DLL files

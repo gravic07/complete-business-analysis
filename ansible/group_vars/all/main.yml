@@ -13,8 +13,8 @@ app_venv: "{{ app_home }}/.venv"
 app_env_file: "{{ app_home }}/.env"
 
 ssh_port: 2207
-admin_user: admin
-admin_ssh_pubkey: "ssh-ed25519 AAAA..." # paste full public key here
+admin_user: gravic
+admin_ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM+SfBlEIR/WyF8J64LmnZIpup0zcLhpf6w+oKebkIyZ"
 # Adding a developer later is purely a manual server operation: create user,
 # add to sshusers, drop their public key, NOPASSWD in sudoers.
 
@@ -33,7 +33,7 @@ postgres_port: 5432
 redis_bind: 127.0.0.1
 redis_port: 6379
 
-maintenance_ip: "75.186.148.51" # replace with actual admin IP
+maintenance_ip: "75.186.148.51"
 
 static_url: /assets/
 media_url: /uploads/

@@ -110,6 +110,20 @@
     owner: '{{ admin_user }}'
     mode: '0600'
 
+- name: Deploy dotfiles SSH key for app user
+  copy:
+    src: dotfiles_deploy_key
+    dest: '{{ app_user_home }}/.ssh/id_ed25519_dotfiles'
+    owner: '{{ app_user }}'
+    mode: '0600'
+
+- name: Deploy dotfiles SSH key for admin user
+  copy:
+    src: dotfiles_deploy_key
+    dest: '/home/{{ admin_user }}/.ssh/id_ed25519_dotfiles'
+    owner: '{{ admin_user }}'
+    mode: '0600'
+
 - name: Grant admin passwordless sudo
   lineinfile:
     path: '/etc/sudoers.d/{{ admin_user }}'
