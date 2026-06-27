@@ -39,3 +39,12 @@
     roles: '{{ postgres_user }}'
     type: database
     privs: ALL
+
+- name: Grant privileges on public schema
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: '{{ postgres_db }}'
+    roles: '{{ postgres_user }}'
+    type: schema
+    objs: public
+    privs: ALL

@@ -1,31 +1,35 @@
-# Role Name
+# Role: postgresql
 
-A brief description of the role goes here.
+Installs PostgreSQL and creates the application database and user.
 
-## Requirements
+## What this role does
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+1. Installs `postgresql-{{ postgres_version }}` and `postgresql-contrib`
+2. Installs `python3-psycopg2` (required by Ansible's `community.postgresql` modules)
+3. Ensures PostgreSQL is started and enabled
+4. Creates the application database with UTF-8 encoding and `en_US.UTF-8` locale
+5. Creates the application database user with the vault-supplied password
+6. Grants all privileges on the database to the app user
+7. Grants all privileges on the `public` schema to the app user (required in PostgreSQL 15+ where `PUBLIC` no longer has CREATE on the public schema by default)
 
-## Role Variables
+## Variables (from `group_vars/all.yml`)
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+| Variable           | Description                              |
+| ------------------ | ---------------------------------------- |
+| `postgres_version` | PostgreSQL major version to install (17) |
+| `postgres_db`      | Database name (`cba`)                    |
+| `postgres_user`    | Database user (`cba`)                    |
+| `postgres_host`    | Host Django connects to (`localhost`)    |
+| `postgres_port`    | Port Django connects to (`5432`)         |
 
-## Dependencies
+## Vault variables (from `group_vars/all/vault.yml`)
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+| Variable            | Description               |
+| ------------------- | ------------------------- |
+| `postgres_password` | Password for the app user |
 
-## Example Playbook
+## Notes
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-## License
-
-BSD
-
-## Author Information
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- `python3-psycopg2` is the system-level psycopg2 used by Ansible's postgresql modules. The Django app uses `psycopg[c]` (psycopg3) installed in the virtualenv — these are separate.
+- The database is created from `template0` (not `template1`) so that the encoding and locale can be set explicitly.
+- The `community.postgresql` collection must be installed: `ansible-galaxy collection install community.postgresql`.
