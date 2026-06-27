@@ -9,7 +9,7 @@ Provisions and deploys the CBA Django stack on a single Ubuntu server.
 | `common`     | Base packages, pyenv build deps, Neovim (snap), Node.js 22, users, SSH hardening, UFW, unattended-upgrades, dotfiles |
 | `postgresql` | PostgreSQL 17, database and user                                                                                     |
 | `redis`      | Redis, bound to localhost                                                                                            |
-| `app`        | pyenv, Python 3.14, pipenv deps, app repo, migrations, static files                                                  |
+| `app`        | uv, Python 3.14, uv deps, app repo, migrations, static files                                                         |
 | `gunicorn`   | systemd service (`gunicorn-cba`) bound to a Unix socket                                                              |
 | `celery`     | systemd services for the worker and celery-beat scheduler                                                            |
 | `nginx`      | Reverse proxy with SSL, wildcard subdomains, maintenance mode                                                        |
@@ -46,14 +46,13 @@ Use port `22` for the **first run** — Ansible will harden SSH and switch the p
 
 Fill in the placeholder values before running:
 
-| Variable                                              | Description                                                                                |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `app_repo`                                            | SSH URL of the application repo (`git@github.com:org/repo.git`)                            |
-| `admin_ssh_pubkey`                                    | Full public key for the admin user (paste the contents of `~/.ssh/id_ed25519.pub`)         |
-| `admin_email`                                         | Email for Let's Encrypt certificate notifications                                          |
-| `domain_name`                                         | Production domain (`cba.3-peak.com`)                                                       |
-| `maintenance_ip`                                      | Your IP address — bypasses the maintenance page so you can verify the site while it's down |
-| `postgres_db` / `postgres_user` / `postgres_password` | Database credentials                                                                       |
+| Variable          | Description                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `app_repo`        | SSH URL of the application repo (`git@github.com:org/repo.git`)                            |
+| `admin_ssh_pubkey`| Full public key for the admin user (paste the contents of `~/.ssh/id_ed25519.pub`)         |
+| `admin_email`     | Email for Let's Encrypt certificate notifications                                          |
+| `domain_name`     | Production domain (`cba.3-peak.com`)                                                       |
+| `maintenance_ip`  | Your IP address — bypasses the maintenance page so you can verify the site while it's down |
 
 **Worker tuning** (optional) — these have sensible defaults derived from `ansible_processor_vcpus` at runtime:
 
@@ -64,6 +63,32 @@ Fill in the placeholder values before running:
 
 On an 8-vCPU server the defaults produce 2 Celery workers and 9 Gunicorn workers.
 
+### 4. Vault secrets
+
+Sensitive values are kept in an encrypted vault file rather than `all.yml`. Create `group_vars/all/vault.yml` with the following content, then encrypt it:
+
+```yaml
+django_secret_key: "a-long-random-string"
+postgres_password: "db-password"
+django_admin_url: "your-secret-admin-path/"
+vault_sentry_dsn: "https://...@sentry.io/..."   # omit or leave empty to disable Sentry
+mailgun_api_key: "key-..."
+mailgun_domain: "mg.cba.3-peak.com"
+claude_api_key: "sk-ant-..."
+```
+
+```bash
+ansible-vault encrypt ansible/group_vars/all/vault.yml
+```
+
+> When restructuring to `group_vars/all/`, rename the existing `all.yml` to `group_vars/all/main.yml` so both files are loaded automatically.
+
+Store the vault password in `~/.vault_pass` (mode 600) and pass it to playbook runs:
+
+```bash
+ansible-playbook -i inventory/production.ini site.yml --vault-password-file ~/.vault_pass
+```
+
 ---
 
 ## Running the Playbooks
@@ -73,7 +98,7 @@ On an 8-vCPU server the defaults produce 2 Celery workers and 9 Gunicorn workers
 Provisions the entire server from scratch: packages, users, database, services, nginx, SSL, app code.
 
 ```bash
-ansible-playbook -i inventory/production.ini site.yml
+ansible-playbook -i inventory/production.ini site.yml --vault-password-file ~/.vault_pass
 ```
 
 After the first run, update `inventory/production.ini` to use the hardened SSH port (`2207`).
@@ -83,7 +108,7 @@ After the first run, update `inventory/production.ini` to use the hardened SSH p
 Pulls the latest app code, installs dependencies, runs migrations, collects static files, and restarts services. Puts the site into maintenance mode for the duration.
 
 ```bash
-ansible-playbook -i inventory/production.ini deploy.yml
+ansible-playbook -i inventory/production.ini deploy.yml --vault-password-file ~/.vault_pass
 ```
 
 ---

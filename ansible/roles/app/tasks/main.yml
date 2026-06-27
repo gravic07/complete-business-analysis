@@ -1,30 +1,15 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for roles/app
-- name: Install pipenv
+- name: Install uv
   pip:
-    name: pipenv
+    name: uv
     executable: pip3
     extra_args: --break-system-packages
 
-- name: Clone pyenv
+- name: Install Python {{ python_version }} via uv
   become_user: '{{ app_user }}'
-  git:
-    repo: https://github.com/pyenv/pyenv.git
-    dest: '{{ app_user_home }}/.pyenv'
-    update: yes
-
-- name: Install Python {{ python_version }} via pyenv
-  become_user: '{{ app_user }}'
-  command: '{{ app_user_home }}/.pyenv/bin/pyenv install --skip-existing {{ python_version }}'
-  environment:
-    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
-
-- name: Set pyenv global Python version
-  become_user: '{{ app_user }}'
-  command: '{{ app_user_home }}/.pyenv/bin/pyenv global {{ python_version }}'
-  environment:
-    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+  command: 'uv python install {{ python_version }}'
 
 - name: Create app home directory
   file:
@@ -56,15 +41,11 @@
     - '{{ app_home }}/logs'
     - '{{ app_home }}/data'
 
-- name: Install Python dependencies via pipenv
+- name: Install Python dependencies via uv
   become_user: '{{ app_user }}'
-  command: pipenv install --deploy --ignore-pipfile
+  command: uv sync --frozen
   args:
     chdir: '{{ app_src }}'
-  environment:
-    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
-    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'
-    PIPENV_VENV_IN_PROJECT: '1'
 
 - name: Template environment file
   template:
@@ -79,12 +60,9 @@
 
 - name: Run Django migrations
   become_user: '{{ app_user }}'
-  command: pipenv run python manage.py migrate_schemas --noinput
+  command: uv run python manage.py migrate --noinput
   args:
     chdir: '{{ app_src }}'
-  environment:
-    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
-    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'
 
 - name: Create static and media directories
   file:
@@ -99,9 +77,6 @@
 
 - name: Collect static files
   become_user: '{{ app_user }}'
-  command: pipenv run python manage.py collectstatic -i "*.sass" -i "*.scss" --noinput
+  command: uv run python manage.py collectstatic -i "*.sass" -i "*.scss" --noinput
   args:
     chdir: '{{ app_src }}'
-  environment:
-    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
-    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'
