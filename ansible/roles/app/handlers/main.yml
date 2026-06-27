@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for roles/app
+- name: Restart gunicorn
+  service: { name: 'gunicorn-{{ project_name }}', state: restarted }
+- name: Restart celery
+  service: { name: celery-worker, state: restarted }
+- name: Restart celery-beat
+  service: { name: celery-beat, state: restarted }

@@ -1,0 +1,107 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/app
+- name: Install pipenv
+  pip:
+    name: pipenv
+    executable: pip3
+    extra_args: --break-system-packages
+
+- name: Clone pyenv
+  become_user: '{{ app_user }}'
+  git:
+    repo: https://github.com/pyenv/pyenv.git
+    dest: '{{ app_user_home }}/.pyenv'
+    update: yes
+
+- name: Install Python {{ python_version }} via pyenv
+  become_user: '{{ app_user }}'
+  command: '{{ app_user_home }}/.pyenv/bin/pyenv install --skip-existing {{ python_version }}'
+  environment:
+    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+
+- name: Set pyenv global Python version
+  become_user: '{{ app_user }}'
+  command: '{{ app_user_home }}/.pyenv/bin/pyenv global {{ python_version }}'
+  environment:
+    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+
+- name: Create app home directory
+  file:
+    path: '{{ app_home }}'
+    state: directory
+    owner: '{{ app_user }}'
+    group: '{{ app_group }}'
+    mode: '0755'
+
+- name: Clone or update the app repo
+  become_user: '{{ app_user }}'
+  git:
+    repo: '{{ app_repo }}'
+    dest: '{{ app_src }}'
+    version: '{{ app_branch }}'
+    accept_hostkey: yes
+  notify:
+    - Restart gunicorn
+    - Restart celery
+
+- name: Create app subdirectories
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ app_user }}'
+    group: '{{ app_group }}'
+    mode: '0755'
+  loop:
+    - '{{ app_home }}/logs'
+    - '{{ app_home }}/data'
+
+- name: Install Python dependencies via pipenv
+  become_user: '{{ app_user }}'
+  command: pipenv install --deploy --ignore-pipfile
+  args:
+    chdir: '{{ app_src }}'
+  environment:
+    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'
+    PIPENV_VENV_IN_PROJECT: '1'
+
+- name: Template environment file
+  template:
+    src: env.j2
+    dest: '{{ app_env_file }}'
+    owner: '{{ app_user }}'
+    group: '{{ app_group }}'
+    mode: '0600'
+  notify:
+    - Restart gunicorn
+    - Restart celery
+
+- name: Run Django migrations
+  become_user: '{{ app_user }}'
+  command: pipenv run python manage.py migrate_schemas --noinput
+  args:
+    chdir: '{{ app_src }}'
+  environment:
+    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'
+
+- name: Create static and media directories
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ app_user }}'
+    group: www-data
+    mode: '0755'
+  loop:
+    - '{{ static_root }}'
+    - '{{ media_root }}'
+
+- name: Collect static files
+  become_user: '{{ app_user }}'
+  command: pipenv run python manage.py collectstatic -i "*.sass" -i "*.scss" --noinput
+  args:
+    chdir: '{{ app_src }}'
+  environment:
+    PYENV_ROOT: '{{ app_user_home }}/.pyenv'
+    PATH: '{{ app_user_home }}/.pyenv/shims:{{ app_user_home }}/.pyenv/bin:{{ ansible_env.PATH }}'

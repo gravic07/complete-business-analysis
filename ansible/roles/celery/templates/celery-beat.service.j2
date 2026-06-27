@@ -1,0 +1,19 @@
+[Unit]
+Description=Celery beat for {{ app_name }}
+After=network.target redis-server.service postgresql.service celery-worker.service
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_src }}
+EnvironmentFile={{ app_env_file }}
+ExecStart={{ app_venv }}/bin/celery \
+  -A {{ app_name }} beat \
+  --scheduler django_celery_beat.schedulers:DatabaseScheduler \
+  --loglevel=INFO \
+  --logfile={{ app_home }}/logs/celery-beat.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,124 @@
+upstream gunicorn-{{ project_name }} {
+    server {{ gunicorn_bind }};
+}
+
+upstream daphne-{{ project_name }} {
+    server 127.0.0.1:{{ daphne_port }};
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ~^(?<sub_name>.*){{ domain_name }} {{ domain_name }};
+    return 301 https://${sub_name}{{ domain_name }}$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name *.{{ domain_name }} {{ domain_name }};
+
+    ssl_certificate /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ domain_name }}/privkey.pem;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    include snippets/ssl-params.conf;
+
+    large_client_header_buffers 4 64k;
+
+    error_log /var/log/nginx/{{ project_name }}_error.log;
+    access_log /var/log/nginx/{{ project_name }}_access.log;
+
+    client_max_body_size 25M;
+
+    set $maintenance 0;
+    if (-f /etc/nginx/maintenance.flag) {
+        set $maintenance 1;
+    }
+    if ($remote_addr = {{ maintenance_ip }}) {
+        set $maintenance 0;
+    }
+
+    location ~ /assets/favicon/favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    location = /favicon.ico {
+        root {{ static_root }}/favicon;
+    }
+
+    location {{ static_url }} {
+        alias {{ static_root }}/;
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable" always;
+    }
+
+    location {{ media_url }} {
+        alias {{ media_root }}/;
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000" always;
+    }
+
+    location ~ /.well-known {
+        allow all;
+        root {{ app_src }};
+    }
+
+    location /api/ {
+        if ($maintenance = 1) {
+            return 503;
+        }
+        if ($request_method = OPTIONS) {
+            add_header Allow "GET, POST, PUT, PATCH, DELETE, OPTIONS";
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 204;
+        }
+        proxy_redirect off;
+        include proxy_params;
+        proxy_pass http://gunicorn-{{ project_name }};
+        add_header Cache-Control "no-store" always;
+    }
+
+    location /ws/ {
+        if ($maintenance = 1) {
+            return 503;
+        }
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_redirect off;
+        proxy_pass http://daphne-{{ project_name }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
+    }
+
+    location / {
+        if ($maintenance = 1) {
+            return 503;
+        }
+        if ($request_method = OPTIONS) {
+            add_header Allow "GET, POST, OPTIONS, HEAD";
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 204;
+        }
+        proxy_redirect off;
+        include proxy_params;
+        proxy_pass http://gunicorn-{{ project_name }};
+        add_header Cache-Control "no-store, private" always;
+    }
+
+    error_page 503 @maintenance;
+    location @maintenance {
+        root /var/www/maintenance;
+        rewrite ^.*$ /maintenance.html break;
+        add_header Retry-After 3600 always;
+        add_header Cache-Control "no-store" always;
+    }
+}

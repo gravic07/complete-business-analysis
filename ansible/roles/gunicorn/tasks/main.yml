@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/gunicorn
+- name: Install gunicorn systemd unit
+  template:
+    src: gunicorn.service.j2
+    dest: /etc/systemd/system/gunicorn-{{ project_name }}.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable and start gunicorn
+  service:
+    name: gunicorn-{{ project_name }}
+    state: started
+    enabled: yes

@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+FLAG=/etc/nginx/maintenance.flag
+touch "$FLAG"
+echo "Maintenance mode: ON  ($FLAG created)"

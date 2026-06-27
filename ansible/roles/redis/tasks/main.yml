@@ -1,0 +1,20 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/redis
+- name: Install Redis
+  apt:
+    name: redis-server
+    state: present
+
+- name: Configure Redis bind
+  lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^bind '
+    line: 'bind {{ redis_bind }}'
+  notify: Restart redis
+
+- name: Ensure Redis is running
+  service:
+    name: redis-server
+    state: started
+    enabled: yes

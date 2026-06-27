@@ -1,0 +1,16 @@
+- hosts: web
+  become: yes
+
+  pre_tasks:
+    - name: Enable maintenance mode
+      command: /usr/local/bin/maintenance-on
+
+  roles:
+    - app
+
+  post_tasks:
+    - name: Flush service restart handlers
+      meta: flush_handlers
+
+    - name: Disable maintenance mode
+      command: /usr/local/bin/maintenance-off

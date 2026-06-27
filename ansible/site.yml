@@ -1,0 +1,11 @@
+- name: Provision Django stack
+  hosts: web
+  become: yes
+  roles:
+    - common
+    - postgresql
+    - redis
+    - app
+    - gunicorn
+    - celery
+    - nginx

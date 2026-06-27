@@ -1,0 +1,57 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/nginx
+- name: Install NGINX and certbot
+  apt:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: Deploy SSL params snippet
+  template:
+    src: ssl-params.conf.j2
+    dest: /etc/nginx/snippets/ssl-params.conf
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Deploy WebSocket upgrade map
+  template:
+    src: websocket_upgrade.conf.j2
+    dest: /etc/nginx/conf.d/websocket_upgrade.conf
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Remove default NGINX site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Template app NGINX config
+  template:
+    src: app.conf.j2
+    dest: /etc/nginx/sites-available/{{ project_name }}.conf
+  notify: Reload nginx
+
+- name: Enable app site
+  file:
+    src: /etc/nginx/sites-available/{{ project_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ project_name }}.conf
+    state: link
+  notify: Reload nginx
+
+- name: Ensure NGINX running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Obtain/renew Let's Encrypt cert
+  command: >
+    certbot --nginx --non-interactive --agree-tos
+    --email {{ admin_email }}
+    -d {{ domain_name }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem

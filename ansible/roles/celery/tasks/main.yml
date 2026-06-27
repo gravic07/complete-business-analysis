@@ -1,0 +1,23 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/celery
+- name: Install celery worker systemd unit
+  template:
+    src: celery-worker.service.j2
+    dest: /etc/systemd/system/celery-worker.service
+  notify: Reload systemd
+
+- name: Install celery beat systemd unit
+  template:
+    src: celery-beat.service.j2
+    dest: /etc/systemd/system/celery-beat.service
+  notify: Reload systemd
+
+- name: Enable and start celery services
+  service:
+    name: '{{ item }}'
+    state: started
+    enabled: yes
+  loop:
+    - celery-worker
+    - celery-beat

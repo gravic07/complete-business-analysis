@@ -1,0 +1,183 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/common
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install base packages
+  apt:
+    name:
+      - build-essential
+      - git
+      - curl
+      - ca-certificates
+      - ufw
+      - unattended-upgrades
+      - python3-pip
+      - python3-venv
+      - libpq-dev
+      - acl # needed for become_user file ops
+      - zsh
+      # pyenv build dependencies
+      - libssl-dev
+      - zlib1g-dev
+      - libbz2-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - libncursesw5-dev
+      - xz-utils
+      - tk-dev
+      - libxml2-dev
+      - libxmlsec1-dev
+      - libffi-dev
+      - liblzma-dev
+    state: present
+
+- name: Install Neovim via snap
+  community.general.snap:
+    name: nvim
+    classic: yes
+    state: present
+
+- name: Install Node.js {{ node_major_version }} via NodeSource
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_{{ node_major_version }}.x | bash -
+    apt-get install -y nodejs
+  args:
+    creates: /usr/bin/node
+
+# Expected Neovim plugin
+- name: Install tree-sitter CLI
+  community.general.npm:
+    name: tree-sitter-cli
+    global: yes
+    state: present
+
+- name: Create app group
+  group:
+    name: '{{ app_group }}'
+    state: present
+
+- name: Create sshusers group
+  group:
+    name: sshusers
+    state: present
+
+- name: Create app user
+  user:
+    name: '{{ app_user }}'
+    group: '{{ app_group }}'
+    shell: /bin/zsh
+    home: '{{ app_user_home }}'
+    state: present
+
+- name: Create admin user
+  user:
+    name: '{{ admin_user }}'
+    groups:
+      - sudo
+      - sshusers
+    shell: /bin/zsh
+    state: present
+
+- name: Set admin home directory permissions
+  file:
+    path: '/home/{{ admin_user }}'
+    owner: '{{ admin_user }}'
+    group: '{{ admin_user }}'
+    mode: '0750'
+
+# authorized_key creates the admin's .ssh directory so no need for a specific task.
+- name: Add admin SSH public key
+  authorized_key:
+    user: '{{ admin_user }}'
+    key: '{{ admin_ssh_pubkey }}'
+    state: present
+
+- name: Create .ssh directory for app user
+  file:
+    path: '{{ app_user_home }}/.ssh'
+    state: directory
+    owner: '{{ app_user }}'
+    mode: '0700'
+
+- name: Deploy SSH deploy key for app user
+  copy:
+    src: deploy_key
+    dest: '{{ app_user_home }}/.ssh/id_ed25519'
+    owner: '{{ app_user }}'
+    mode: '0600'
+
+- name: Deploy SSH deploy key for admin user
+  copy:
+    src: deploy_key
+    dest: '/home/{{ admin_user }}/.ssh/id_ed25519'
+    owner: '{{ admin_user }}'
+    mode: '0600'
+
+- name: Grant admin passwordless sudo
+  lineinfile:
+    path: '/etc/sudoers.d/{{ admin_user }}'
+    line: '{{ admin_user }} ALL=(ALL) NOPASSWD: ALL'
+    create: yes
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Configure sshd
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - { regexp: '^#?Port ', line: 'Port {{ ssh_port }}' }
+    - { regexp: '^#?PermitRootLogin ', line: 'PermitRootLogin no' }
+    - {
+        regexp: '^#?PasswordAuthentication ',
+        line: 'PasswordAuthentication no',
+      }
+    - { regexp: '^#?AllowGroups ', line: 'AllowGroups sshusers' }
+  notify: Restart sshd
+
+- name: Configure UFW defaults
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Allow SSH, HTTP, HTTPS
+  community.general.ufw:
+    rule: allow
+    port: '{{ item }}'
+    proto: tcp
+  loop: ['{{ ssh_port }}', '80', '443']
+
+- name: Deploy maintenance scripts
+  copy:
+    src: '{{ item }}'
+    dest: '/usr/local/bin/{{ item }}'
+    mode: '0755'
+  loop:
+    - maintenance-on
+    - maintenance-off
+
+- name: Enable unattended-upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: '0644'
+
+- name: Set up dotfiles for admin user
+  include_tasks: dotfiles.yml
+  vars:
+    dotfiles_user: '{{ admin_user }}'
+    dotfiles_home: '/home/{{ admin_user }}'
+
+- name: Set up dotfiles for app user
+  include_tasks: dotfiles.yml
+  vars:
+    dotfiles_user: '{{ app_user }}'
+    dotfiles_home: '{{ app_user_home }}'

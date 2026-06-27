@@ -1,0 +1,31 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Called with dotfiles_user and dotfiles_home vars
+
+- name: Clone dotfiles as bare repo for {{ dotfiles_user }}
+  become_user: '{{ dotfiles_user }}'
+  git:
+    repo: '{{ dotfiles_repo }}'
+    dest: '{{ dotfiles_home }}/.cfg'
+    bare: yes
+    accept_hostkey: yes
+    update: yes
+
+- name: Configure dotfiles bare repo for {{ dotfiles_user }}
+  become_user: '{{ dotfiles_user }}'
+  command: >
+    git --git-dir={{ dotfiles_home }}/.cfg --work-tree={{ dotfiles_home }}
+    config --local status.showUntrackedFiles no
+
+- name: Checkout dotfiles for {{ dotfiles_user }}
+  become_user: '{{ dotfiles_user }}'
+  command: >
+    git --git-dir={{ dotfiles_home }}/.cfg --work-tree={{ dotfiles_home }} checkout -f
+
+- name: Initialize dotfiles submodules for {{ dotfiles_user }}
+  become_user: '{{ dotfiles_user }}'
+  command: >
+    git --git-dir={{ dotfiles_home }}/.cfg --work-tree={{ dotfiles_home }}
+    submodule update --init --recursive
+  args:
+    chdir: '{{ dotfiles_home }}'

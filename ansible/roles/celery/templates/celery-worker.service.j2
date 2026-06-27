@@ -1,0 +1,20 @@
+[Unit]
+Description=Celery worker for {{ app_name }}
+After=network.target redis-server.service
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_src }}
+EnvironmentFile={{ app_env_file }}
+ExecStart={{ app_venv }}/bin/celery \
+  -A {{ app_name }} worker \
+  --concurrency={{ celery_workers }} \
+  --time-limit={{ celery_task_time_limit }} \
+  --loglevel=INFO \
+  --logfile={{ app_home }}/logs/celery-worker.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

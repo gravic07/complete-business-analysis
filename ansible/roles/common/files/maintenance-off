@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+FLAG=/etc/nginx/maintenance.flag
+rm -f "$FLAG"
+echo "Maintenance mode: OFF ($FLAG removed)"

@@ -1,0 +1,25 @@
+[Unit]
+Description=gunicorn daemon for {{ app_name }}
+After=network.target postgresql.service redis-server.service
+
+[Service]
+Type=notify
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_src }}
+EnvironmentFile={{ app_env_file }}
+ExecStart={{ app_venv }}/bin/gunicorn \
+  --workers {{ gunicorn_workers }} \
+  --bind {{ gunicorn_bind }} \
+  --access-logfile {{ app_home }}/logs/gunicorn-access.log \
+  --error-logfile {{ app_home }}/logs/gunicorn-error.log \
+  --timeout 60 \
+  --limit-request-line 8190 \
+  {{ app_name }}.wsgi:application
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
+Restart=always
+KillSignal=SIGQUIT
+
+[Install]
+WantedBy=multi-user.target
