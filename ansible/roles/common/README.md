@@ -1,31 +1,51 @@
-# Role Name
+# Role: common
 
-A brief description of the role goes here.
+Base server provisioning — packages, users, SSH hardening, firewall, dotfiles, and maintenance tooling. Always runs first; all other roles depend on the environment this establishes.
 
-## Requirements
+## What this role does
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+1. Updates apt cache and installs base packages (git, curl, zsh, build deps, libpq-dev, python3-pip, etc.)
+2. Installs Neovim via snap and tree-sitter CLI via npm (for developer tooling)
+3. Installs Node.js `{{ node_major_version }}` via NodeSource
+4. Creates the `{{ app_group }}` and `sshusers` OS groups
+5. Creates `{{ app_user }}` (app process identity) and `{{ admin_user }}` (human SSH user)
+6. Deploys the SSH deploy key to both users' `~/.ssh/id_ed25519`
+7. Grants `{{ admin_user }}` passwordless sudo
+8. Hardens sshd: custom port, no root login, no password auth, restricts to `sshusers` group
+9. Configures UFW: default-deny inbound, allows SSH / HTTP / HTTPS
+10. Installs `maintenance-on` and `maintenance-off` scripts to `/usr/local/bin/`
+11. Enables unattended security upgrades
+12. Sets up dotfiles (bare repo) for both `{{ admin_user }}` and `{{ app_user }}`
 
-## Role Variables
+## Files required before running
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+| File | Description |
+| ---- | ----------- |
+| `roles/common/files/deploy_key` | Private SSH key with read access to the app repo and dotfiles repo. Mode 600. **Not committed — add to `.gitignore`.** |
 
-## Dependencies
+## Variables (from `group_vars/all.yml`)
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+| Variable           | Description                                           |
+| ------------------ | ----------------------------------------------------- |
+| `app_user`         | OS user that owns and runs the application (`django`) |
+| `app_group`        | OS group for the app user                             |
+| `app_user_home`    | Home directory for the app user                       |
+| `admin_user`       | Human SSH user with sudo access                       |
+| `admin_ssh_pubkey` | Public key added to the admin user's `authorized_keys`|
+| `ssh_port`         | Non-default SSH port (default `2207`)                 |
+| `node_major_version` | Node.js major version installed via NodeSource      |
+| `dotfiles_repo`    | SSH URL of the dotfiles bare repo                     |
+| `dotfiles_branch`  | Branch to check out                                   |
 
-## Example Playbook
+## SSH access model
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+- `{{ admin_user }}` — can SSH in (member of `sshusers`), has passwordless sudo
+- `{{ app_user }}` — **cannot SSH in** (not in `sshusers`); use `sudo su - {{ app_user }}` from the admin account to access its environment for debugging
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+## Dotfiles
 
-## License
+Uses a [bare repo approach](https://www.atlassian.com/git/tutorials/dotfiles): the repo is cloned as `~/.cfg` and files are checked out directly into the home directory. Applied to both `{{ admin_user }}` and `{{ app_user }}` so both have a consistent shell environment (zsh + Neovim config).
 
-BSD
+## Maintenance scripts
 
-## Author Information
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`maintenance-on` and `maintenance-off` create/remove `/etc/nginx/maintenance.flag`. Nginx checks for this flag and serves a static maintenance page when it exists. The `maintenance_ip` in `group_vars/all.yml` always bypasses the maintenance page for your IP.

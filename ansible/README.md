@@ -6,7 +6,7 @@ Provisions and deploys the CBA Django stack on a single Ubuntu server.
 
 | Role         | What it installs / configures                                                                                        |
 | ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `common`     | Base packages, pyenv build deps, Neovim (snap), Node.js 22, users, SSH hardening, UFW, unattended-upgrades, dotfiles |
+| `common`     | Base packages, build deps, Neovim (snap), Node.js 22, users, SSH hardening, UFW, unattended-upgrades, dotfiles        |
 | `postgresql` | PostgreSQL 17, database and user                                                                                     |
 | `redis`      | Redis, bound to localhost                                                                                            |
 | `app`        | uv, Python 3.14, uv deps, app repo, migrations, static files                                                         |

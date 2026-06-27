@@ -20,19 +20,12 @@
       - libpq-dev
       - acl # needed for become_user file ops
       - zsh
-      # pyenv build dependencies
+      # C extension build dependencies
       - libssl-dev
+      - libffi-dev
+      - libxml2-dev
       - zlib1g-dev
       - libbz2-dev
-      - libreadline-dev
-      - libsqlite3-dev
-      - libncursesw5-dev
-      - xz-utils
-      - tk-dev
-      - libxml2-dev
-      - libxmlsec1-dev
-      - libffi-dev
-      - liblzma-dev
     state: present
 
 - name: Install Neovim via snap
