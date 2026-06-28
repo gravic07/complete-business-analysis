@@ -47,6 +47,17 @@
   args:
     chdir: '{{ app_src }}'
 
+- name: Install Playwright OS dependencies for Chromium
+  command: uv run playwright install-deps chromium
+  args:
+    chdir: '{{ app_src }}'
+
+- name: Install Playwright Chromium browser binary
+  become_user: '{{ app_user }}'
+  command: uv run playwright install chromium
+  args:
+    chdir: '{{ app_src }}'
+
 - name: Template environment file
   template:
     src: env.j2
