@@ -147,6 +147,9 @@
     - { regexp: '^#?AllowGroups ', line: 'AllowGroups sshusers' }
   notify: Restart sshd
 
+- name: Flush handlers to restart sshd before UFW locks port 22
+  meta: flush_handlers
+
 - name: Configure UFW defaults
   community.general.ufw:
     state: enabled

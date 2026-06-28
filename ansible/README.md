@@ -106,6 +106,16 @@ The file is plain YAML (not encrypted) — keep it out of version control and of
 
 ## Running the Playbooks
 
+### SSH key agent
+
+Ansible connects via SSH and cannot handle interactive passphrase prompts. Add your key to the agent before each session:
+
+```bash
+ssh-add ~/.ssh/cba_ed25519
+```
+
+This persists for the life of the shell session. Re-run it whenever you open a new terminal.
+
 ### Full provision (first time)
 
 Provisions the entire server from scratch: packages, users, database, services, nginx, SSL, app code. Uses `bootstrap.ini` because root is the only user available on a fresh Droplet.

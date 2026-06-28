@@ -14,13 +14,53 @@
     src: ssl-params.conf.j2
     dest: /etc/nginx/snippets/ssl-params.conf
     mode: '0644'
-  notify: Reload nginx
 
 - name: Remove default NGINX site
   file:
     path: /etc/nginx/sites-enabled/default
     state: absent
-  notify: Reload nginx
+
+- name: Create maintenance page directory
+  file:
+    path: /var/www/maintenance
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Deploy maintenance page
+  template:
+    src: maintenance.html.j2
+    dest: /var/www/maintenance/maintenance.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Check if Let's Encrypt cert exists
+  stat:
+    path: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+  register: cert_stat
+
+# certbot standalone opens its own port-80 listener — nginx must be stopped first.
+# This block only runs on first provision; subsequent runs skip it (cert already exists).
+- name: Stop nginx for certbot standalone challenge
+  service:
+    name: nginx
+    state: stopped
+  when: not cert_stat.stat.exists
+
+- name: Obtain Let's Encrypt cert
+  command: >
+    certbot certonly --standalone --non-interactive --agree-tos
+    --email {{ admin_email }}
+    -d {{ domain_name }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+
+- name: Generate DH parameters for SSL
+  command: openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
+  args:
+    creates: /etc/letsencrypt/ssl-dhparams.pem
 
 - name: Template app NGINX config
   template:
@@ -40,27 +80,3 @@
     name: nginx
     state: started
     enabled: yes
-
-- name: Create maintenance page directory
-  file:
-    path: /var/www/maintenance
-    state: directory
-    owner: www-data
-    group: www-data
-    mode: '0755'
-
-- name: Deploy maintenance page
-  template:
-    src: maintenance.html.j2
-    dest: /var/www/maintenance/maintenance.html
-    owner: www-data
-    group: www-data
-    mode: '0644'
-
-- name: Obtain/renew Let's Encrypt cert
-  command: >
-    certbot --nginx --non-interactive --agree-tos
-    --email {{ admin_email }}
-    -d {{ domain_name }}
-  args:
-    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem

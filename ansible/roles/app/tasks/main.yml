@@ -63,6 +63,8 @@
   command: uv run python manage.py migrate --noinput
   args:
     chdir: '{{ app_src }}'
+  environment:
+    DJANGO_SETTINGS_MODULE: '{{ app_name }}.settings.production'
 
 - name: Create static and media directories
   file:
@@ -80,3 +82,5 @@
   command: uv run python manage.py collectstatic -i "*.sass" -i "*.scss" --noinput
   args:
     chdir: '{{ app_src }}'
+  environment:
+    DJANGO_SETTINGS_MODULE: '{{ app_name }}.settings.production'
