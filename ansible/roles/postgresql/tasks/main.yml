@@ -1,6 +1,21 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for roles/postgresql
+- name: Add PGDG apt signing key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PGDG apt repository
+  apt_repository:
+    repo: 'deb https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main'
+    state: present
+    filename: pgdg
+
+- name: Update apt cache after adding PGDG
+  apt:
+    update_cache: yes
+
 - name: Install PostgreSQL
   apt:
     name:
