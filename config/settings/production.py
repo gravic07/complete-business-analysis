@@ -198,5 +198,12 @@ sentry_sdk.init(
 SPECTACULAR_SETTINGS["SERVERS"] = [
     {"url": "https://cba.3-peak.com", "description": "Production server"},
 ]
+# allauth proxy config
+# ------------------------------------------------------------------------------
+# Gunicorn on a Unix socket sets REMOTE_ADDR to "", so allauth can't determine
+# the client IP from it. Tell allauth there is exactly one trusted proxy (nginx)
+# so it reads the real client IP from the X-Forwarded-For header instead.
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
+
 # Your stuff...
 # ------------------------------------------------------------------------------
