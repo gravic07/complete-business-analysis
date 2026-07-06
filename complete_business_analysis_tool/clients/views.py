@@ -2,7 +2,7 @@ from django.db.models import Count, OuterRef, Subquery, Sum
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from complete_business_analysis_tool.assessments.models import Answer
+from complete_business_analysis_tool.assessments.models import Answer, AssessmentTemplate
 
 from .forms import ClientForm
 from .models import Client
@@ -46,6 +46,7 @@ class ClientDetailView(DetailView):
             )
             .order_by("-created_at")
         )
+        context["assessment_templates"] = AssessmentTemplate.objects.order_by("title")
         return context
 
 

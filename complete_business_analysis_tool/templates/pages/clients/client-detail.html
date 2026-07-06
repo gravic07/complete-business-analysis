@@ -131,51 +131,74 @@
   </section>
   <section class="section">
     <div class="container">
-      <h2 class="title is-3">Assessments</h2>
-      <table class="table is-fullwidth is-striped is-hoverable"
-             id="assessment-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Questions</th>
-            <th>Score</th>
-            <th>Created</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for assessment in assessments %}
+      <div class="level">
+        <div class="level-left">
+          <h2 class="title is-3">Assessments</h2>
+        </div>
+        <div class="level-right">
+          <div class="field has-addons">
+            <div class="control">
+              <div class="select">
+                <select id="start-assessment-template">
+                  <option value="">Start an assessment…</option>
+                  {% for template in assessment_templates %}
+                    <option value="{% url 'assessments:entry' template.pk %}?client={{ client.pk }}">{{ template.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="control">
+              <button id="start-assessment-btn" class="button is-primary" disabled>Start</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% if assessments %}
+        <table class="table is-fullwidth is-striped is-hoverable"
+               id="assessment-table">
+          <thead>
             <tr>
-              <td>{{ assessment.template.title }}</td>
-              <td>{{ assessment.question_count }}</td>
-              <td>{{ assessment.score|default:"—" }}</td>
-              <td data-order="{{ assessment.created_at|date:'Y-m-d' }}">{{ assessment.created_at|date:"M d, Y" }}</td>
-              <td>
-                <div class="buttons is-right">
-                  <a href="{% url 'assessments:detail' assessment.pk %}"
-                     class="button is-small is-light"
-                     title="View assessment">
-                    <span class="icon">
-                      <i class="fa-duotone fa-regular fa-eye"></i>
-                    </span>
-                  </a>
-                  <a href="{% url 'reports:report' assessment.pk %}"
-                     class="button is-small is-light"
-                     title="View report">
-                    <span class="icon">
-                      <i class="fa-duotone fa-regular fa-file-chart-column"></i>
-                    </span>
-                  </a>
-                </div>
-              </td>
+              <th>Name</th>
+              <th>Questions</th>
+              <th>Score</th>
+              <th>Created</th>
+              <th></th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" class="has-text-centered has-text-grey">No assessments found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for assessment in assessments %}
+              <tr>
+                <td>{{ assessment.template.title }}</td>
+                <td>{{ assessment.question_count }}</td>
+                <td>{{ assessment.score|default:"—" }}</td>
+                <td data-order="{{ assessment.created_at|date:'Y-m-d' }}">{{ assessment.created_at|date:"M d, Y" }}</td>
+                <td>
+                  <div class="buttons is-right">
+                    <a href="{% url 'assessments:detail' assessment.pk %}"
+                       class="button is-small is-light"
+                       title="View assessment">
+                      <span class="icon">
+                        <i class="fa-duotone fa-regular fa-eye"></i>
+                      </span>
+                    </a>
+                    <a href="{% url 'reports:report' assessment.pk %}"
+                       class="button is-small is-light"
+                       title="View report">
+                      <span class="icon">
+                        <i class="fa-duotone fa-regular fa-file-chart-column"></i>
+                      </span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="has-text-centered py-6">
+          <p class="has-text-grey mb-0">No assessments found.</p>
+        </div>
+      {% endif %}
     </div>
   </section>
 {% endblock content %}
@@ -192,9 +215,18 @@
   <script type="application/javascript">
     DataTable.type('num', 'className', 'dt-body-left');
     $(document).ready(function() {
+      $('#start-assessment-template').on('change', function() {
+        $('#start-assessment-btn').prop('disabled', !$(this).val());
+      });
+      $('#start-assessment-btn').on('click', function() {
+        var url = $('#start-assessment-template').val();
+        if (url) window.location.href = url;
+      });
+
+      if ($('#assessment-table').length === 0) return;
       $('#assessment-table').DataTable({
         initComplete: function(settings, json) {
-          $("#client-table").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
+          $("#assessment-table").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
         },
         layout: {
           top2Start: {

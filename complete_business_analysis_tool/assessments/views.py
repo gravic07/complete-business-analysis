@@ -61,6 +61,13 @@ class AssessmentEntryView(LoginRequiredMixin, FormView):
         kwargs["template"] = self.assessment_template
         return kwargs
 
+    def get_initial(self):
+        initial = super().get_initial()
+        client_id = self.request.GET.get("client")
+        if client_id:
+            initial["client"] = client_id
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["assessment_template"] = self.assessment_template
