@@ -53,9 +53,45 @@
         {% endif %}
       </div>
       <div class="columns">
-        <div class="column">
-          {% include 'snippets/reports/assessment-name.html' %}
-        </div>
+        <div class="column">{% include 'snippets/reports/assessment-name.html' %}</div>
+      </div>
+      <div id="analysis-status-container"
+           data-status-url-template="{% url 'reports:analysis_status' '00000000-0000-0000-0000-000000000000' %}"
+           {% if latest_analysis.status == "pending" or latest_analysis.status == "processing" %} data-status-url="{% url 'reports:analysis_status' latest_analysis.pk %}" {% elif autostart %} data-autostart-url="{% url 'reports:generate_analysis' assessment.pk %}" data-autostart-feedback-id="{{ autostart_feedback_id }}" {% endif %}>
+        {% csrf_token %}
+        {% if latest_analysis.status == "failed" %}
+          <div class="notification is-danger mb-5">
+            Report generation failed.
+            <br />
+            <button type="button"
+                    id="generate-report-btn"
+                    class="button is-danger is-light mt-2"
+                    data-trigger-url="{% url 'reports:generate_analysis' assessment.pk %}"
+                    data-retry-analysis-id="{{ latest_analysis.pk }}">Try Again</button>
+          </div>
+        {% elif not latest_analysis and not autostart %}
+          <div class="notification is-warning mb-5">
+            No report has been generated for this assessment yet.
+            <br />
+            <button type="button"
+                    id="generate-report-btn"
+                    class="button is-light mt-2"
+                    data-trigger-url="{% url 'reports:generate_analysis' assessment.pk %}">Generate Report</button>
+          </div>
+        {% endif %}
+        <template id="analysis-generating-template">
+          <div class="notification is-info mb-5">
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-medium mr-2">
+                <i class="fa-duotone fa-regular fa-spinner fa-spin"></i>
+              </span>
+              <div>
+                <p id="analysis-status-message">Your report is being generated...</p>
+                <p class="is-size-7 has-text-white" id="analysis-status-elapsed"></p>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
       {% if chart_data %}
         <div class="box mb-5">
@@ -200,8 +236,6 @@
             </div>
           </div>
         </form>
-      {% else %}
-        <div class="notification is-warning">No report has been generated for this assessment yet.</div>
       {% endif %}
     </div>
   </section>
@@ -212,45 +246,112 @@
   {% if chart_data %}
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
-      (function () {
-        const data = {{ chart_data|safe }};
-        const labels = data.map(function (d) { return d.category; });
-        const values = data.map(function (d) { return d.pct; });
+      (function() {
+        const data = {
+          {
+            chart_data | safe
+          }
+        };
+        const labels = data.map(function(d) {
+          return d.category;
+        });
+        const values = data.map(function(d) {
+          return d.pct;
+        });
         const primary = '#00294f';
 
         new ApexCharts(document.getElementById('chart-bar'), {
-          chart: { type: 'bar', height: 320, toolbar: { show: false } },
-          series: [{ name: 'Score', data: values }],
-          xaxis: { categories: labels },
+          chart: {
+            type: 'bar',
+            height: 320,
+            toolbar: {
+              show: false
+            }
+          },
+          series: [{
+            name: 'Score',
+            data: values
+          }],
+          xaxis: {
+            categories: labels
+          },
           yaxis: {
             min: 0,
             max: 100,
-            labels: { formatter: function (v) { return v + '%'; } },
+            labels: {
+              formatter: function(v) {
+                return v + '%';
+              }
+            },
           },
           colors: [primary],
-          title: { text: 'Category Scores', align: 'center' },
-          plotOptions: { bar: { borderRadius: 4 } },
-          dataLabels: { enabled: false },
-          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
+          title: {
+            text: 'Category Scores',
+            align: 'center'
+          },
+          plotOptions: {
+            bar: {
+              borderRadius: 4
+            }
+          },
+          dataLabels: {
+            enabled: false
+          },
+          tooltip: {
+            y: {
+              formatter: function(v) {
+                return v + '%';
+              }
+            }
+          },
         }).render();
 
         new ApexCharts(document.getElementById('chart-radar'), {
-          chart: { type: 'radar', height: 450, toolbar: { show: false } },
-          series: [{ name: 'Score', data: values }],
-          xaxis: { categories: labels },
-          yaxis: { show: false, max: 100 },
-          fill: { opacity: 0.3 },
+          chart: {
+            type: 'radar',
+            height: 450,
+            toolbar: {
+              show: false
+            }
+          },
+          series: [{
+            name: 'Score',
+            data: values
+          }],
+          xaxis: {
+            categories: labels
+          },
+          yaxis: {
+            show: false,
+            max: 100
+          },
+          fill: {
+            opacity: 0.3
+          },
           colors: [primary],
-          stroke: { width: 2 },
-          markers: { size: 4 },
-          title: { text: 'Holistic Business Visualization', align: 'center' },
-          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
+          stroke: {
+            width: 2
+          },
+          markers: {
+            size: 4
+          },
+          title: {
+            text: 'Holistic Business Visualization',
+            align: 'center'
+          },
+          tooltip: {
+            y: {
+              formatter: function(v) {
+                return v + '%';
+              }
+            }
+          },
         }).render();
       }());
     </script>
   {% endif %}
   <script>
-    document.body.addEventListener("showToast", function (e) {
+    document.body.addEventListener("showToast", function(e) {
       bulmaToast.toast({
         message: e.detail && e.detail.value ? e.detail.value : "Saved.",
         type: "is-success",
@@ -263,7 +364,7 @@
   </script>
   {% if has_complete_analysis %}
     <script>
-      (function () {
+      (function() {
         var btn = document.getElementById('download-pdf-btn');
         var statusEl = document.getElementById('pdf-export-status');
         if (!btn) return;
@@ -299,9 +400,15 @@
         }
 
         function poll(statusUrl) {
-          fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
+          fetch(statusUrl, {
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(function(r) {
+              return r.json();
+            })
+            .then(function(data) {
               if (data.status === 'complete') {
                 clearStatus();
                 setLoading(false);
@@ -310,31 +417,42 @@
                 setLoading(false);
                 showStatus('PDF generation failed — please try again', true);
               } else {
-                pollTimer = setTimeout(function () { poll(statusUrl); }, 2000);
+                pollTimer = setTimeout(function() {
+                  poll(statusUrl);
+                }, 2000);
               }
             })
-            .catch(function () {
+            .catch(function() {
               setLoading(false);
               showStatus('PDF generation failed — please try again', true);
             });
         }
 
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function() {
           clearStatus();
           setLoading(true);
           showStatus('Generating PDF…', false);
 
           var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-          var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+          var headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+          };
           if (csrfToken) headers['X-CSRFToken'] = csrfToken.value;
 
-          fetch(exportUrl, { method: 'POST', headers: headers })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-              var statusUrl = statusUrlTemplate.replace(PLACEHOLDER, data.pdf_export_id);
-              pollTimer = setTimeout(function () { poll(statusUrl); }, 2000);
+          fetch(exportUrl, {
+              method: 'POST',
+              headers: headers
             })
-            .catch(function () {
+            .then(function(r) {
+              return r.json();
+            })
+            .then(function(data) {
+              var statusUrl = statusUrlTemplate.replace(PLACEHOLDER, data.pdf_export_id);
+              pollTimer = setTimeout(function() {
+                poll(statusUrl);
+              }, 2000);
+            })
+            .catch(function() {
               setLoading(false);
               showStatus('PDF generation failed — please try again', true);
             });
@@ -342,4 +460,138 @@
       }());
     </script>
   {% endif %}
+  <script>
+    (function() {
+      var container = document.getElementById('analysis-status-container');
+      if (!container) return;
+
+      var statusUrlTemplate = container.getAttribute('data-status-url-template');
+      var PLACEHOLDER = '00000000-0000-0000-0000-000000000000';
+
+      var messageEl = document.getElementById('analysis-status-message');
+      var elapsedEl = document.getElementById('analysis-status-elapsed');
+      var elapsedTimer = null;
+
+      function showGeneratingNotice() {
+        var existing = container.querySelector('.notification');
+        if (existing) existing.remove();
+        var tmpl = document.getElementById('analysis-generating-template');
+        if (!tmpl) return;
+        container.appendChild(tmpl.content.cloneNode(true));
+        messageEl = document.getElementById('analysis-status-message');
+        elapsedEl = document.getElementById('analysis-status-elapsed');
+      }
+
+      function startDynamicNotice() {
+        if (elapsedTimer || !elapsedEl) return;
+        var startedAt = Date.now();
+        elapsedTimer = setInterval(function() {
+          var seconds = Math.floor((Date.now() - startedAt) / 1000);
+          var mins = Math.floor(seconds / 60);
+          var secs = seconds % 60;
+          elapsedEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }, 1000);
+      }
+
+      function stopDynamicNotice() {
+        if (!elapsedTimer) return;
+        clearInterval(elapsedTimer);
+        elapsedTimer = null;
+      }
+
+      function poll(statusUrl) {
+        fetch(statusUrl, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(function(r) {
+            return r.json();
+          })
+          .then(function(data) {
+            if (data.status === 'pending' || data.status === 'processing') {
+              if (data.message && messageEl) messageEl.textContent = data.message;
+              setTimeout(function() {
+                poll(statusUrl);
+              }, 2000);
+            } else {
+              stopDynamicNotice();
+              window.location.reload();
+            }
+          })
+          .catch(function() {
+            setTimeout(function() {
+              poll(statusUrl);
+            }, 5000);
+          });
+      }
+
+      function trigger(triggerUrl, feedbackId, retryAnalysisId) {
+        var csrfToken = container.querySelector('[name=csrfmiddlewaretoken]');
+        var headers = {
+          'X-Requested-With': 'XMLHttpRequest'
+        };
+        var params = [];
+        if (feedbackId) params.push('feedback_id=' + encodeURIComponent(feedbackId));
+        if (retryAnalysisId) params.push('retry_analysis_id=' + encodeURIComponent(retryAnalysisId));
+        var body = params.length ? params.join('&') : null;
+        if (body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        if (csrfToken) headers['X-CSRFToken'] = csrfToken.value;
+        fetch(triggerUrl, {
+            method: 'POST',
+            headers: headers,
+            body: body
+          })
+          .then(function(r) {
+            return r.json();
+          })
+          .then(function(data) {
+            if (!retryAnalysisId) {
+              var statusUrl = statusUrlTemplate.replace(PLACEHOLDER, data.analysis_id);
+              setTimeout(function() {
+                poll(statusUrl);
+              }, 2000);
+            }
+          });
+      }
+
+      // Consume the one-shot autostart params so a later reload doesn't re-trigger.
+      var url = new URL(window.location.href);
+      if (url.searchParams.has('autostart')) {
+        url.searchParams.delete('autostart');
+        url.searchParams.delete('feedback_id');
+        window.history.replaceState(null, '', url.pathname + url.search);
+      }
+
+      var existingStatusUrl = container.getAttribute('data-status-url');
+      if (existingStatusUrl) {
+        showGeneratingNotice();
+        startDynamicNotice();
+        setTimeout(function() {
+          poll(existingStatusUrl);
+        }, 2000);
+      }
+
+      var autostartUrl = container.getAttribute('data-autostart-url');
+      if (autostartUrl) {
+        showGeneratingNotice();
+        startDynamicNotice();
+        trigger(autostartUrl, container.getAttribute('data-autostart-feedback-id'));
+      }
+
+      var btn = document.getElementById('generate-report-btn');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          var triggerUrl = btn.getAttribute('data-trigger-url');
+          var retryAnalysisId = btn.getAttribute('data-retry-analysis-id');
+          showGeneratingNotice();
+          startDynamicNotice();
+          if (retryAnalysisId) {
+            poll(statusUrlTemplate.replace(PLACEHOLDER, retryAnalysisId));
+          }
+          trigger(triggerUrl, null, retryAnalysisId);
+        });
+      }
+    }());
+  </script>
 {% endblock inline_javascript %}

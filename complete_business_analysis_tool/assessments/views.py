@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views.generic import DetailView, FormView, ListView
 
 from complete_business_analysis_tool.clients.forms import ClientForm
@@ -80,7 +81,8 @@ class AssessmentEntryView(LoginRequiredMixin, FormView):
             self.request,
             f"Assessment for {assessment.client} completed successfully.",
         )
-        return redirect("assessments:list")
+        url = reverse("reports:report", kwargs={"pk": assessment.pk})
+        return redirect(f"{url}?autostart=1")
 
     def form_invalid(self, form):
         messages.error(

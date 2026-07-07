@@ -14,6 +14,19 @@ RECOMMENDATION_STRENGTH_THRESHOLD = 0.75
 RECOMMENDATION_MODERATE_THRESHOLD = 0.5
 
 
+class TruncatedResponseError(RuntimeError):
+    """Raised when the Anthropic API cuts off a tool-use response before completion."""
+
+
+def _create_tool_message(client: anthropic.Anthropic, **kwargs):
+    message = client.messages.create(**kwargs)
+    if message.stop_reason == "max_tokens":
+        tool_name = kwargs["tool_choice"]["name"]
+        msg = f"Response for tool '{tool_name}' was truncated (stop_reason=max_tokens)"
+        raise TruncatedResponseError(msg)
+    return message
+
+
 def generate_category_recommendations(  # noqa: PLR0913
     answers: list[dict],
     section_text: str,
@@ -294,7 +307,8 @@ def _default_category_section_client() -> Callable[[str], dict]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> dict:
-        message = client.messages.create(
+        message = _create_tool_message(
+            client,
             model="claude-sonnet-4-6",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
@@ -407,7 +421,8 @@ def _default_category_recommendations_client() -> Callable[[str], list]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> list:
-        message = client.messages.create(
+        message = _create_tool_message(
+            client,
             model="claude-sonnet-4-6",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
@@ -439,7 +454,8 @@ def _default_executive_summary_client() -> Callable[[str], str]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> str:
-        message = client.messages.create(
+        message = _create_tool_message(
+            client,
             model="claude-sonnet-4-6",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
@@ -471,7 +487,8 @@ def _default_recommendations_overview_client() -> Callable[[str], str]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> str:
-        message = client.messages.create(
+        message = _create_tool_message(
+            client,
             model="claude-sonnet-4-6",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
@@ -548,9 +565,10 @@ def _default_roadmap_client() -> Callable[[str], dict]:
     client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
 
     def call(prompt: str) -> dict:
-        message = client.messages.create(
+        message = _create_tool_message(
+            client,
             model="claude-sonnet-4-6",
-            max_tokens=8192,
+            max_tokens=16000,
             messages=[{"role": "user", "content": prompt}],
             tools=[_ROADMAP_TOOL],
             tool_choice={"type": "tool", "name": "record_roadmap"},

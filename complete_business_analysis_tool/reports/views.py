@@ -4,13 +4,19 @@ from json import dumps as json_dumps
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.db import transaction
 from django.http import HttpResponseForbidden, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import DetailView, FormView
 
 from complete_business_analysis_tool.analysis.models import Analysis
+from complete_business_analysis_tool.analysis.services import (
+    analysis_progress_message,
+    start_analysis,
+)
 from complete_business_analysis_tool.analysis.tasks import run_analysis
 from complete_business_analysis_tool.assessments.models import Assessment, Category
 from complete_business_analysis_tool.reports.forms import FeedbackForm
@@ -85,6 +91,9 @@ class ReportView(LoginRequiredMixin, DetailView):
             .order_by("-created_at")
             .first()
         )
+        context["latest_analysis"] = assessment.analyses.order_by("-created_at").first()
+        context["autostart"] = self.request.GET.get("autostart") == "1"
+        context["autostart_feedback_id"] = self.request.GET.get("feedback_id", "")
         return context
 
 
@@ -140,16 +149,8 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
                     category=category,
                     text=text,
                 )
-        analysis = Analysis(assessment=self.assessment, feedback=feedback)
-        try:
-            analysis.full_clean()
-        except ValidationError as e:
-            feedback.delete()
-            form.add_error(None, e)
-            return self.form_invalid(form)
-        analysis.save()
-        run_analysis.delay(str(analysis.pk))
-        return super().form_valid(form)
+        url = self.get_success_url()
+        return redirect(f"{url}?autostart=1&feedback_id={feedback.pk}")
 
 
 class UpdateAssessmentNameView(LoginRequiredMixin, View):
@@ -283,3 +284,46 @@ class PDFExportStatusView(LoginRequiredMixin, View):
         export = get_object_or_404(PDFExport, pk=pk)
         download_url = export.file.url if export.file else ""
         return JsonResponse({"status": export.status, "download_url": download_url})
+
+
+@method_decorator(transaction.non_atomic_requests, name="dispatch")
+class TriggerAnalysisView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        assessment = get_object_or_404(Assessment, pk=pk)
+
+        retry_analysis_id = request.POST.get("retry_analysis_id")
+        if retry_analysis_id:
+            analysis = get_object_or_404(
+                Analysis,
+                pk=retry_analysis_id,
+                assessment=assessment,
+            )
+            updated = Analysis.objects.filter(
+                pk=analysis.pk,
+                status=Analysis.Status.FAILED,
+            ).update(status=Analysis.Status.PENDING)
+            if updated:
+                run_analysis.delay(str(analysis.pk))
+            analysis.refresh_from_db()
+            return JsonResponse(
+                {"analysis_id": str(analysis.pk), "status": analysis.status},
+            )
+
+        feedback = None
+        feedback_id = request.POST.get("feedback_id")
+        if feedback_id:
+            feedback = get_object_or_404(Feedback, pk=feedback_id, assessment=assessment)
+        try:
+            analysis = start_analysis(assessment, feedback=feedback)
+        except ValidationError:
+            analysis = assessment.analyses.order_by("-created_at").first()
+        return JsonResponse({"analysis_id": str(analysis.pk), "status": analysis.status})
+
+
+class AnalysisStatusView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        analysis = get_object_or_404(Analysis, pk=pk)
+        data = {"status": analysis.status}
+        if analysis.status in (Analysis.Status.PENDING, Analysis.Status.PROCESSING):
+            data["message"] = analysis_progress_message(analysis)
+        return JsonResponse(data)
