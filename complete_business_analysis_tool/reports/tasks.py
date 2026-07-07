@@ -1,10 +1,11 @@
 import logging
 import re
-from datetime import date as date_cls
 
 from celery import shared_task
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.signing import TimestampSigner
+from django.utils import timezone
 
 from complete_business_analysis_tool.reports import pdf_service
 from complete_business_analysis_tool.reports.models import PDFExport
@@ -38,7 +39,7 @@ def generate_pdf_export(pdf_export_id: str) -> None:
         )
         company = _safe_name(export.assessment.client.business_name)
         title = _safe_name(export.assessment.name)
-        date_str = date_cls.today().strftime("%Y%m%d")
+        date_str = timezone.now().date().strftime("%Y%m%d")
         filename = f"{company}_{title}_{date_str}.pdf"
         export.file.save(filename, ContentFile(pdf_bytes), save=True)
     except Exception:
@@ -49,3 +50,22 @@ def generate_pdf_export(pdf_export_id: str) -> None:
 
     export.status = PDFExport.Status.COMPLETE
     export.save(update_fields=["status"])
+
+
+@shared_task()
+def fail_stale_pdf_exports() -> int:
+    """Recover PDFExport rows orphaned by a killed or crashed worker.
+
+    Same failure mode as analysis.tasks.fail_stale_analyses: a SIGKILLed
+    worker never runs the except block that would set status to FAILED.
+    """
+    cutoff = timezone.now() - settings.STALE_PROCESSING_THRESHOLD
+    stale = PDFExport.objects.filter(
+        status=PDFExport.Status.PROCESSING,
+        updated_at__lt=cutoff,
+    )
+    stale_ids = list(stale.values_list("pk", flat=True))
+    if stale_ids:
+        logger.warning("Marking stale processing PDF exports as failed: %s", stale_ids)
+        stale.update(status=PDFExport.Status.FAILED)
+    return len(stale_ids)

@@ -1,7 +1,9 @@
 import logging
 
 from celery import shared_task
+from django.conf import settings
 from django.db.models import Max
+from django.utils import timezone
 
 from complete_business_analysis_tool.analysis.models import Analysis, CategoryScore
 from complete_business_analysis_tool.analysis.scope import resolve_scope
@@ -277,3 +279,24 @@ def run_analysis(analysis_pk: str) -> None:
 
     analysis.status = Analysis.Status.COMPLETE
     analysis.save(update_fields=["status"])
+
+
+@shared_task()
+def fail_stale_analyses() -> int:
+    """Recover Analysis rows orphaned by a killed or crashed worker.
+
+    A Celery hard time limit (or an OOM/host crash) kills the worker process
+    with SIGKILL, which Python cannot catch, so run_analysis never gets a
+    chance to move status off PROCESSING. This periodic sweep is the only
+    thing that recovers those rows so the report can be retried.
+    """
+    cutoff = timezone.now() - settings.STALE_PROCESSING_THRESHOLD
+    stale = Analysis.objects.filter(
+        status=Analysis.Status.PROCESSING,
+        updated_at__lt=cutoff,
+    )
+    stale_ids = list(stale.values_list("pk", flat=True))
+    if stale_ids:
+        logger.warning("Marking stale processing analyses as failed: %s", stale_ids)
+        stale.update(status=Analysis.Status.FAILED)
+    return len(stale_ids)

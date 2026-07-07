@@ -44,7 +44,8 @@ media_root: /var/www/{{ project_name }}/mediafiles
 system_reserved_vcpus: 2 # headroom for OS, Redis, Celery Beat
 celery_vcpu_divisor: 4 # 1 Celery worker per N remaining vCPUs
 
-celery_task_time_limit: 300
+# Kept in sync with CELERY_TASK_TIME_LIMIT in config/settings/base.py
+celery_task_time_limit: 900
 
 # Auto-derived from server vCPU count (ansible_processor_vcpus)
 celery_workers: "{{ [((ansible_processor_vcpus - system_reserved_vcpus) // celery_vcpu_divisor) | int, 2] | max }}"

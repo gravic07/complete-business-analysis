@@ -2,6 +2,7 @@
 """Base settings to build other settings files upon."""
 
 import ssl
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -83,6 +84,7 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "django_celery_beat",
+    "django_celery_results",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -289,16 +291,16 @@ CELERY_BROKER_URL = REDIS_URL
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-use-ssl
 CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": ssl.CERT_NONE} if REDIS_SSL else None
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-result_backend
-CELERY_RESULT_BACKEND = REDIS_URL
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-use-ssl
-CELERY_REDIS_BACKEND_USE_SSL = CELERY_BROKER_USE_SSL
+# django-db (via django_celery_results) instead of Redis so task results —
+# including WorkerLostError failures from a SIGKILLed hard-time-limit task —
+# are visible and queryable in the Django admin.
+CELERY_RESULT_BACKEND = "django-db"
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-extended
 CELERY_RESULT_EXTENDED = True
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-backend-always-retry
-# https://github.com/celery/celery/pull/6122
-CELERY_RESULT_BACKEND_ALWAYS_RETRY = True
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-backend-max-retries
-CELERY_RESULT_BACKEND_MAX_RETRIES = 10
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-track-started
+# Surfaces a STARTED state in the admin so a running task can be told apart
+# from one that never got picked up by a worker.
+CELERY_TASK_TRACK_STARTED = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-accept_content
 CELERY_ACCEPT_CONTENT = ["json"]
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-task_serializer
@@ -306,13 +308,33 @@ CELERY_TASK_SERIALIZER = "json"
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-result_serializer
 CELERY_RESULT_SERIALIZER = "json"
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-time-limit
-# TODO: set to whatever value is adequate in your circumstances
-CELERY_TASK_TIME_LIMIT = 5 * 60
+# Report generation makes many sequential Claude calls (2 per category, plus
+# overview/summary/roadmap) and can legitimately run past a few minutes. A
+# hard time limit is enforced with SIGKILL, which can't be caught in Python —
+# the stale-processing watchdog (see analysis.tasks.fail_stale_analyses) is
+# what actually recovers a task killed this way.
+CELERY_TASK_TIME_LIMIT = 15 * 60
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-soft-time-limit
-# TODO: set to whatever value is adequate in your circumstances
-CELERY_TASK_SOFT_TIME_LIMIT = 60
+CELERY_TASK_SOFT_TIME_LIMIT = 13 * 60
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#beat-scheduler
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+# Synced into the DB by DatabaseScheduler on startup — further changes can be
+# made either here or via the PeriodicTask admin.
+CELERY_BEAT_SCHEDULE = {
+    "fail-stale-analyses": {
+        "task": "complete_business_analysis_tool.analysis.tasks.fail_stale_analyses",
+        "schedule": 15 * 60,
+    },
+    "fail-stale-pdf-exports": {
+        "task": "complete_business_analysis_tool.reports.tasks.fail_stale_pdf_exports",
+        "schedule": 15 * 60,
+    },
+}
+# Not a real Celery setting (no CELERY_ prefix) — used by
+# analysis.tasks.fail_stale_analyses and reports.tasks.fail_stale_pdf_exports
+# to recover rows orphaned by a SIGKILLed worker. Kept above the hard time
+# limit so it never fires on a task that's still legitimately running.
+STALE_PROCESSING_THRESHOLD = timedelta(minutes=20)
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#worker-send-task-events
 CELERY_WORKER_SEND_TASK_EVENTS = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std-setting-task_send_sent_event
