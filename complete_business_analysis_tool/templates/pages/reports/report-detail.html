@@ -247,11 +247,7 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
       (function() {
-        const data = {
-          {
-            chart_data | safe
-          }
-        };
+        const data = {{ chart_data | safe }};
         const labels = data.map(function(d) {
           return d.category;
         });
@@ -261,91 +257,32 @@
         const primary = '#00294f';
 
         new ApexCharts(document.getElementById('chart-bar'), {
-          chart: {
-            type: 'bar',
-            height: 320,
-            toolbar: {
-              show: false
-            }
-          },
-          series: [{
-            name: 'Score',
-            data: values
-          }],
-          xaxis: {
-            categories: labels
-          },
+          chart: { type: 'bar', height: 320, toolbar: { show: false } },
+          series: [{ name: 'Score', data: values }],
+          xaxis: { categories: labels },
           yaxis: {
             min: 0,
             max: 100,
-            labels: {
-              formatter: function(v) {
-                return v + '%';
-              }
-            },
+            labels: { formatter: function (v) { return v + '%'; } },
           },
           colors: [primary],
-          title: {
-            text: 'Category Scores',
-            align: 'center'
-          },
-          plotOptions: {
-            bar: {
-              borderRadius: 4
-            }
-          },
-          dataLabels: {
-            enabled: false
-          },
-          tooltip: {
-            y: {
-              formatter: function(v) {
-                return v + '%';
-              }
-            }
-          },
+          title: { text: 'Category Scores', align: 'center' },
+          plotOptions: { bar: { borderRadius: 4 } },
+          dataLabels: { enabled: false },
+          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
         }).render();
 
         new ApexCharts(document.getElementById('chart-radar'), {
-          chart: {
-            type: 'radar',
-            height: 450,
-            toolbar: {
-              show: false
-            }
-          },
-          series: [{
-            name: 'Score',
-            data: values
-          }],
-          xaxis: {
-            categories: labels
-          },
-          yaxis: {
-            show: false,
-            max: 100
-          },
-          fill: {
-            opacity: 0.3
-          },
+          chart: { type: 'radar', height: 450, toolbar: { show: false } },
+          series: [{ name: 'Score', data: values }],
+          xaxis: { categories: labels },
+          yaxis: { show: false, max: 100 },
+          fill: { opacity: 0.3 },
           colors: [primary],
-          stroke: {
-            width: 2
-          },
-          markers: {
-            size: 4
-          },
-          title: {
-            text: 'Holistic Business Visualization',
-            align: 'center'
-          },
-          tooltip: {
-            y: {
-              formatter: function(v) {
-                return v + '%';
-              }
-            }
-          },
+          stroke: { width: 2 },
+          markers: { size: 4 },
+          title: { text: 'Holistic Business Visualization', align: 'center' },
+          tooltip: { y: { formatter: function (v) { return v + '%'; } } },
         }).render();
       }());
     </script>
