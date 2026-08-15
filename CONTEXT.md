@@ -3,7 +3,13 @@
 ## Glossary
 
 ### Assessment
-A completed set of answers submitted by an advisor on behalf of a Client, based on an AssessmentTemplate. An Assessment is the starting point for all analysis. It is immutable once submitted — answers are preserved via snapshots.
+A set of answers and optional per-Category Guidance entered by an advisor on behalf of a Client, based on an AssessmentTemplate. Created as soon as the advisor selects a Client and AssessmentTemplate — its lifecycle is tracked by Assessment Status. Only once marked Complete does it become immutable and serve as the starting point for Analysis; answers are preserved via snapshots from that point on.
+
+### Assessment Status
+Tracks an Assessment's progress through `draft → in_progress → complete`. `draft` is set at creation, before the advisor has started either the Guidance step or the questions. `in_progress` is set automatically once either step has been started. `complete` is set only by an explicit advisor action ("Mark Complete") — never inferred from finishing a step — and requires both the Guidance step and all questions to be done first. Marking an Assessment Complete triggers its first Analysis run. The Guidance step and the questions can be completed in either order; nothing about their sequence is enforced.
+
+### CategoryGuidance
+Optional free-text guidance an advisor provides for a Category, entered during the Assessment's Guidance step — a step that is mandatory to submit (even with every field left blank) before an Assessment can be marked Complete, though each individual Category's text is optional. Used to steer AI generation toward areas the standard Questions don't cover, or to push emphasis toward specific topics within a Category. Distinct from Feedback: Guidance is forward-looking context supplied before the Report exists and is included in every Analysis run for the Assessment's lifetime (initial run and all later re-analyses); Feedback is corrective input supplied after reviewing a generated Report, addressed to content that already exists. The two are labeled separately in generation prompts rather than merged. A CategoryGuidance record is created only for Categories where the advisor actually entered text. Editable freely while the Assessment is `draft` or `in_progress`; locked once the Assessment is `complete`.
 
 ### Analysis
 A single run of the scoring and AI-generation process against an Assessment. Stored as a persistent record. Inputs include: computed scores (total + per-category), question/answer content, and any Feedback from a prior Report. Produces exactly one Report. An Assessment can have many Analysis runs over its lifetime.
@@ -100,6 +106,7 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 
 - `Client` has many `Assessments`
 - `Assessment` has many `Analysis` runs
+- `Assessment` has many `CategoryGuidance` records (one per Category the advisor entered guidance for)
 - `Analysis` belongs to one `Assessment`, optionally references one `Feedback` (null on first run)
 - `Analysis` produces many `CategoryScore` records, many `CategorySection` records, one `ExecutiveSummary`, many `CategoryRecommendations` records, one `RecommendationsOverview`, and one `Roadmap`
 - `CategorySection` belongs to one `Analysis` and one `Category`
@@ -120,7 +127,8 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 ### `assessments` app
 | Model | Key Fields |
 |---|---|
-| `Assessment` | `template` FK, `client` FK, `name` (short label, defaults to "Initial Report", shown on PDF cover and header) |
+| `Assessment` | `template` FK, `client` FK, `name` (short label, defaults to "Initial Report", shown on PDF cover and header), `status` (draft/in_progress/complete), `guidance_submitted_at` (nullable, set when the Guidance step is submitted) |
+| `CategoryGuidance` | `assessment` FK, `category` FK, `text` TextField |
 
 ### `analysis` app
 | Model | Key Fields |
@@ -153,3 +161,4 @@ The ExecutiveSummary regenerates whenever any CategorySection changes — not on
 - All generated content is written in third person, referring to the business by name ("Acme Corp is currently...", "Acme Corp's approach...") — never in second person ("your business", "you are currently..."). The business name is passed to every generation call from `Client.business_name`.
 - CategoryRecommendations prompts use a start/stop/continue lens as a soft generative guide — not a structural label. The model is instructed to consider what the business should start doing, stop doing, and continue doing, with the balance weighted by category performance. High-scoring categories emphasise continuation; low-scoring categories emphasise change. Every set of 7 must include all three types of guidance.
 - Business Profile (company size, revenue, corporate style) is injected as qualitative context into CategorySection and CategoryRecommendations prompts only — the leaf-level generation calls. The ExecutiveSummary and RecommendationsOverview inherit this context implicitly through the content they synthesize.
+- CategoryGuidance is labeled separately from advisor Feedback in generation prompts (e.g. "Advisor guidance provided before the assessment" vs. "Advisor feedback to incorporate") rather than merged into one combined string — the two carry different intent and the model should not conflate "focus on this area" with "this needs to change."
