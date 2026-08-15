@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Assessment lifecycle schema and completion readiness checker
 
@@ -18,16 +18,16 @@ Foundational schema and pure logic that the rest of the Category Guidance featur
 
 ## Acceptance criteria
 
-- [ ] `Assessment.status` field exists with choices `draft`/`in_progress`/`complete`, defaulting to `draft`
-- [ ] `Assessment.guidance_submitted_at` exists as a nullable `DateTimeField`
-- [ ] `CategoryGuidance` model exists with `assessment` FK (`related_name="category_guidance"`), `category` FK, `text` TextField, and is registered in Django admin
-- [ ] Migration applies cleanly and backfills every existing `Assessment` to `status="complete"`, `guidance_submitted_at=created_at`
-- [ ] Backfill migration creates no `CategoryGuidance` rows
-- [ ] `assessment_completion_status()` returns ineligible with a reason when `guidance_submitted_at` is null, regardless of answer completeness
-- [ ] `assessment_completion_status()` returns ineligible with a reason when one or more template questions have no `Answer`, regardless of `guidance_submitted_at`
-- [ ] `assessment_completion_status()` returns ineligible with both reasons when neither condition is met
-- [ ] `assessment_completion_status()` returns eligible when `guidance_submitted_at` is set and every template question has an `Answer`
-- [ ] Unit tests for the readiness checker use factories, no view/request involved
+- [x] `Assessment.status` field exists with choices `draft`/`in_progress`/`complete`, defaulting to `draft`
+- [x] `Assessment.guidance_submitted_at` exists as a nullable `DateTimeField`
+- [x] `CategoryGuidance` model exists with `assessment` FK (`related_name="category_guidance"`), `category` FK, `text` TextField, and is registered in Django admin
+- [x] Migration applies cleanly and backfills every existing `Assessment` to `status="complete"`, `guidance_submitted_at=created_at`
+- [x] Backfill migration creates no `CategoryGuidance` rows
+- [x] `assessment_completion_status()` returns ineligible with a reason when `guidance_submitted_at` is null, regardless of answer completeness
+- [x] `assessment_completion_status()` returns ineligible with a reason when one or more template questions have no `Answer`, regardless of `guidance_submitted_at`
+- [x] `assessment_completion_status()` returns ineligible with both reasons when neither condition is met
+- [x] `assessment_completion_status()` returns eligible when `guidance_submitted_at` is set and every template question has an `Answer`
+- [x] Unit tests for the readiness checker use factories, no view/request involved
 
 ## Blocked by
 

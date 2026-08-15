@@ -10,6 +10,7 @@ from complete_business_analysis_tool.assessments.models import (
     Category,
     Question,
     QuestionOption,
+    TemplateQuestion,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
 
@@ -42,6 +43,14 @@ class QuestionFactory(DjangoModelFactory[Question]):
 
     class Meta:
         model = Question
+
+
+class TemplateQuestionFactory(DjangoModelFactory[TemplateQuestion]):
+    template = SubFactory(AssessmentTemplateFactory)
+    question = SubFactory(QuestionFactory)
+
+    class Meta:
+        model = TemplateQuestion
 
 
 class QuestionOptionFactory(DjangoModelFactory[QuestionOption]):

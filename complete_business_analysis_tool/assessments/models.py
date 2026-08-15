@@ -91,6 +91,11 @@ class TemplateQuestion(BaseModel):
 class Assessment(BaseModel):
     """A completed or in-progress instance of an assessment template."""
 
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        IN_PROGRESS = "in_progress", "In progress"
+        COMPLETE = "complete", "Complete"
+
     name = models.CharField(max_length=100, default="Initial Report")
     template = models.ForeignKey(
         "AssessmentTemplate",
@@ -102,6 +107,12 @@ class Assessment(BaseModel):
         on_delete=models.CASCADE,
         related_name="assessments",
     )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
+    guidance_submitted_at = models.DateTimeField(null=True, blank=True)
 
     @property
     def total_score(self) -> int:
@@ -144,3 +155,25 @@ class Answer(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.assessment} — {self.question_snapshot[:60]}"
+
+
+class CategoryGuidance(BaseModel):
+    """Free-text guidance captured for a single category within an assessment."""
+
+    assessment = models.ForeignKey(
+        "Assessment",
+        on_delete=models.CASCADE,
+        related_name="category_guidance",
+    )
+    category = models.ForeignKey(
+        "Category",
+        on_delete=models.PROTECT,
+        related_name="category_guidance",
+    )
+    text = models.TextField()
+
+    class Meta:
+        unique_together = [["assessment", "category"]]
+
+    def __str__(self) -> str:
+        return f"{self.assessment} — {self.category}"

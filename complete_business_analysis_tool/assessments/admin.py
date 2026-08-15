@@ -5,6 +5,7 @@ from .models import (
     Assessment,
     AssessmentTemplate,
     Category,
+    CategoryGuidance,
     Question,
     QuestionOption,
     TemplateQuestion,
@@ -82,11 +83,24 @@ class AssessmentTemplateAdmin(admin.ModelAdmin):
         return obj.assessments.count()
 
 
+class CategoryGuidanceInline(admin.TabularInline):
+    model = CategoryGuidance
+    fields = ["category", "text"]
+    extra = 0
+
+
 @admin.register(Assessment)
 class AssessmentAdmin(admin.ModelAdmin):
-    inlines = [AnswerInline]
-    list_display = ["__str__", "client", "template", "answer_count", "created_at"]
-    list_filter = ["template", "client__industry"]
+    inlines = [AnswerInline, CategoryGuidanceInline]
+    list_display = [
+        "__str__",
+        "client",
+        "template",
+        "status",
+        "answer_count",
+        "created_at",
+    ]
+    list_filter = ["status", "template", "client__industry"]
     search_fields = ["client__business_name", "template__title"]
     readonly_fields = ["id", "created_at", "updated_at"]
     date_hierarchy = "created_at"
