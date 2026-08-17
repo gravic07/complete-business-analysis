@@ -8,7 +8,7 @@ from complete_business_analysis_tool.reports.models import RecommendationsOvervi
 
 @pytest.mark.django_db
 def test_recommendations_overview_can_be_created():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
     overview = RecommendationsOverview.objects.create(
         analysis=analysis,
         content="Action-focused recommendations overview.",
@@ -19,7 +19,7 @@ def test_recommendations_overview_can_be_created():
 
 @pytest.mark.django_db
 def test_recommendations_overview_unique_per_analysis():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
     RecommendationsOverview.objects.create(analysis=analysis, content="first")
     with pytest.raises(IntegrityError):
         RecommendationsOverview.objects.create(analysis=analysis, content="second")

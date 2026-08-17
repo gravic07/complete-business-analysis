@@ -24,11 +24,15 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 def _make_assessment_with_category():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
     return assessment, category
 
 
@@ -78,13 +82,13 @@ def _make_report(assessment, monkeypatch):
 
 def _authed_client(user=None):
     c = Client()
-    c.force_login(user or UserFactory())
+    c.force_login(user or UserFactory.create())
     return c
 
 
 @pytest.mark.django_db
 def test_report_view_redirects_unauthenticated_user():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     client = Client()
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = client.get(url)
@@ -117,7 +121,7 @@ def test_report_view_context_has_executive_summary_and_category_sections(monkeyp
 
 @pytest.mark.django_db
 def test_report_view_executive_summary_none_when_no_analysis(monkeypatch):
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = _authed_client().get(url)
@@ -225,7 +229,7 @@ def test_report_view_context_has_recommendations_overview(monkeypatch):
 
 @pytest.mark.django_db
 def test_report_view_recommendations_overview_none_when_no_analysis():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = _authed_client().get(url)
@@ -292,7 +296,7 @@ def test_report_view_context_has_roadmap(monkeypatch):
 
 @pytest.mark.django_db
 def test_report_view_roadmap_none_when_no_analysis():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = _authed_client().get(url)
@@ -313,7 +317,7 @@ def test_report_view_renders_roadmap_section_when_roadmap_exists(monkeypatch):
 
 @pytest.mark.django_db
 def test_report_view_does_not_render_roadmap_section_when_no_roadmap():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     content = _authed_client().get(url).content.decode()
@@ -408,7 +412,7 @@ def test_report_view_renders_closing_reflections(monkeypatch):
 
 @pytest.mark.django_db
 def test_report_view_context_has_complete_analysis_true_when_complete_analysis_exists():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
@@ -419,7 +423,7 @@ def test_report_view_context_has_complete_analysis_true_when_complete_analysis_e
 
 @pytest.mark.django_db
 def test_report_view_context_has_complete_analysis_false_when_no_complete_analysis():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
@@ -430,7 +434,7 @@ def test_report_view_context_has_complete_analysis_false_when_no_complete_analys
 
 @pytest.mark.django_db
 def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     export = PDFExport.objects.create(
         assessment=assessment,
         status=PDFExport.Status.COMPLETE,
@@ -444,7 +448,7 @@ def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
 
 @pytest.mark.django_db
 def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     PDFExport.objects.create(assessment=assessment, status=PDFExport.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
@@ -455,7 +459,7 @@ def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist(
 
 @pytest.mark.django_db
 def test_report_view_renders_generate_pdf_button_when_complete_analysis_exists():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
@@ -466,7 +470,7 @@ def test_report_view_renders_generate_pdf_button_when_complete_analysis_exists()
 
 @pytest.mark.django_db
 def test_report_view_omits_generate_pdf_button_when_no_complete_analysis():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})

@@ -10,8 +10,8 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 @pytest.mark.django_db
 def test_post_valid_name_saves_and_returns_200():
-    assessment = AssessmentFactory()
-    user = UserFactory()
+    assessment = AssessmentFactory.create()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 
@@ -25,8 +25,8 @@ def test_post_valid_name_saves_and_returns_200():
 
 @pytest.mark.django_db
 def test_post_empty_name_is_rejected():
-    assessment = AssessmentFactory(name="Original Name")
-    user = UserFactory()
+    assessment = AssessmentFactory.create(name="Original Name")
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 

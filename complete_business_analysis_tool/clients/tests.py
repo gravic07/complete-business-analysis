@@ -9,10 +9,10 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 @pytest.mark.django_db
 def test_client_detail_includes_report_link_for_each_assessment():
-    client_obj = ClientFactory()
-    assessment = AssessmentFactory(client=client_obj)
+    client_obj = ClientFactory.create()
+    assessment = AssessmentFactory.create(client=client_obj)
 
-    user = UserFactory()
+    user = UserFactory.create()
     http_client = Client()
     http_client.force_login(user)
 

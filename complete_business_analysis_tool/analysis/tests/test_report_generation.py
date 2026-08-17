@@ -38,11 +38,15 @@ def test_orchestrator_calls_generate_category_section_not_generate_section(monke
         lambda **kwargs: "overall",
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -70,11 +74,15 @@ def test_orchestrator_calls_generate_executive_summary_with_category_sections(
         capture_overall,
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -87,15 +95,15 @@ def test_orchestrator_calls_generate_executive_summary_with_category_sections(
 
 
 def _make_two_category_assessment():
-    cat_a = CategoryFactory(name="Alpha")
-    cat_b = CategoryFactory(name="Beta")
-    q_a = QuestionFactory(category=cat_a)
-    q_b = QuestionFactory(category=cat_b)
-    opt_a = QuestionOptionFactory(question=q_a, rank=1, weight=Decimal("1.0000"))
-    opt_b = QuestionOptionFactory(question=q_b, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=q_a, selected_option=opt_a)
-    AnswerFactory(assessment=assessment, question=q_b, selected_option=opt_b)
+    cat_a = CategoryFactory.create(name="Alpha")
+    cat_b = CategoryFactory.create(name="Beta")
+    q_a = QuestionFactory.create(category=cat_a)
+    q_b = QuestionFactory.create(category=cat_b)
+    opt_a = QuestionOptionFactory.create(question=q_a, rank=1, weight=Decimal("1.0000"))
+    opt_b = QuestionOptionFactory.create(question=q_b, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=q_a, selected_option=opt_a)
+    AnswerFactory.create(assessment=assessment, question=q_b, selected_option=opt_b)
     return assessment, cat_a, cat_b
 
 
@@ -172,11 +180,15 @@ def test_task_creates_one_report_section_per_category_plus_overall(monkeypatch):
         lambda **kwargs: "Generated narrative",
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=3, weight=Decimal("2.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=3,
+        weight=Decimal("2.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -201,14 +213,14 @@ def test_task_creates_separate_sections_for_two_categories(monkeypatch):
         lambda **kwargs: "Generated narrative",
     )
 
-    cat_a = CategoryFactory()
-    cat_b = CategoryFactory()
-    assessment = AssessmentFactory()
+    cat_a = CategoryFactory.create()
+    cat_b = CategoryFactory.create()
+    assessment = AssessmentFactory.create()
 
     for cat in (cat_a, cat_b):
-        q = QuestionFactory(category=cat)
-        opt = QuestionOptionFactory(question=q, rank=2, weight=Decimal("1.0000"))
-        AnswerFactory(assessment=assessment, question=q, selected_option=opt)
+        q = QuestionFactory.create(category=cat)
+        opt = QuestionOptionFactory.create(question=q, rank=2, weight=Decimal("1.0000"))
+        AnswerFactory.create(assessment=assessment, question=q, selected_option=opt)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -238,11 +250,15 @@ def test_report_sections_are_never_updated_after_creation(monkeypatch):
         lambda **kwargs: "overall",
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis1 = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis1.pk)
@@ -286,11 +302,15 @@ def test_executive_summary_receives_labeled_concatenated_text_per_category(monke
         capture_overall,
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -322,11 +342,15 @@ def test_prior_section_fields_passed_on_reanalysis(monkeypatch):
         lambda **kwargs: "overall",
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis1 = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis1.pk)
@@ -364,11 +388,15 @@ def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
         capture_overall,
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     feedback = Feedback.objects.create(
         assessment=assessment,
@@ -416,11 +444,15 @@ def _patch_ai(monkeypatch, cat_recs_return=None):
 def test_orchestrator_creates_one_category_recommendations_per_category(monkeypatch):
     _patch_ai(monkeypatch)
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -436,11 +468,15 @@ def test_orchestrator_creates_one_category_recommendations_per_category(monkeypa
 def test_orchestrator_category_recommendations_idempotent(monkeypatch):
     _patch_ai(monkeypatch)
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -489,11 +525,15 @@ def test_orchestrator_partial_reanalysis_creates_recommendations_only_for_in_sco
 def test_orchestrator_creates_one_recommendations_overview_per_analysis(monkeypatch):
     _patch_ai(monkeypatch)
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -505,11 +545,15 @@ def test_orchestrator_creates_one_recommendations_overview_per_analysis(monkeypa
 def test_orchestrator_recommendations_overview_idempotent(monkeypatch):
     _patch_ai(monkeypatch)
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)

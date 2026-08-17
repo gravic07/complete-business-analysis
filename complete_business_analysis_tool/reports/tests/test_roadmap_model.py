@@ -8,7 +8,7 @@ from complete_business_analysis_tool.reports.models import Roadmap
 
 @pytest.mark.django_db
 def test_roadmap_can_be_created():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
     roadmap = Roadmap.objects.create(
         analysis=analysis,
         months=[
@@ -36,7 +36,7 @@ def test_roadmap_can_be_created():
 
 @pytest.mark.django_db
 def test_roadmap_unique_per_analysis():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
     Roadmap.objects.create(
         analysis=analysis,
         months=[],

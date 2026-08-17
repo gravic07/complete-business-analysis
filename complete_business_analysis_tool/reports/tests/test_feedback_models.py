@@ -9,7 +9,7 @@ from complete_business_analysis_tool.reports.models import CategoryFeedback, Fee
 
 @pytest.mark.django_db
 def test_feedback_requires_only_assessment():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     feedback = Feedback.objects.create(assessment=assessment)
     assert feedback.pk is not None
     assert feedback.report_feedback == ""
@@ -17,7 +17,7 @@ def test_feedback_requires_only_assessment():
 
 @pytest.mark.django_db
 def test_feedback_stores_report_feedback():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     feedback = Feedback.objects.create(
         assessment=assessment,
         report_feedback="Needs more detail in financials.",
@@ -27,8 +27,8 @@ def test_feedback_stores_report_feedback():
 
 @pytest.mark.django_db
 def test_category_feedback_links_feedback_and_category():
-    assessment = AssessmentFactory()
-    category = CategoryFactory()
+    assessment = AssessmentFactory.create()
+    category = CategoryFactory.create()
     feedback = Feedback.objects.create(assessment=assessment)
     cf = CategoryFeedback.objects.create(
         feedback=feedback,

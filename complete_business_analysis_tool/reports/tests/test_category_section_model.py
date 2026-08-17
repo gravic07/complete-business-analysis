@@ -11,8 +11,8 @@ from complete_business_analysis_tool.reports.models import CategorySection
 
 @pytest.mark.django_db
 def test_category_section_can_be_created():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
-    category = CategoryFactory()
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
+    category = CategoryFactory.create()
     section = CategorySection.objects.create(
         analysis=analysis,
         category=category,
@@ -28,7 +28,7 @@ def test_category_section_can_be_created():
 
 @pytest.mark.django_db
 def test_category_section_category_is_required():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
     with pytest.raises(IntegrityError):
         CategorySection.objects.create(
             analysis=analysis,
@@ -41,8 +41,8 @@ def test_category_section_category_is_required():
 
 @pytest.mark.django_db
 def test_category_section_unique_per_analysis_category():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
-    category = CategoryFactory()
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
+    category = CategoryFactory.create()
     CategorySection.objects.create(
         analysis=analysis,
         category=category,

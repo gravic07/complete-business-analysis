@@ -13,12 +13,12 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 def _authed_client(user=None):
     c = Client()
-    c.force_login(user or UserFactory())
+    c.force_login(user or UserFactory.create())
     return c
 
 
 def _make_export(status=PDFExport.Status.PENDING, file=None):
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     return PDFExport.objects.create(assessment=assessment, status=status)
 
 

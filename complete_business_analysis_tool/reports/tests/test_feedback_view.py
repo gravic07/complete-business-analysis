@@ -18,11 +18,15 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 def _make_assessment_with_category():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
     return assessment, category
 
 
@@ -45,7 +49,7 @@ def test_post_overall_feedback_creates_feedback_and_redirects_to_autostart_analy
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 
@@ -75,7 +79,7 @@ def test_post_category_feedback_creates_category_feedback_record(monkeypatch):
     _stub_task(monkeypatch)
     assessment, category = _make_assessment_with_category()
 
-    user = UserFactory()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 
@@ -98,7 +102,7 @@ def test_post_empty_feedback_is_rejected(monkeypatch):
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 
@@ -117,7 +121,7 @@ def test_submit_feedback_view_context_has_executive_summary_and_category_section
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 
@@ -141,7 +145,7 @@ def test_post_feedback_allowed_when_analysis_active_but_autostart_does_not_dupli
         status=Analysis.Status.PENDING,
     )
 
-    user = UserFactory()
+    user = UserFactory.create()
     client = Client()
     client.force_login(user)
 

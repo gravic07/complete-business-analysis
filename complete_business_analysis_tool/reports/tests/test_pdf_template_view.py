@@ -25,11 +25,15 @@ def _signed_token(assessment_pk):
 
 
 def _make_assessment_with_category(category_name="Finance"):
-    category = CategoryFactory(name=category_name)
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create(name=category_name)
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
     return assessment, category
 
 
@@ -77,7 +81,7 @@ def _make_report(assessment, monkeypatch):
 
 def _authed_client(user=None):
     c = Client()
-    c.force_login(user or UserFactory())
+    c.force_login(user or UserFactory.create())
     return c
 
 

@@ -11,8 +11,8 @@ from complete_business_analysis_tool.reports.models import CategoryRecommendatio
 
 @pytest.mark.django_db
 def test_category_recommendations_can_be_created():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
-    category = CategoryFactory()
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
+    category = CategoryFactory.create()
 
     rec = CategoryRecommendations.objects.create(
         analysis=analysis,
@@ -34,7 +34,7 @@ def test_category_recommendations_can_be_created():
 
 @pytest.mark.django_db
 def test_category_recommendations_category_is_required():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
 
     with pytest.raises(IntegrityError):
         CategoryRecommendations.objects.create(
@@ -46,8 +46,8 @@ def test_category_recommendations_category_is_required():
 
 @pytest.mark.django_db
 def test_category_recommendations_unique_per_analysis_category():
-    analysis = Analysis.objects.create(assessment=AssessmentFactory())
-    category = CategoryFactory()
+    analysis = Analysis.objects.create(assessment=AssessmentFactory.create())
+    category = CategoryFactory.create()
     recs = ["r1", "r2", "r3", "r4", "r5", "r6", "r7"]
 
     CategoryRecommendations.objects.create(

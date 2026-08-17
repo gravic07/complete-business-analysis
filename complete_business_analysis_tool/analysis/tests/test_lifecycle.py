@@ -24,7 +24,7 @@ from complete_business_analysis_tool.reports.queries import latest_roadmap
 
 @pytest.mark.django_db
 def test_analysis_starts_in_pending_status():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     analysis = Analysis.objects.create(assessment=assessment)
     assert analysis.status == Analysis.Status.PENDING
 
@@ -39,7 +39,7 @@ def test_run_analysis_task_transitions_to_complete(monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     analysis = Analysis.objects.create(assessment=assessment)
 
     run_analysis(analysis.pk)
@@ -50,7 +50,7 @@ def test_run_analysis_task_transitions_to_complete(monkeypatch):
 
 @pytest.mark.django_db
 def test_cannot_create_second_active_analysis_for_same_assessment():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
 
     duplicate = Analysis(assessment=assessment, status=Analysis.Status.PENDING)
@@ -68,11 +68,15 @@ def test_task_persists_category_scores_and_total(monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=3, weight=Decimal("2.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=3,
+        weight=Decimal("2.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -89,7 +93,7 @@ def test_task_persists_category_scores_and_total(monkeypatch):
 
 @pytest.mark.django_db
 def test_run_analysis_task_transitions_to_failed_on_error(monkeypatch):
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     analysis = Analysis.objects.create(assessment=assessment)
 
     def boom():
@@ -109,15 +113,15 @@ def test_run_analysis_task_transitions_to_failed_on_error(monkeypatch):
 
 def _make_two_category_assessment():
     """Assessment with two categories, one question + answer each."""
-    cat_a = CategoryFactory(name="Alpha")
-    cat_b = CategoryFactory(name="Beta")
-    q_a = QuestionFactory(category=cat_a)
-    q_b = QuestionFactory(category=cat_b)
-    opt_a = QuestionOptionFactory(question=q_a, rank=1, weight=Decimal("1.0000"))
-    opt_b = QuestionOptionFactory(question=q_b, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=q_a, selected_option=opt_a)
-    AnswerFactory(assessment=assessment, question=q_b, selected_option=opt_b)
+    cat_a = CategoryFactory.create(name="Alpha")
+    cat_b = CategoryFactory.create(name="Beta")
+    q_a = QuestionFactory.create(category=cat_a)
+    q_b = QuestionFactory.create(category=cat_b)
+    opt_a = QuestionOptionFactory.create(question=q_a, rank=1, weight=Decimal("1.0000"))
+    opt_b = QuestionOptionFactory.create(question=q_b, rank=1, weight=Decimal("1.0000"))
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=q_a, selected_option=opt_a)
+    AnswerFactory.create(assessment=assessment, question=q_b, selected_option=opt_b)
     return assessment, cat_a, cat_b
 
 
@@ -292,11 +296,15 @@ def test_rerunning_same_analysis_does_not_create_duplicate_sections(monkeypatch)
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -370,11 +378,15 @@ def test_failed_analysis_transitions_back_to_processing_on_retry(monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         lambda **kwargs: "stub",
     )
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(
         assessment=assessment,
@@ -407,11 +419,15 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
         "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
         capture_overall,
     )
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     # Simulate partial failure: all category sections done, overall not yet created
@@ -446,11 +462,15 @@ def test_preexisting_overall_section_is_skipped_on_retry(monkeypatch):
 
 @pytest.mark.django_db
 def test_run_analysis_creates_roadmap():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -462,11 +482,15 @@ def test_run_analysis_creates_roadmap():
 
 @pytest.mark.django_db
 def test_roadmap_has_twelve_months_with_non_empty_lists():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis.pk)
@@ -481,11 +505,15 @@ def test_roadmap_has_twelve_months_with_non_empty_lists():
 
 @pytest.mark.django_db
 def test_second_analysis_run_creates_new_roadmap():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis1 = Analysis.objects.create(assessment=assessment)
     run_analysis(analysis1.pk)
@@ -543,11 +571,15 @@ def test_preexisting_roadmap_is_skipped_on_retry(monkeypatch):
         capture_roadmap,
     )
 
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question, rank=1, weight=Decimal("1.0000"))
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
 
     analysis = Analysis.objects.create(assessment=assessment)
     # Simulate retry: Roadmap already written before the crash

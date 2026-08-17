@@ -18,13 +18,13 @@ from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 @pytest.mark.django_db
 def test_assessment_name_defaults_to_initial_report():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     assert assessment.name == "Initial Report"
 
 
 @pytest.mark.django_db
 def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
-    assessment = AssessmentFactory()
+    assessment = AssessmentFactory.create()
     analysis1 = Analysis.objects.create(
         assessment=assessment,
         status=Analysis.Status.COMPLETE,
@@ -34,7 +34,7 @@ def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
         status=Analysis.Status.FAILED,
     )
 
-    user = UserFactory()
+    user = UserFactory.create()
     http_client = Client()
     http_client.force_login(user)
 
@@ -49,10 +49,10 @@ def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
 
 @pytest.mark.django_db
 def test_completion_status_ineligible_when_guidance_not_submitted_even_if_answered():
-    assessment = AssessmentFactory(guidance_submitted_at=None)
-    question = QuestionFactory()
-    TemplateQuestionFactory(template=assessment.template, question=question)
-    AnswerFactory(assessment=assessment, question=question)
+    assessment = AssessmentFactory.create(guidance_submitted_at=None)
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=assessment.template, question=question)
+    AnswerFactory.create(assessment=assessment, question=question)
 
     status = assessment_completion_status(assessment)
 
@@ -63,9 +63,9 @@ def test_completion_status_ineligible_when_guidance_not_submitted_even_if_answer
 
 @pytest.mark.django_db
 def test_completion_status_ineligible_when_unanswered_despite_guidance_submitted():
-    assessment = AssessmentFactory(guidance_submitted_at=timezone.now())
-    question = QuestionFactory()
-    TemplateQuestionFactory(template=assessment.template, question=question)
+    assessment = AssessmentFactory.create(guidance_submitted_at=timezone.now())
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=assessment.template, question=question)
 
     status = assessment_completion_status(assessment)
 
@@ -76,9 +76,9 @@ def test_completion_status_ineligible_when_unanswered_despite_guidance_submitted
 
 @pytest.mark.django_db
 def test_completion_status_ineligible_with_both_reasons_when_neither_condition_met():
-    assessment = AssessmentFactory(guidance_submitted_at=None)
-    question = QuestionFactory()
-    TemplateQuestionFactory(template=assessment.template, question=question)
+    assessment = AssessmentFactory.create(guidance_submitted_at=None)
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=assessment.template, question=question)
 
     status = assessment_completion_status(assessment)
 
@@ -89,10 +89,10 @@ def test_completion_status_ineligible_with_both_reasons_when_neither_condition_m
 
 @pytest.mark.django_db
 def test_completion_status_eligible_when_guidance_submitted_and_all_questions_answered():
-    assessment = AssessmentFactory(guidance_submitted_at=timezone.now())
-    question = QuestionFactory()
-    TemplateQuestionFactory(template=assessment.template, question=question)
-    AnswerFactory(assessment=assessment, question=question)
+    assessment = AssessmentFactory.create(guidance_submitted_at=timezone.now())
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=assessment.template, question=question)
+    AnswerFactory.create(assessment=assessment, question=question)
 
     status = assessment_completion_status(assessment)
 

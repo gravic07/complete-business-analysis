@@ -15,11 +15,11 @@ from complete_business_analysis_tool.reports.tasks import generate_pdf_export
 
 
 def _make_assessment():
-    category = CategoryFactory()
-    question = QuestionFactory(category=category)
-    option = QuestionOptionFactory(question=question)
-    assessment = AssessmentFactory()
-    AnswerFactory(assessment=assessment, question=question, selected_option=option)
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(question=question)
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
     return assessment
 
 
