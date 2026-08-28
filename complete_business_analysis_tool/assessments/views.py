@@ -10,7 +10,7 @@ from django.views.generic import DetailView, FormView, ListView
 
 from complete_business_analysis_tool.clients.forms import ClientForm
 
-from .forms import AssessmentEntryForm
+from .forms import AssessmentEntryForm, AssessmentStartForm
 from .models import Assessment, AssessmentTemplate
 
 
@@ -44,6 +44,39 @@ class AssessmentTemplateListView(LoginRequiredMixin, ListView):
     template_name = "pages/assessments/assessment-list.html"
     context_object_name = "templates"
     ordering = ["title"]
+
+
+class AssessmentStartView(LoginRequiredMixin, FormView):
+    template_name = "pages/assessments/assessment-start.html"
+    form_class = AssessmentStartForm
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.assessment_template = get_object_or_404(
+            AssessmentTemplate,
+            pk=kwargs["pk"],
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["template"] = self.assessment_template
+        return kwargs
+
+    def get_initial(self):
+        initial = super().get_initial()
+        client_id = self.request.GET.get("client")
+        if client_id:
+            initial["client"] = client_id
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["assessment_template"] = self.assessment_template
+        return context
+
+    def form_valid(self, form):
+        assessment = form.save()
+        return redirect("assessments:detail", pk=assessment.pk)
 
 
 class AssessmentEntryView(LoginRequiredMixin, FormView):

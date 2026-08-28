@@ -11,6 +11,33 @@ from .models import Answer, Assessment, AssessmentTemplate, QuestionOption
 from .widgets import RankedRadioSelect
 
 
+class AssessmentStartForm(forms.Form):
+    """Minimal form for creating a draft Assessment from a client selection.
+
+    The template is fixed at construction time (from the URL); this form only
+    collects the client.
+    """
+
+    client = forms.ModelChoiceField(
+        queryset=None,
+        label="Client",
+        empty_label="-- Select a client --",
+        widget=forms.Select(attrs={"class": "input"}),
+    )
+
+    def __init__(self, *args, template: AssessmentTemplate, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.template = template
+        self.fields["client"].queryset = Client.objects.order_by("business_name")
+
+    def save(self) -> Assessment:
+        """Create and return a draft Assessment for the chosen client."""
+        return Assessment.objects.create(
+            template=self.template,
+            client=self.cleaned_data["client"],
+        )
+
+
 class AssessmentEntryForm(forms.Form):
     """Dynamically built form for completing an assessment.
 

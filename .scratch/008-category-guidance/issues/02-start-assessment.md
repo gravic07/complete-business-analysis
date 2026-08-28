@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Start Assessment: create a draft Assessment from client + template selection
 
@@ -16,17 +16,23 @@ Leave `AssessmentEntryView`/`AssessmentEntryForm` and their URL in place for now
 
 ## Acceptance criteria
 
-- [ ] `AssessmentStartForm` has only a `client` field, scoped to a template passed in at construction time
-- [ ] Submitting the form creates an `Assessment` with the chosen client, the template from the URL, and `status="draft"`
-- [ ] No `Answer` or `CategoryGuidance` records are created by this flow
-- [ ] `?client=<pk>` pre-fills the client field, matching today's `AssessmentEntryView` behavior
-- [ ] Successful submission redirects to `assessments:detail` for the new Assessment
-- [ ] Template-list page's template links point to the new start URL
-- [ ] Client-detail page's "Start an assessment…" control points to the new start URL (with `?client=` prefilled)
-- [ ] View requires login (`LoginRequiredMixin`), matching existing views
-- [ ] Test asserts a valid POST creates a draft Assessment and redirects correctly
-- [ ] Test asserts an invalid POST (no client selected) re-renders the form with errors, no Assessment created
+- [x] `AssessmentStartForm` has only a `client` field, scoped to a template passed in at construction time
+- [x] Submitting the form creates an `Assessment` with the chosen client, the template from the URL, and `status="draft"`
+- [x] No `Answer` or `CategoryGuidance` records are created by this flow
+- [x] `?client=<pk>` pre-fills the client field, matching today's `AssessmentEntryView` behavior
+- [x] Successful submission redirects to `assessments:detail` for the new Assessment
+- [x] Template-list page's template links point to the new start URL
+- [x] Client-detail page's "Start an assessment…" control points to the new start URL (with `?client=` prefilled)
+- [x] View requires login (`LoginRequiredMixin`), matching existing views
+- [x] Test asserts a valid POST creates a draft Assessment and redirects correctly
+- [x] Test asserts an invalid POST (no client selected) re-renders the form with errors, no Assessment created
 
 ## Blocked by
 
 - `01-assessment-lifecycle-schema-and-readiness-checker.md` — needs `Assessment.status` to exist
+
+## Comments
+
+Implemented as specified: `AssessmentStartForm`/`AssessmentStartView` added in `assessments/forms.py` and `assessments/views.py`, new `assessments:start` URL at `<uuid:pk>/start/`, new `assessment-start.html` template, template-list and client-detail links repointed. 9 tests added covering valid/invalid submission and `?client=` pre-fill; full suite and lint green.
+
+As called out in the spec, this leaves a known temporary gap: assessments created via the new Start flow land on the (unmodified) detail page with no in-UI path to actually answer questions, since `assessment-list.html`/`client-detail.html` no longer link to `assessments:entry` and the detail page doesn't yet link anywhere either. This is expected to be resolved by the Answer step slice, which should either add a "continue" link from the detail/hub page or otherwise let `AssessmentEntryView` resume an existing draft `Assessment` rather than always creating a new one.

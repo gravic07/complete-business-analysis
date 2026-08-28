@@ -142,7 +142,7 @@
                 <select id="start-assessment-template">
                   <option value="">Start an assessment…</option>
                   {% for template in assessment_templates %}
-                    <option value="{% url 'assessments:entry' template.pk %}?client={{ client.pk }}">{{ template.title }}</option>
+                    <option value="{% url 'assessments:start' template.pk %}?client={{ client.pk }}">{{ template.title }}</option>
                   {% endfor %}
                 </select>
               </div>
