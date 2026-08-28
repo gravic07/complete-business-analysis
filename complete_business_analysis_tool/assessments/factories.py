@@ -8,6 +8,7 @@ from complete_business_analysis_tool.assessments.models import (
     Assessment,
     AssessmentTemplate,
     Category,
+    CategoryGuidance,
     Question,
     QuestionOption,
     TemplateQuestion,
@@ -77,3 +78,12 @@ class AnswerFactory(DjangoModelFactory[Answer]):
 
     class Meta:
         model = Answer
+
+
+class CategoryGuidanceFactory(DjangoModelFactory[CategoryGuidance]):
+    assessment = SubFactory(AssessmentFactory)
+    category = SubFactory(CategoryFactory)
+    text = Faker("paragraph")
+
+    class Meta:
+        model = CategoryGuidance

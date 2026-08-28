@@ -7,6 +7,7 @@ from .views import (
     AssessmentEntryView,
     AssessmentStartView,
     AssessmentTemplateListView,
+    CategoryGuidanceView,
 )
 
 app_name = "assessments"
@@ -16,4 +17,9 @@ urlpatterns = [
     path("<uuid:pk>/", view=AssessmentDetailView.as_view(), name="detail"),
     path("<uuid:pk>/entry/", view=AssessmentEntryView.as_view(), name="entry"),
     path("<uuid:pk>/start/", view=AssessmentStartView.as_view(), name="start"),
+    path(
+        "<uuid:pk>/guidance/",
+        view=CategoryGuidanceView.as_view(),
+        name="guidance",
+    ),
 ]

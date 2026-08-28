@@ -10,10 +10,15 @@ from complete_business_analysis_tool.assessments.factories import (
     AnswerFactory,
     AssessmentFactory,
     AssessmentTemplateFactory,
+    CategoryFactory,
+    CategoryGuidanceFactory,
     QuestionFactory,
     TemplateQuestionFactory,
 )
-from complete_business_analysis_tool.assessments.models import Assessment
+from complete_business_analysis_tool.assessments.models import (
+    Assessment,
+    CategoryGuidance,
+)
 from complete_business_analysis_tool.assessments.services import (
     assessment_completion_status,
 )
@@ -155,3 +160,286 @@ def test_start_view_prefills_client_from_query_param():
 
     assert response.status_code == HTTPStatus.OK
     assert response.context["form"].initial["client"] == str(client_obj.pk)
+
+
+@pytest.mark.django_db
+def test_guidance_view_lists_template_categories_alphabetically_with_no_answers():
+    template = AssessmentTemplateFactory.create()
+    category_b = CategoryFactory.create(name="Bravo")
+    category_a = CategoryFactory.create(name="Alpha")
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category_b),
+    )
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category_a),
+    )
+    assessment = AssessmentFactory.create(template=template)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+
+    categories = [c for c, _ in response.context["form"].get_category_fields()]
+    assert categories == [category_a, category_b]
+    assert assessment.answers.count() == 0
+
+
+@pytest.mark.django_db
+def test_guidance_view_requires_login():
+    assessment = AssessmentFactory.create()
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = Client().get(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+
+
+@pytest.mark.django_db
+def test_guidance_view_requires_login_even_when_assessment_is_complete():
+    assessment = AssessmentFactory.create(status=Assessment.Status.COMPLETE)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = Client().get(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+    assert response.url != reverse("assessments:detail", kwargs={"pk": assessment.pk})
+
+
+@pytest.mark.django_db
+def test_guidance_view_all_blank_submit_succeeds_and_stamps_submitted_at():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+        guidance_submitted_at=None,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = http_client.post(url, {f"category_{category.pk.hex}": ""})
+
+    assessment.refresh_from_db()
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    assert assessment.guidance_submitted_at is not None
+    assert assessment.category_guidance.count() == 0
+
+
+@pytest.mark.django_db
+def test_guidance_view_creates_rows_only_for_non_blank_fields():
+    template = AssessmentTemplateFactory.create()
+    category_with_text = CategoryFactory.create()
+    category_blank = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category_with_text),
+    )
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category_blank),
+    )
+    assessment = AssessmentFactory.create(template=template)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(
+        url,
+        {
+            f"category_{category_with_text.pk.hex}": "Focus on cashflow.",
+            f"category_{category_blank.pk.hex}": "",
+        },
+    )
+
+    guidance_rows = CategoryGuidance.objects.filter(assessment=assessment)
+    assert guidance_rows.count() == 1
+    row = guidance_rows.get()
+    assert row.category == category_with_text
+    assert row.text == "Focus on cashflow."
+
+
+@pytest.mark.django_db
+def test_guidance_view_resubmit_updates_existing_row_not_duplicate():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(template=template)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category,
+        text="Original text.",
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"category_{category.pk.hex}": "Revised text."})
+
+    guidance_rows = CategoryGuidance.objects.filter(assessment=assessment)
+    assert guidance_rows.count() == 1
+    assert guidance_rows.get().text == "Revised text."
+
+
+@pytest.mark.django_db
+def test_guidance_view_clearing_field_deletes_existing_row():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(template=template)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category,
+        text="Existing text.",
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"category_{category.pk.hex}": ""})
+
+    assert not CategoryGuidance.objects.filter(assessment=assessment).exists()
+
+
+@pytest.mark.django_db
+def test_guidance_view_advances_draft_assessment_to_in_progress():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"category_{category.pk.hex}": "Some notes."})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_guidance_view_leaves_in_progress_assessment_in_progress():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.IN_PROGRESS,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"category_{category.pk.hex}": "Some notes."})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_guidance_view_complete_assessment_rejects_get_with_message_no_404():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.COMPLETE,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = http_client.get(url, follow=True)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.redirect_chain
+    messages = [str(m) for m in response.context["messages"]]
+    assert any("complete" in m.lower() for m in messages)
+
+
+@pytest.mark.django_db
+def test_guidance_view_complete_assessment_rejects_post_and_persists_nothing():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.COMPLETE,
+        guidance_submitted_at=timezone.now(),
+    )
+    original_submitted_at = assessment.guidance_submitted_at
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"category_{category.pk.hex}": "New notes."})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.COMPLETE
+    assert assessment.guidance_submitted_at == original_submitted_at
+    assert not CategoryGuidance.objects.filter(assessment=assessment).exists()
+
+
+@pytest.mark.django_db
+def test_guidance_view_prefills_fields_with_previously_entered_text():
+    template = AssessmentTemplateFactory.create()
+    category = CategoryFactory.create()
+    TemplateQuestionFactory.create(
+        template=template,
+        question=QuestionFactory.create(category=category),
+    )
+    assessment = AssessmentFactory.create(template=template)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category,
+        text="Previously entered guidance.",
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+
+    initial = response.context["form"].initial
+    assert initial[f"category_{category.pk.hex}"] == "Previously entered guidance."

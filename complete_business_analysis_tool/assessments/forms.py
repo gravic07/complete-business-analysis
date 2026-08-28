@@ -7,7 +7,7 @@ from django.db import transaction
 
 from complete_business_analysis_tool.clients.models import Client
 
-from .models import Answer, Assessment, AssessmentTemplate, QuestionOption
+from .models import Answer, Assessment, AssessmentTemplate, Category, QuestionOption
 from .widgets import RankedRadioSelect
 
 
@@ -125,3 +125,28 @@ class AssessmentEntryForm(forms.Form):
             )
 
         return assessment
+
+
+class CategoryGuidanceForm(forms.Form):
+    """Dynamically built form with one optional text field per Category.
+
+    Field names use the pattern ``category_<pk_hex>`` to avoid UUID hyphens,
+    which are invalid in Python identifiers and problematic in HTML name attrs.
+    """
+
+    def __init__(self, *args, categories, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.categories = list(categories)
+        for category in self.categories:
+            self.fields[f"category_{category.pk.hex}"] = forms.CharField(
+                required=False,
+                widget=forms.Textarea(attrs={"rows": 3, "class": "textarea"}),
+                label=category.name,
+            )
+
+    def get_category_fields(self) -> list[tuple[Category, object]]:
+        """Return (category, bound_field) pairs for template rendering."""
+        return [
+            (category, self[f"category_{category.pk.hex}"])
+            for category in self.categories
+        ]

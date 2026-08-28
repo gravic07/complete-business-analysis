@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ assessment.template.title }} — Category Guidance
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'assessments:list' %}">Assessment Templates</a>
+          </li>
+          <li>
+            <a href="{% url 'assessments:detail' pk=assessment.pk %}">{{ assessment.template.title }}</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">Category Guidance</a>
+          </li>
+        </ul>
+      </nav>
+      <h1 class="title">Category Guidance</h1>
+      <p class="subtitle">Optional notes to steer AI generation for each category. Leave any field blank to skip it.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "snippets/form-errors.html" with form=form %}
+        {% for category, bound_field in form.get_category_fields %}
+          <div class="box mb-5">
+            <h2 class="title is-5 has-text-primary">{{ category.name }}</h2>
+            <hr />
+            {% for error in bound_field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            <div class="control">{{ bound_field }}</div>
+          </div>
+        {% endfor %}
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary is-medium">Save Guidance</button>
+            <a href="{% url 'assessments:detail' pk=assessment.pk %}"
+               class="button is-light is-medium ml-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock content %}
