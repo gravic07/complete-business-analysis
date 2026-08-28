@@ -37,7 +37,7 @@ def test_assessment_name_defaults_to_initial_report():
 
 @pytest.mark.django_db
 def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
-    assessment = AssessmentFactory.create()
+    assessment = AssessmentFactory.create(status=Assessment.Status.COMPLETE)
     analysis1 = Analysis.objects.create(
         assessment=assessment,
         status=Analysis.Status.COMPLETE,
@@ -687,3 +687,231 @@ def test_answer_view_requires_login_even_when_assessment_is_complete():
 def test_entry_url_no_longer_registered():
     with pytest.raises(NoReverseMatch):
         reverse("assessments:entry", kwargs={"pk": uuid.uuid4()})
+
+
+@pytest.mark.django_db
+def test_detail_hub_shows_guidance_and_answer_links_with_done_indicators():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=timezone.now(),
+    )
+    AnswerFactory.create(assessment=assessment, question=question)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    assert reverse("assessments:guidance", kwargs={"pk": assessment.pk}) in content
+    assert reverse("assessments:answer", kwargs={"pk": assessment.pk}) in content
+    expected_done_indicators = 2
+    assert content.count("Done") == expected_done_indicators
+
+
+@pytest.mark.django_db
+def test_detail_hub_shows_not_done_indicators_when_guidance_and_answers_incomplete():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+        guidance_submitted_at=None,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    expected_not_done_indicators = 2
+    assert content.count("Not done") == expected_not_done_indicators
+
+
+@pytest.mark.django_db
+def test_detail_hub_mark_complete_button_disabled_with_reason_when_ineligible():
+    assessment = AssessmentFactory.create(
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=None,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    assert "disabled" in content
+    assert "Category Guidance has not been submitted." in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_mark_complete_button_enabled_when_eligible():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=timezone.now(),
+    )
+    AnswerFactory.create(assessment=assessment, question=question)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    assert reverse("assessments:mark_complete", kwargs={"pk": assessment.pk}) in content
+    assert "disabled" not in content
+
+
+@pytest.mark.django_db
+def test_mark_complete_rejects_when_ineligible_no_status_change_no_analysis():
+    assessment = AssessmentFactory.create(
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=None,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:mark_complete", kwargs={"pk": assessment.pk})
+    response = http_client.post(url, follow=True)
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.IN_PROGRESS
+    assert Analysis.objects.filter(assessment=assessment).count() == 0
+    messages = [str(m) for m in response.context["messages"]]
+    assert any("complete" in m.lower() for m in messages)
+
+
+@pytest.mark.django_db
+def test_mark_complete_sets_status_and_redirects_to_report_autostart_when_eligible():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=timezone.now(),
+    )
+    AnswerFactory.create(assessment=assessment, question=question)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:mark_complete", kwargs={"pk": assessment.pk})
+    response = http_client.post(url)
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.COMPLETE
+    report_url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == f"{report_url}?autostart=1"
+
+
+@pytest.mark.django_db
+def test_mark_complete_on_already_complete_assessment_does_not_retrigger_autostart():
+    assessment = AssessmentFactory.create(
+        status=Assessment.Status.COMPLETE,
+        guidance_submitted_at=timezone.now(),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:mark_complete", kwargs={"pk": assessment.pk})
+    response = http_client.post(url)
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.COMPLETE
+    report_url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == report_url
+
+
+@pytest.mark.django_db
+def test_mark_complete_requires_login():
+    assessment = AssessmentFactory.create()
+
+    url = reverse("assessments:mark_complete", kwargs={"pk": assessment.pk})
+    response = Client().post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+
+
+@pytest.mark.django_db
+def test_complete_detail_shows_category_guidance_alongside_answers():
+    category_with_guidance = CategoryFactory.create(name="Alpha")
+    category_without_guidance = CategoryFactory.create(name="Bravo")
+    question_a = QuestionFactory.create(category=category_with_guidance)
+    question_b = QuestionFactory.create(category=category_without_guidance)
+    assessment = AssessmentFactory.create(status=Assessment.Status.COMPLETE)
+    AnswerFactory.create(assessment=assessment, question=question_a)
+    AnswerFactory.create(assessment=assessment, question=question_b)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category_with_guidance,
+        text="Focus on scaling the sales team.",
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    assert "Focus on scaling the sales team." in content
+    groups = {g["name"]: g for g in response.context["grouped_answers"]}
+    assert groups["Alpha"]["guidance"] == "Focus on scaling the sales team."
+    assert groups["Bravo"]["guidance"] is None
+
+
+@pytest.mark.django_db
+def test_complete_detail_keeps_same_named_categories_separate():
+    category_1 = CategoryFactory.create(name="Sales")
+    category_2 = CategoryFactory.create(name="Sales")
+    question_1 = QuestionFactory.create(category=category_1)
+    question_2 = QuestionFactory.create(category=category_2)
+    assessment = AssessmentFactory.create(status=Assessment.Status.COMPLETE)
+    AnswerFactory.create(assessment=assessment, question=question_1)
+    AnswerFactory.create(assessment=assessment, question=question_2)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category_1,
+        text="Guidance for the first Sales category.",
+    )
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category_2,
+        text="Guidance for the second Sales category.",
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+
+    groups = response.context["grouped_answers"]
+    expected_group_count = 2
+    assert len(groups) == expected_group_count
+    guidance_texts = {g["guidance"] for g in groups}
+    assert guidance_texts == {
+        "Guidance for the first Sales category.",
+        "Guidance for the second Sales category.",
+    }

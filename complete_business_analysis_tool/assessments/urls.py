@@ -8,6 +8,7 @@ from .views import (
     AssessmentStartView,
     AssessmentTemplateListView,
     CategoryGuidanceView,
+    MarkCompleteView,
 )
 
 app_name = "assessments"
@@ -21,5 +22,10 @@ urlpatterns = [
         "<uuid:pk>/guidance/",
         view=CategoryGuidanceView.as_view(),
         name="guidance",
+    ),
+    path(
+        "<uuid:pk>/complete/",
+        view=MarkCompleteView.as_view(),
+        name="mark_complete",
     ),
 ]

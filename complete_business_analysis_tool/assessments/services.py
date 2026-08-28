@@ -21,6 +21,16 @@ class AssessmentCompletionStatus:
     def eligible(self) -> bool:
         return self.guidance_submitted and self.all_questions_answered
 
+    @property
+    def reasons(self) -> list[str]:
+        """Human-readable reasons this assessment isn't eligible yet."""
+        reasons = []
+        if not self.guidance_submitted:
+            reasons.append("Category Guidance has not been submitted.")
+        if not self.all_questions_answered:
+            reasons.append("Not all questions have been answered.")
+        return reasons
+
 
 def assessment_completion_status(assessment: Assessment) -> AssessmentCompletionStatus:
     """Check whether assessment is eligible to be marked complete.

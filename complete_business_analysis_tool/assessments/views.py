@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
 from .forms import AssessmentAnswerForm, AssessmentStartForm, CategoryGuidanceForm
 from .models import Assessment, AssessmentTemplate, Category, CategoryGuidance
+from .services import assessment_completion_status
+
+if TYPE_CHECKING:
+    import uuid
 
 
 class AssessmentDetailView(LoginRequiredMixin, DetailView):
@@ -21,21 +28,39 @@ class AssessmentDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        answers = self.object.answers.select_related("question__category").order_by(
+        assessment = self.object
+
+        if assessment.status != Assessment.Status.COMPLETE:
+            context["completion_status"] = assessment_completion_status(assessment)
+            return context
+
+        answers = assessment.answers.select_related("question__category").order_by(
             "question__category__name",
             "created_at",
         )
-        groups: dict[str, list] = {}
+        guidance_by_category = dict(
+            CategoryGuidance.objects.filter(assessment=assessment).values_list(
+                "category_id",
+                "text",
+            ),
+        )
+        groups: dict[uuid.UUID | None, dict] = {}
         for answer in answers:
             cat = (
                 answer.question.category
                 if answer.question and answer.question.category
                 else None
             )
-            cat_name = cat.name if cat else "General"
-            groups.setdefault(cat_name, []).append(answer)
-        context["grouped_answers"] = list(groups.items())
-        context["analyses"] = self.object.analyses.order_by("-created_at")
+            key: uuid.UUID | None = cat.pk if cat else None
+            if key not in groups:
+                groups[key] = {
+                    "name": cat.name if cat else "General",
+                    "answers": [],
+                    "guidance": guidance_by_category.get(key) if key else None,
+                }
+            groups[key]["answers"].append(answer)
+        context["grouped_answers"] = list(groups.values())
+        context["analyses"] = assessment.analyses.order_by("-created_at")
         return context
 
 
@@ -232,3 +257,26 @@ class CategoryGuidanceView(LoginRequiredMixin, FormView):
 
         messages.success(self.request, "Guidance saved.")
         return super().form_valid(form)
+
+
+class MarkCompleteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        assessment = get_object_or_404(Assessment, pk=pk)
+
+        if assessment.status == Assessment.Status.COMPLETE:
+            return redirect("reports:report", pk=assessment.pk)
+
+        status = assessment_completion_status(assessment)
+
+        if not status.eligible:
+            messages.error(
+                request,
+                "Cannot mark this assessment complete: " + " ".join(status.reasons),
+            )
+            return redirect("assessments:detail", pk=assessment.pk)
+
+        assessment.status = Assessment.Status.COMPLETE
+        assessment.save(update_fields=["status"])
+
+        url = reverse("reports:report", kwargs={"pk": assessment.pk})
+        return redirect(f"{url}?autostart=1")

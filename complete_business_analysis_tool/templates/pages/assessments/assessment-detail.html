@@ -30,69 +30,142 @@
           <p class="has-text-grey">{{ assessment.created_at|date:"M d, Y" }}</p>
         </div>
       </div>
-      <div class="box mb-5">
-        <div class="columns is-vcentered">
-          <div class="column">
-            <p class="heading">Total Score</p>
-            <p class="title">{{ assessment.total_score }}</p>
-          </div>
-          <div class="column">
-            <p class="heading">Questions Answered</p>
-            <p class="title">{{ assessment.answers.count }}</p>
+      {% if assessment.status == 'complete' %}
+        <div class="box mb-5">
+          <div class="columns is-vcentered">
+            <div class="column">
+              <p class="heading">Total Score</p>
+              <p class="title">{{ assessment.total_score }}</p>
+            </div>
+            <div class="column">
+              <p class="heading">Questions Answered</p>
+              <p class="title">{{ assessment.answers.count }}</p>
+            </div>
           </div>
         </div>
-      </div>
-      {% if analyses %}
-        <div class="box mb-5">
-          <h2 class="title is-5">Analysis Runs</h2>
-          <table class="table is-fullwidth is-striped">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Score</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for analysis in analyses %}
+        {% if analyses %}
+          <div class="box mb-5">
+            <h2 class="title is-5">Analysis Runs</h2>
+            <table class="table is-fullwidth is-striped">
+              <thead>
                 <tr>
-                  <td>{{ analysis.created_at|date:"M d, Y H:i" }}</td>
-                  <td>
-                    <span class="tag {% if analysis.status == 'complete' %}is-success{% elif analysis.status == 'failed' %}is-danger{% else %}is-warning{% endif %}">
-                      {{ analysis.get_status_display }}
-                    </span>
-                  </td>
-                  <td>{{ analysis.total_score|default:"—" }}</td>
-                  <td>
-                    {% if analysis.status == 'complete' %}
-                      <a href="{% url 'reports:report' assessment.pk %}"
-                         class="button is-small is-light">Report</a>
-                    {% endif %}
-                  </td>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                  <th></th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-      {% for category_name, answers in grouped_answers %}
+              </thead>
+              <tbody>
+                {% for analysis in analyses %}
+                  <tr>
+                    <td>{{ analysis.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                      <span class="tag {% if analysis.status == 'complete' %}is-success{% elif analysis.status == 'failed' %}is-danger{% else %}is-warning{% endif %}">
+                        {{ analysis.get_status_display }}
+                      </span>
+                    </td>
+                    <td>{{ analysis.total_score|default:"—" }}</td>
+                    <td>
+                      {% if analysis.status == 'complete' %}
+                        <a href="{% url 'reports:report' assessment.pk %}"
+                           class="button is-small is-light">Report</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+        {% for group in grouped_answers %}
+          <div class="box mb-5">
+            <h2 class="title is-5 has-text-primary">{{ group.name }}</h2>
+            <hr />
+            {% if group.guidance %}
+              <div class="notification is-info is-light">
+                <p class="heading">Guidance</p>
+                <p>{{ group.guidance }}</p>
+              </div>
+            {% endif %}
+            {% for answer in group.answers %}
+              <div class="field mb-5">
+                <p class="label">{{ answer.question_snapshot }}</p>
+                <div class="is-flex is-align-items-center is-justify-content-space-between">
+                  <p>{{ answer.option_snapshot.text }}</p>
+                  <span class="tag is-light is-medium ml-3">Score: {{ answer.option_snapshot.rank }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% empty %}
+          <div class="notification is-warning">No answers recorded for this assessment.</div>
+        {% endfor %}
+      {% else %}
         <div class="box mb-5">
-          <h2 class="title is-5 has-text-primary">{{ category_name }}</h2>
-          <hr />
-          {% for answer in answers %}
-            <div class="field mb-5">
-              <p class="label">{{ answer.question_snapshot }}</p>
-              <div class="is-flex is-align-items-center is-justify-content-space-between">
-                <p>{{ answer.option_snapshot.text }}</p>
-                <span class="tag is-light is-medium ml-3">Score: {{ answer.option_snapshot.rank }}</span>
+          <div class="level is-mobile">
+            <div class="level-left">
+              <div>
+                <h2 class="title is-5">Category Guidance</h2>
+                {% if assessment.guidance_submitted_at %}
+                  <span class="tag is-success">Done</span>
+                {% else %}
+                  <span class="tag is-warning">Not done</span>
+                {% endif %}
               </div>
             </div>
-          {% endfor %}
+            <div class="level-right">
+              <a href="{% url 'assessments:guidance' pk=assessment.pk %}"
+                 class="button is-link is-light">
+                {% if assessment.guidance_submitted_at %}
+                  Review Guidance
+                {% else %}
+                  Start Guidance
+                {% endif %}
+              </a>
+            </div>
+          </div>
         </div>
-      {% empty %}
-        <div class="notification is-warning">No answers recorded for this assessment.</div>
-      {% endfor %}
+        <div class="box mb-5">
+          <div class="level is-mobile">
+            <div class="level-left">
+              <div>
+                <h2 class="title is-5">Answer Questions</h2>
+                {% if completion_status.all_questions_answered %}
+                  <span class="tag is-success">Done</span>
+                {% else %}
+                  <span class="tag is-warning">Not done</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="level-right">
+              <a href="{% url 'assessments:answer' pk=assessment.pk %}"
+                 class="button is-link is-light">
+                {% if completion_status.all_questions_answered %}
+                  Review Answers
+                {% else %}
+                  Start Answers
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="box mb-5">
+          <h2 class="title is-5">Mark Complete</h2>
+          {% if completion_status.eligible %}
+            <form method="post"
+                  action="{% url 'assessments:mark_complete' pk=assessment.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="button is-primary">Mark Complete</button>
+            </form>
+          {% else %}
+            <button type="button" class="button is-primary" disabled>Mark Complete</button>
+            <p class="help">Before this assessment can be marked complete:</p>
+            <ul>
+              {% for reason in completion_status.reasons %}<li>{{ reason }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </section>
 {% endblock content %}
