@@ -1,8 +1,10 @@
+import uuid
+from decimal import Decimal
 from http import HTTPStatus
 
 import pytest
 from django.test import Client
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from complete_business_analysis_tool.analysis.models import Analysis
@@ -13,6 +15,7 @@ from complete_business_analysis_tool.assessments.factories import (
     CategoryFactory,
     CategoryGuidanceFactory,
     QuestionFactory,
+    QuestionOptionFactory,
     TemplateQuestionFactory,
 )
 from complete_business_analysis_tool.assessments.models import (
@@ -443,3 +446,244 @@ def test_guidance_view_prefills_fields_with_previously_entered_text():
 
     initial = response.context["form"].initial
     assert initial[f"category_{category.pk.hex}"] == "Previously entered guidance."
+
+
+@pytest.mark.django_db
+def test_answer_view_renders_one_field_per_question_grouped_by_category():
+    template = AssessmentTemplateFactory.create()
+    category_b = CategoryFactory.create(name="Bravo")
+    category_a = CategoryFactory.create(name="Alpha")
+    question_b = QuestionFactory.create(category=category_b)
+    question_a = QuestionFactory.create(category=category_a)
+    QuestionOptionFactory.create(question=question_b, rank=1)
+    QuestionOptionFactory.create(question=question_a, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question_b, order=1)
+    TemplateQuestionFactory.create(template=template, question=question_a, order=2)
+    assessment = AssessmentFactory.create(template=template)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+
+    grouped = response.context["form"].get_grouped_fields()
+    assert [name for name, _ in grouped] == ["Bravo", "Alpha"]
+    assert [len(fields) for _, fields in grouped] == [1, 1]
+
+
+@pytest.mark.django_db
+def test_answer_view_full_submit_creates_answers_against_existing_assessment():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=2,
+        text="Strong",
+        weight=Decimal("2.0000"),
+    )
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.post(url, {f"question_{question.pk.hex}": str(option.pk)})
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert Assessment.objects.count() == 1
+    answer = assessment.answers.get()
+    assert answer.question == question
+    assert answer.selected_option == option
+    assert answer.question_snapshot == question.body
+    assert answer.option_snapshot == {
+        "id": str(option.pk),
+        "text": option.text,
+        "rank": option.rank,
+        "weight": str(option.weight),
+    }
+
+
+@pytest.mark.django_db
+def test_answer_view_partial_submit_fails_validation_no_answers_created():
+    template = AssessmentTemplateFactory.create()
+    question1 = QuestionFactory.create()
+    question2 = QuestionFactory.create()
+    option1 = QuestionOptionFactory.create(question=question1, rank=1)
+    QuestionOptionFactory.create(question=question2, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question1)
+    TemplateQuestionFactory.create(template=template, question=question2)
+    assessment = AssessmentFactory.create(template=template)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.post(url, {f"question_{question1.pk.hex}": str(option1.pk)})
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.context["form"].errors
+    assert assessment.answers.count() == 0
+
+
+@pytest.mark.django_db
+def test_answer_view_resubmit_updates_existing_answer_not_duplicate():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option_low = QuestionOptionFactory.create(question=question, rank=1, text="Weak")
+    option_high = QuestionOptionFactory.create(question=question, rank=2, text="Strong")
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(template=template)
+    AnswerFactory.create(
+        assessment=assessment,
+        question=question,
+        selected_option=option_low,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"question_{question.pk.hex}": str(option_high.pk)})
+
+    answers = assessment.answers.filter(question=question)
+    assert answers.count() == 1
+    assert answers.get().selected_option == option_high
+
+
+@pytest.mark.django_db
+def test_answer_view_advances_draft_assessment_to_in_progress():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option = QuestionOptionFactory.create(question=question, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"question_{question.pk.hex}": str(option.pk)})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_answer_view_leaves_in_progress_assessment_in_progress():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option = QuestionOptionFactory.create(question=question, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.IN_PROGRESS,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"question_{question.pk.hex}": str(option.pk)})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_answer_view_complete_assessment_rejects_get_with_message_no_404():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    QuestionOptionFactory.create(question=question, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.COMPLETE,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.get(url, follow=True)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.redirect_chain
+    messages = [str(m) for m in response.context["messages"]]
+    assert any("complete" in m.lower() for m in messages)
+
+
+@pytest.mark.django_db
+def test_answer_view_complete_assessment_rejects_post_and_persists_nothing():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option = QuestionOptionFactory.create(question=question, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.COMPLETE,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    http_client.post(url, {f"question_{question.pk.hex}": str(option.pk)})
+
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.COMPLETE
+    assert assessment.answers.count() == 0
+
+
+@pytest.mark.django_db
+def test_answer_view_prefills_previously_selected_answers():
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    option = QuestionOptionFactory.create(question=question, rank=1)
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(template=template)
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+
+    initial = response.context["form"].initial
+    assert initial[f"question_{question.pk.hex}"] == str(option.pk)
+
+
+@pytest.mark.django_db
+def test_answer_view_requires_login():
+    assessment = AssessmentFactory.create()
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = Client().get(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+
+
+@pytest.mark.django_db
+def test_answer_view_requires_login_even_when_assessment_is_complete():
+    assessment = AssessmentFactory.create(status=Assessment.Status.COMPLETE)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = Client().get(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+    assert response.url != reverse("assessments:detail", kwargs={"pk": assessment.pk})
+
+
+def test_entry_url_no_longer_registered():
+    with pytest.raises(NoReverseMatch):
+        reverse("assessments:entry", kwargs={"pk": uuid.uuid4()})

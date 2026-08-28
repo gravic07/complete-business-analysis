@@ -10,9 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import DetailView, FormView, ListView
 
-from complete_business_analysis_tool.clients.forms import ClientForm
-
-from .forms import AssessmentEntryForm, AssessmentStartForm, CategoryGuidanceForm
+from .forms import AssessmentAnswerForm, AssessmentStartForm, CategoryGuidanceForm
 from .models import Assessment, AssessmentTemplate, Category, CategoryGuidance
 
 
@@ -81,43 +79,62 @@ class AssessmentStartView(LoginRequiredMixin, FormView):
         return redirect("assessments:detail", pk=assessment.pk)
 
 
-class AssessmentEntryView(LoginRequiredMixin, FormView):
-    template_name = "pages/assessments/assessment-entry.html"
-    form_class = AssessmentEntryForm
+class AssessmentAnswerView(LoginRequiredMixin, FormView):
+    template_name = "pages/assessments/assessment-answer.html"
+    form_class = AssessmentAnswerForm
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.assessment_template = get_object_or_404(
-            AssessmentTemplate,
-            pk=kwargs["pk"],
-        )
+        self.assessment = get_object_or_404(Assessment, pk=kwargs["pk"])
+
+    def _reject_if_complete(self):
+        """Block access once the assessment is locked.
+
+        Called from get()/post() rather than dispatch() so that
+        LoginRequiredMixin's auth check (enforced in dispatch()) always runs
+        first, regardless of assessment status.
+        """
+        if self.assessment.status == Assessment.Status.COMPLETE:
+            messages.error(
+                self.request,
+                "This assessment is already complete; answers can no longer be edited.",
+            )
+            return redirect("assessments:detail", pk=self.assessment.pk)
+        return None
+
+    def get(self, request, *args, **kwargs):
+        return self._reject_if_complete() or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self._reject_if_complete() or super().post(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["template"] = self.assessment_template
+        kwargs["assessment"] = self.assessment
         return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
-        client_id = self.request.GET.get("client")
-        if client_id:
-            initial["client"] = client_id
+        existing_answers = self.assessment.answers.select_related("question")
+        for answer in existing_answers:
+            if answer.question and answer.selected_option_id:
+                initial[f"question_{answer.question.pk.hex}"] = str(
+                    answer.selected_option_id,
+                )
         return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["assessment_template"] = self.assessment_template
-        context["client_form"] = ClientForm()
+        context["assessment"] = self.assessment
         return context
 
+    def get_success_url(self):
+        return reverse("assessments:detail", kwargs={"pk": self.assessment.pk})
+
     def form_valid(self, form):
-        assessment = form.save()
-        messages.success(
-            self.request,
-            f"Assessment for {assessment.client} completed successfully.",
-        )
-        url = reverse("reports:report", kwargs={"pk": assessment.pk})
-        return redirect(f"{url}?autostart=1")
+        form.save()
+        messages.success(self.request, "Answers saved.")
+        return super().form_valid(form)
 
     def form_invalid(self, form):
         messages.error(

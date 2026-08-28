@@ -38,29 +38,23 @@ class AssessmentStartForm(forms.Form):
         )
 
 
-class AssessmentEntryForm(forms.Form):
-    """Dynamically built form for completing an assessment.
+class AssessmentAnswerForm(forms.Form):
+    """Dynamically built form for answering an existing assessment's questions.
 
-    Fields are generated at init time from the template's ordered questions.
-    Field names use the pattern ``question_<pk_hex>`` to avoid UUID hyphens,
-    which are invalid in Python identifiers and problematic in HTML name attrs.
+    Fields are generated at init time from the assessment template's ordered
+    questions. Field names use the pattern ``question_<pk_hex>`` to avoid UUID
+    hyphens, which are invalid in Python identifiers and problematic in HTML
+    name attrs.
     """
 
-    client = forms.ModelChoiceField(
-        queryset=None,
-        label="Client",
-        empty_label="-- Select a client --",
-        widget=forms.Select(attrs={"class": "input"}),
-    )
-
-    def __init__(self, *args, template: AssessmentTemplate, **kwargs):
+    def __init__(self, *args, assessment: Assessment, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.template = template
-        self.fields["client"].queryset = Client.objects.order_by("business_name")
+        self.assessment = assessment
+        self.template = assessment.template
 
         self.template_questions = (
-            template.template_questions.select_related(
+            self.template.template_questions.select_related(
                 "question",
                 "question__category",
             )
@@ -96,13 +90,14 @@ class AssessmentEntryForm(forms.Form):
 
     @transaction.atomic
     def save(self) -> Assessment:
-        """Create and return an Assessment with one Answer per question.
+        """Create or update one Answer per question on the existing Assessment.
+
+        Resubmitting updates the existing Answer for a question in place
+        (rather than erroring on the assessment/question unique_together
+        constraint). Advances a draft Assessment to in_progress.
 
         Must only be called after is_valid() returns True.
         """
-        client = self.cleaned_data["client"]
-        assessment = Assessment.objects.create(template=self.template, client=client)
-
         option_cache: dict[str, QuestionOption] = {}
         for tq in self.template_questions:
             q = tq.question
@@ -111,20 +106,26 @@ class AssessmentEntryForm(forms.Form):
                 option_cache[opt_pk] = QuestionOption.objects.get(pk=opt_pk)
             opt = option_cache[opt_pk]
 
-            Answer.objects.create(
-                assessment=assessment,
+            Answer.objects.update_or_create(
+                assessment=self.assessment,
                 question=q,
-                selected_option=opt,
-                question_snapshot=q.body,
-                option_snapshot={
-                    "id": str(opt.pk),
-                    "text": opt.text,
-                    "rank": opt.rank,
-                    "weight": str(opt.weight),  # Decimal is not JSON-serializable
+                defaults={
+                    "selected_option": opt,
+                    "question_snapshot": q.body,
+                    "option_snapshot": {
+                        "id": str(opt.pk),
+                        "text": opt.text,
+                        "rank": opt.rank,
+                        "weight": str(opt.weight),  # Decimal is not JSON-serializable
+                    },
                 },
             )
 
-        return assessment
+        if self.assessment.status == Assessment.Status.DRAFT:
+            self.assessment.status = Assessment.Status.IN_PROGRESS
+            self.assessment.save(update_fields=["status"])
+
+        return self.assessment
 
 
 class CategoryGuidanceForm(forms.Form):

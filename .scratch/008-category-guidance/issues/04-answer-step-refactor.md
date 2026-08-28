@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: complete
 
 # Answer step: attach Questions to an existing Assessment, retire AssessmentEntryView
 
@@ -16,19 +16,27 @@ Extract today's question-answering logic out of `AssessmentEntryForm`/`Assessmen
 
 ## Acceptance criteria
 
-- [ ] Answer page renders one field per template question, grouped by category, matching today's `AssessmentEntryForm` rendering
-- [ ] Submitting all questions creates one `Answer` per question with correct snapshots, against the existing Assessment (no new Assessment created)
-- [ ] Submitting with a question left unanswered fails validation, same as today
-- [ ] Resubmitting (e.g. advisor changes an answer before completing) updates the existing `Answer` rather than erroring or duplicating
-- [ ] A `draft` Assessment advances to `in_progress` after a successful answer submit
-- [ ] An `in_progress` Assessment stays `in_progress` (no regression) after a successful answer submit
-- [ ] A `complete` Assessment rejects further answer submissions with a clear message, no changes persisted
-- [ ] Revisiting the page pre-fills already-selected answers
-- [ ] `AssessmentEntryView`, `AssessmentEntryForm`, and the old entry URL/template are removed
-- [ ] No remaining references to the old entry URL name in templates or tests
-- [ ] Tests cover: full submit, partial submit rejection, resubmit/update, status advancement, and the locked-when-complete case
+- [x] Answer page renders one field per template question, grouped by category, matching today's `AssessmentEntryForm` rendering
+- [x] Submitting all questions creates one `Answer` per question with correct snapshots, against the existing Assessment (no new Assessment created)
+- [x] Submitting with a question left unanswered fails validation, same as today
+- [x] Resubmitting (e.g. advisor changes an answer before completing) updates the existing `Answer` rather than erroring or duplicating
+- [x] A `draft` Assessment advances to `in_progress` after a successful answer submit
+- [x] An `in_progress` Assessment stays `in_progress` (no regression) after a successful answer submit
+- [x] A `complete` Assessment rejects further answer submissions with a clear message, no changes persisted
+- [x] Revisiting the page pre-fills already-selected answers
+- [x] `AssessmentEntryView`, `AssessmentEntryForm`, and the old entry URL/template are removed
+- [x] No remaining references to the old entry URL name in templates or tests
+- [x] Tests cover: full submit, partial submit rejection, resubmit/update, status advancement, and the locked-when-complete case
 
 ## Blocked by
 
 - `01-assessment-lifecycle-schema-and-readiness-checker.md` — needs `Assessment.status`
 - `02-start-assessment.md` — needs a way to create a draft Assessment to answer against, and needs to have taken over client selection before the old entry view can be safely removed
+
+## Comments
+
+Implemented as specified: `AssessmentAnswerForm`/`AssessmentAnswerView` added in `assessments/forms.py` and `assessments/views.py`, replacing `AssessmentEntryForm`/`AssessmentEntryView` (deleted). New `assessments:answer` URL at `<uuid:pk>/answer/` (assessment-scoped, replacing the template-scoped `<uuid:pk>/entry/`), new `assessment-answer.html` template (replacing `assessment-entry.html`, dropping the client-selection box and "Create Client" modal now owned by the Start step). 15 tests added covering every acceptance criterion; full suite (240 tests), and mypy (no new error categories vs. baseline) all green. A repo-wide grep confirmed no remaining references to `assessments:entry`, `AssessmentEntryView`, `AssessmentEntryForm`, or `assessment-entry.html` outside the intentional negative-check test.
+
+`AssessmentAnswerForm.save()` uses `Answer.objects.update_or_create(assessment=..., question=..., defaults={...})` per question so a resubmit updates the existing row in place rather than hitting the `unique_together = [["assessment", "question"]]` constraint — mirrors the `update_or_create` pattern already used by `CategoryGuidanceForm`/`CategoryGuidanceView`. `AssessmentAnswerView` replicates `CategoryGuidanceView`'s `_reject_if_complete()` / `get()`/`post()` locked-assessment pattern verbatim (checked in `get()`/`post()` rather than `dispatch()` so `LoginRequiredMixin`'s auth check always runs first) — a code review flagged this duplication as a candidate for a shared mixin, but with only two occurrences and the spec explicitly calling for "the same posture as the Guidance step," extracting an abstraction now was judged premature.
+
+As in the spec, this step is reachable only by direct URL for now — no link exists yet from the Assessment detail (hub) page. That wiring is deferred to the hub page slice (`05-hub-page-and-mark-complete.md`), as intended.

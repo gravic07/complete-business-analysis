@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ assessment.template.title }} — Answer Questions
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+          <li>
+            <a href="{% url 'assessments:list' %}">Assessment Templates</a>
+          </li>
+          <li>
+            <a href="{% url 'assessments:detail' pk=assessment.pk %}">{{ assessment.template.title }}</a>
+          </li>
+          <li class="is-active">
+            <a href="#" aria-current="page">Answer Questions</a>
+          </li>
+        </ul>
+      </nav>
+      <h1 class="title">{{ assessment.template.title }}</h1>
+      {% if assessment.template.description %}<p class="subtitle">{{ assessment.template.description }}</p>{% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "snippets/form-errors.html" with form=form %}
+        {% for category_name, bound_fields in form.get_grouped_fields %}
+          <div class="box mb-5">
+            <h2 class="title is-5 has-text-primary">
+              {% if category_name %}
+                {{ category_name }}
+              {% else %}
+                General
+              {% endif %}
+            </h2>
+            <hr />
+            {% for bound_field in bound_fields %}
+              <div class="field mb-5">
+                <label class="label">{{ bound_field.label }}</label>
+                {% for error in bound_field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                <div class="control">{{ bound_field }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary is-medium">Submit Answers</button>
+            <a href="{% url 'assessments:detail' pk=assessment.pk %}"
+               class="button is-light is-medium ml-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock content %}
