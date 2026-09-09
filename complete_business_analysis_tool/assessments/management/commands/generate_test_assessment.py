@@ -156,6 +156,13 @@ class Command(BaseCommand):
 
             Answer.objects.bulk_create(answers_to_create)
 
+            # Mirrors AssessmentAnswerView.form_valid: submitting every
+            # Question for the template advances a draft Assessment to
+            # in_progress. Guidance is deliberately left untouched here —
+            # it's entered later via the web hub page.
+            assessment.status = Assessment.Status.IN_PROGRESS
+            assessment.save(update_fields=["status"])
+
         # --- Step 5: summary ---
         self.stdout.write(self.style.SUCCESS("\n=== Done ==="))
         self.stdout.write(
@@ -164,5 +171,9 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"  Assessment:  {template.title}")
         self.stdout.write(f"  Answers:     {len(answers_to_create)}")
+        self.stdout.write(
+            f"  Guidance:    not yet entered — add it at "
+            f"/assessments/{assessment.pk}/guidance/ before marking complete",
+        )
         self.stdout.write(f"  URL:         /assessments/{assessment.pk}/")
         self.stdout.write("")
