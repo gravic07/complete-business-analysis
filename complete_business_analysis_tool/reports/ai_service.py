@@ -105,6 +105,7 @@ def generate_category_section(  # noqa: PLR0913
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
     feedback_text: str | None = None,
+    guidance_text: str | None = None,
     llm_client: Callable[[str], dict] | None = None,
 ) -> dict:
     if llm_client is None:
@@ -117,6 +118,7 @@ def generate_category_section(  # noqa: PLR0913
         prior_impact,
         prior_path_forward,
         feedback_text,
+        guidance_text,
     )
     return llm_client(prompt)
 
@@ -129,6 +131,7 @@ def _build_category_prompt(  # noqa: PLR0913
     prior_impact: str | None = None,
     prior_path_forward: str | None = None,
     feedback_text: str | None = None,
+    guidance_text: str | None = None,
 ) -> str:
     lines = [
         "You are a business advisor writing a section of a business analysis report.",
@@ -165,6 +168,10 @@ def _build_category_prompt(  # noqa: PLR0913
     if feedback_text:
         lines.append("")
         lines.append(f"Advisor feedback to incorporate: {feedback_text}")
+
+    if guidance_text:
+        lines.append("")
+        lines.append(f"Advisor guidance provided before the assessment: {guidance_text}")
 
     lines.extend(
         [

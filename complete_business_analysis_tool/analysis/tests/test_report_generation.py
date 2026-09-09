@@ -8,6 +8,7 @@ from complete_business_analysis_tool.assessments.factories import (
     AnswerFactory,
     AssessmentFactory,
     CategoryFactory,
+    CategoryGuidanceFactory,
     QuestionFactory,
     QuestionOptionFactory,
 )
@@ -406,6 +407,120 @@ def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
     run_analysis(analysis.pk)
 
     assert "Global feedback text." in cat_calls[0]["feedback_text"]
+
+
+@pytest.mark.django_db
+def test_category_guidance_passed_on_first_analysis_run(monkeypatch):
+    cat_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category,
+        text="Focus on cash flow resilience.",
+    )
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    assert cat_calls[0]["guidance_text"] == "Focus on cash flow resilience."
+
+
+@pytest.mark.django_db
+def test_category_guidance_passed_on_reanalysis_regardless_of_feedback(monkeypatch):
+    cat_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return {"overview": f"run-{len(cat_calls)}", "impact": "i", "path_forward": "p"}
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
+    CategoryGuidanceFactory.create(
+        assessment=assessment,
+        category=category,
+        text="Focus on cash flow resilience.",
+    )
+
+    analysis1 = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis1.pk)
+
+    # Second run has no Feedback at all, guidance should still flow through.
+    analysis2 = Analysis.objects.create(assessment=assessment)
+    cat_calls.clear()
+    run_analysis(analysis2.pk)
+
+    assert cat_calls[0]["guidance_text"] == "Focus on cash flow resilience."
+
+
+@pytest.mark.django_db
+def test_category_with_no_guidance_passes_none(monkeypatch):
+    cat_calls = []
+
+    def capture_category(**kwargs):
+        cat_calls.append(kwargs)
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_category_section",
+        capture_category,
+    )
+    monkeypatch.setattr(
+        "complete_business_analysis_tool.analysis.tasks.generate_executive_summary",
+        lambda **kwargs: "overall",
+    )
+
+    category = CategoryFactory.create()
+    question = QuestionFactory.create(category=category)
+    option = QuestionOptionFactory.create(
+        question=question,
+        rank=1,
+        weight=Decimal("1.0000"),
+    )
+    assessment = AssessmentFactory.create()
+    AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
+
+    analysis = Analysis.objects.create(assessment=assessment)
+    run_analysis(analysis.pk)
+
+    assert cat_calls[0]["guidance_text"] is None
 
 
 # --- CategoryRecommendations orchestrator tests ---

@@ -75,6 +75,10 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
     result = compute_scores(answer_dicts)
     all_category_ids = set(result.category_scores.keys())
 
+    category_guidance_by_id = {
+        str(g.category_id): g.text for g in analysis.assessment.category_guidance.all()
+    }
+
     # Determine scope and collect feedback context
     if analysis.feedback_id:
         feedback = analysis.feedback
@@ -152,6 +156,7 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
             business_name=business_name,
             business_profile=business_profile,
             feedback_text=combined_feedback,
+            guidance_text=category_guidance_by_id.get(cat_id),
             prior_overview=prior_section.overview if prior_section else None,
             prior_impact=prior_section.impact if prior_section else None,
             prior_path_forward=prior_section.path_forward if prior_section else None,

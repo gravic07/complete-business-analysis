@@ -209,6 +209,79 @@ def test_generate_category_section_includes_feedback_when_provided():
     assert "Emphasise the supply chain risks." in captured["prompt"]
 
 
+def test_generate_category_section_includes_guidance_when_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> dict:
+        captured["prompt"] = prompt
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        guidance_text="Focus on cash flow resilience.",
+        llm_client=capturing_client,
+    )
+    assert "Focus on cash flow resilience." in captured["prompt"]
+
+
+def test_generate_category_section_labels_guidance_distinctly_from_feedback():
+    captured = {}
+
+    def capturing_client(prompt: str) -> dict:
+        captured["prompt"] = prompt
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        guidance_text="Focus on cash flow resilience.",
+        llm_client=capturing_client,
+    )
+    prompt = captured["prompt"]
+    assert "Advisor guidance provided before the assessment:" in prompt
+    assert "Advisor feedback to incorporate:" not in prompt
+
+
+def test_generate_category_section_includes_both_guidance_and_feedback_when_present():
+    captured = {}
+
+    def capturing_client(prompt: str) -> dict:
+        captured["prompt"] = prompt
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        feedback_text="Emphasise the supply chain risks.",
+        guidance_text="Focus on cash flow resilience.",
+        llm_client=capturing_client,
+    )
+    prompt = captured["prompt"]
+    assert "Advisor feedback to incorporate: Emphasise the supply chain risks." in prompt
+    assert (
+        "Advisor guidance provided before the assessment: Focus on cash flow resilience."
+        in prompt
+    )
+
+
+def test_generate_category_section_omits_guidance_and_feedback_when_neither_provided():
+    captured = {}
+
+    def capturing_client(prompt: str) -> dict:
+        captured["prompt"] = prompt
+        return {"overview": "o", "impact": "i", "path_forward": "p"}
+
+    generate_category_section(
+        answers=[],
+        business_name="Acme Corp",
+        llm_client=capturing_client,
+    )
+    prompt = captured["prompt"]
+    assert "Advisor guidance provided before the assessment:" not in prompt
+    assert "Advisor feedback to incorporate:" not in prompt
+
+
 # --- generate_executive_summary ---
 
 
