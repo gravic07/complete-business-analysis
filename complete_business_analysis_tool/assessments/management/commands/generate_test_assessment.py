@@ -117,7 +117,7 @@ class Command(BaseCommand):
             )
 
             # Group by category while preserving template order
-            groups: dict[str | None, list] = {}
+            groups: dict[str, list[TemplateQuestion]] = {}
             for tq in template_questions:
                 cat_name = (
                     tq.question.category.name if tq.question.category else "General"
@@ -132,12 +132,12 @@ class Command(BaseCommand):
 
                 for tq in tqs:
                     question = tq.question
-                    options = list(question.options.order_by("rank"))
-                    if not options:
+                    question_options = list(question.options.order_by("rank"))
+                    if not question_options:
                         continue
-                    available_ranks = [o.rank for o in options]
+                    available_ranks = [o.rank for o in question_options]
                     chosen_rank = _pick_rank(rating, available_ranks)
-                    option = next(o for o in options if o.rank == chosen_rank)
+                    option = next(o for o in question_options if o.rank == chosen_rank)
 
                     answers_to_create.append(
                         Answer(
