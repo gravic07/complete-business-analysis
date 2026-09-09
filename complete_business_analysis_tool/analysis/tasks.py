@@ -80,8 +80,8 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
     }
 
     # Determine scope and collect feedback context
-    if analysis.feedback_id:
-        feedback = analysis.feedback
+    feedback = analysis.feedback
+    if feedback is not None:
         cf_qs = list(feedback.category_feedbacks.all())
         category_feedback_ids = {str(cf.category_id) for cf in cf_qs}
         category_feedback_by_id = {str(cf.category_id): cf.text for cf in cf_qs}
@@ -184,8 +184,8 @@ def _run_analysis_work(analysis: Analysis) -> None:  # noqa: PLR0915
         section = sections_by_category_id.get(cat_id)
         section_text = _build_section_text(section) if section else ""
 
-        category_score = result.category_scores.get(cat_id)
-        category_max_score = result.category_max_scores.get(cat_id)
+        category_score = result.category_scores[cat_id]
+        category_max_score = result.category_max_scores[cat_id]
 
         prior_recs = (
             CategoryRecommendations.objects.filter(
