@@ -60,6 +60,7 @@ class AssessmentDetailView(LoginRequiredMixin, DetailView):
                 }
             groups[key]["answers"].append(answer)
         context["grouped_answers"] = list(groups.values())
+        context["has_guidance"] = bool(guidance_by_category)
         context["analyses"] = assessment.analyses.order_by("-created_at")
         return context
 

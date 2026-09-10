@@ -159,6 +159,7 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Status</th>
               <th>Questions</th>
               <th>Score</th>
               <th>Created</th>
@@ -169,6 +170,9 @@
             {% for assessment in assessments %}
               <tr>
                 <td>{{ assessment.template.title }}</td>
+                <td>
+                  <span class="tag {{ assessment.status_tag_class }}">{{ assessment.get_status_display }}</span>
+                </td>
                 <td>{{ assessment.question_count }}</td>
                 <td>{{ assessment.score|default:"—" }}</td>
                 <td data-order="{{ assessment.created_at|date:'Y-m-d' }}">{{ assessment.created_at|date:"M d, Y" }}</td>
@@ -249,10 +253,10 @@
         },
         pageLength: 50,
         order: [
-          [3, "asc"]
+          [4, "asc"]
         ],
         columnDefs: [{
-          "targets": [4],
+          "targets": [5],
           "orderable": false
         }],
       });

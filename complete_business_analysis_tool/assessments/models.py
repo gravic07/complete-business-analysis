@@ -118,6 +118,14 @@ class Assessment(BaseModel):
     def total_score(self) -> int:
         return self.answers.aggregate(total=Sum("selected_option__rank"))["total"] or 0
 
+    @property
+    def status_tag_class(self) -> str:
+        if self.status == self.Status.COMPLETE:
+            return "is-success"
+        if self.status == self.Status.IN_PROGRESS:
+            return "is-warning"
+        return "is-light"
+
     def __str__(self) -> str:
         return f"{self.template} ({self.created_at:%Y-%m-%d})"
 

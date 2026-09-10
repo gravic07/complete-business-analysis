@@ -27,7 +27,12 @@
           </div>
         </div>
         <div class="level-right">
-          <p class="has-text-grey">{{ assessment.created_at|date:"M d, Y" }}</p>
+          <div class="has-text-right">
+            <p class="mb-1">
+              <span class="tag {{ assessment.status_tag_class }}">{{ assessment.get_status_display }}</span>
+            </p>
+            <p class="has-text-grey">{{ assessment.created_at|date:"M d, Y" }}</p>
+          </div>
         </div>
       </div>
       {% if assessment.status == 'complete' %}
@@ -43,6 +48,9 @@
             </div>
           </div>
         </div>
+        {% if not has_guidance %}
+          <div class="notification is-info is-light mb-5">No advisor guidance was provided for this assessment.</div>
+        {% endif %}
         {% if analyses %}
           <div class="box mb-5">
             <h2 class="title is-5">Analysis Runs</h2>
