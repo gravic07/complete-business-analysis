@@ -9,7 +9,14 @@ A set of answers and optional per-Category Guidance entered by an advisor on beh
 Tracks an Assessment's progress through `draft → in_progress → complete`. `draft` is set at creation, before the advisor has started either the Guidance step or the questions. `in_progress` is set automatically once either step has been started. `complete` is set only by an explicit advisor action ("Mark Complete") — never inferred from finishing a step — and requires both the Guidance step and all questions to be done first. Marking an Assessment Complete triggers its first Analysis run. The Guidance step and the questions can be completed in either order; nothing about their sequence is enforced.
 
 ### CategoryGuidance
-Optional free-text guidance an advisor provides for a Category, entered during the Assessment's Guidance step — a step that is mandatory to submit (even with every field left blank) before an Assessment can be marked Complete, though each individual Category's text is optional. Used to steer AI generation toward areas the standard Questions don't cover, or to push emphasis toward specific topics within a Category. Distinct from Feedback: Guidance is forward-looking context supplied before the Report exists and is included in every Analysis run for the Assessment's lifetime (initial run and all later re-analyses); Feedback is corrective input supplied after reviewing a generated Report, addressed to content that already exists. The two are labeled separately in generation prompts rather than merged. A CategoryGuidance record is created only for Categories where the advisor actually entered text. Editable freely while the Assessment is `draft` or `in_progress`; locked once the Assessment is `complete`.
+Optional free-text guidance an advisor provides for a Category, entered during the Assessment's Guidance step — a step that is mandatory to submit (even with every field left blank) before an Assessment can be marked Complete, though each individual Category's text is optional. Used to steer AI generation toward areas the standard Questions don't cover, or to push emphasis toward specific topics within a Category. Distinct from Feedback: Guidance is forward-looking context supplied before the Report exists and is included in every Analysis run for the Assessment's lifetime (initial run and all later re-analyses); Feedback is corrective input supplied after reviewing a generated Report, addressed to content that already exists. The two are labeled separately in generation prompts rather than merged. A CategoryGuidance record is created only for Categories where the advisor actually entered text. Editable freely while the Assessment is `draft` or `in_progress`; locked once the Assessment is `complete`. Presented to the Client under the alias **Concerns, Priorities and Goals** when entered via a ClientAccessLink — a client-facing label only; the model, fields, and every other behavior are identical.
+
+### Concerns, Priorities and Goals
+The client-facing name for the CategoryGuidance step, shown only on pages reached through a ClientAccessLink. Not a separate model or concept — purely a rebranded label for the same data, chosen because "Guidance" reads as advisor-to-advisor language.
+_Avoid_: treating this as a distinct feature or data model from CategoryGuidance.
+
+### ClientAccessLink
+A token-gated, revocable link that lets a Client fill in the Guidance step (as "Concerns, Priorities and Goals") or the Answer Questions step of an Assessment remotely, with no login. One ClientAccessLink exists per (Assessment, link_type) pair, where link_type is `guidance` or `answer`. Generated on demand by an advisor once the Client has an email on file; the Client is verified against their live `Client.email` on every page load — no snapshot, no session. Grants entry to the existing Guidance/Answer forms only; it does not create a parallel data model, and submitting through it writes to the exact same records an advisor would create directly, with no way to distinguish after the fact who entered the data.
 
 ### Analysis
 A single run of the scoring and AI-generation process against an Assessment. Stored as a persistent record. Inputs include: computed scores (total + per-category), question/answer content, and any Feedback from a prior Report. Produces exactly one Report. An Assessment can have many Analysis runs over its lifetime.
@@ -116,19 +123,21 @@ Assessment → Analysis → Report → Feedback → Analysis → Report → ...
 - `Roadmap` belongs to one `Analysis`
 - `Feedback` belongs to one `Assessment`, has optional `overall_text` and many `CategoryFeedback` records
 - `CategoryFeedback` belongs to one `Feedback` and one `Category`
+- `Assessment` has up to two `ClientAccessLink` records, one per `link_type` (`guidance`, `answer`)
 
 ## Model Layout
 
 ### `clients` app
 | Model | Key Fields |
 |---|---|
-| `Client` | `business_name`, `first_name`, `last_name`, `title`, `industry` (choice), `company_size` (choice), `revenue` (choice), `corporate_style` (choice) |
+| `Client` | `business_name`, `first_name`, `last_name`, `title`, `email` (optional, format-validated, no uniqueness constraint), `industry` (choice), `company_size` (choice), `revenue` (choice), `corporate_style` (choice) |
 
 ### `assessments` app
 | Model | Key Fields |
 |---|---|
 | `Assessment` | `template` FK, `client` FK, `name` (short label, defaults to "Initial Report", shown on PDF cover and header), `status` (draft/in_progress/complete), `guidance_submitted_at` (nullable, set when the Guidance step is submitted) |
 | `CategoryGuidance` | `assessment` FK, `category` FK, `text` TextField |
+| `ClientAccessLink` | `assessment` FK, `link_type` (guidance/answer), `token` (opaque, `secrets.token_urlsafe(32)`), `status` (active/revoked) |
 
 ### `analysis` app
 | Model | Key Fields |
