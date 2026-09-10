@@ -3,6 +3,7 @@ from decimal import Decimal
 from http import HTTPStatus
 
 import pytest
+from django.db import IntegrityError, transaction
 from django.test import Client
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -14,6 +15,7 @@ from complete_business_analysis_tool.assessments.factories import (
     AssessmentTemplateFactory,
     CategoryFactory,
     CategoryGuidanceFactory,
+    ClientAccessLinkFactory,
     QuestionFactory,
     QuestionOptionFactory,
     TemplateQuestionFactory,
@@ -21,9 +23,14 @@ from complete_business_analysis_tool.assessments.factories import (
 from complete_business_analysis_tool.assessments.models import (
     Assessment,
     CategoryGuidance,
+    ClientAccessLink,
 )
 from complete_business_analysis_tool.assessments.services import (
     assessment_completion_status,
+    generate_client_access_link,
+    is_client_access_link_valid,
+    regenerate_client_access_link,
+    revoke_client_access_link,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
 from complete_business_analysis_tool.users.tests.factories import UserFactory
@@ -915,3 +922,124 @@ def test_complete_detail_keeps_same_named_categories_separate():
         "Guidance for the first Sales category.",
         "Guidance for the second Sales category.",
     }
+
+
+@pytest.mark.django_db
+def test_client_access_link_unique_per_assessment_and_link_type():
+    assessment = AssessmentFactory.create()
+    ClientAccessLinkFactory.create(
+        assessment=assessment,
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+    )
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        ClientAccessLinkFactory.create(
+            assessment=assessment,
+            link_type=ClientAccessLink.LinkType.GUIDANCE,
+        )
+
+
+@pytest.mark.django_db
+def test_generate_client_access_link_creates_active_row_when_none_exists():
+    assessment = AssessmentFactory.create()
+
+    link = generate_client_access_link(assessment, ClientAccessLink.LinkType.GUIDANCE)
+
+    assert link.status == ClientAccessLink.Status.ACTIVE
+    assert link.token
+    assert (
+        ClientAccessLink.objects.filter(
+            assessment=assessment,
+            link_type=ClientAccessLink.LinkType.GUIDANCE,
+        ).count()
+        == 1
+    )
+
+
+@pytest.mark.django_db
+def test_generate_client_access_link_leaves_active_row_unchanged():
+    existing = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+
+    link = generate_client_access_link(existing.assessment, existing.link_type)
+
+    assert link.pk == existing.pk
+    assert link.token == existing.token
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_generate_client_access_link_reissues_token_when_revoked():
+    existing = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
+    original_token = existing.token
+
+    link = generate_client_access_link(existing.assessment, existing.link_type)
+
+    assert link.pk == existing.pk
+    assert link.token != original_token
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_revoke_client_access_link_marks_revoked_without_new_token():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+    original_token = link.token
+
+    revoked = revoke_client_access_link(link)
+
+    assert revoked.status == ClientAccessLink.Status.REVOKED
+    assert revoked.token == original_token
+
+
+@pytest.mark.django_db
+def test_regenerate_client_access_link_overwrites_token_and_stays_active():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+    original_token = link.token
+
+    regenerated = regenerate_client_access_link(link)
+
+    assert regenerated.token != original_token
+    assert regenerated.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_regenerate_client_access_link_reactivates_a_revoked_link():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
+
+    regenerated = regenerate_client_access_link(link)
+
+    assert regenerated.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_is_client_access_link_valid_false_for_unrecognized_token():
+    assert is_client_access_link_valid("not-a-real-token") is False
+
+
+@pytest.mark.django_db
+def test_is_client_access_link_valid_false_when_revoked():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.REVOKED,
+        assessment=AssessmentFactory.create(status=Assessment.Status.IN_PROGRESS),
+    )
+
+    assert is_client_access_link_valid(link.token) is False
+
+
+@pytest.mark.django_db
+def test_is_client_access_link_valid_false_when_assessment_complete():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        assessment=AssessmentFactory.create(status=Assessment.Status.COMPLETE),
+    )
+
+    assert is_client_access_link_valid(link.token) is False
+
+
+@pytest.mark.django_db
+def test_is_client_access_link_valid_true_when_active_and_assessment_not_complete():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        assessment=AssessmentFactory.create(status=Assessment.Status.IN_PROGRESS),
+    )
+
+    assert is_client_access_link_valid(link.token) is True

@@ -165,6 +165,37 @@ class Answer(BaseModel):
         return f"{self.assessment} — {self.question_snapshot[:60]}"
 
 
+class ClientAccessLink(BaseModel):
+    """A token-gated, revocable link letting a Client fill in a step remotely."""
+
+    class LinkType(models.TextChoices):
+        GUIDANCE = "guidance", "Guidance"
+        ANSWER = "answer", "Answer"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        REVOKED = "revoked", "Revoked"
+
+    assessment = models.ForeignKey(
+        "Assessment",
+        on_delete=models.CASCADE,
+        related_name="client_access_links",
+    )
+    link_type = models.CharField(max_length=10, choices=LinkType.choices)
+    token = models.CharField(max_length=64, unique=True)
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+    )
+
+    class Meta:
+        unique_together = [["assessment", "link_type"]]
+
+    def __str__(self) -> str:
+        return f"{self.assessment} — {self.get_link_type_display()}"
+
+
 class CategoryGuidance(BaseModel):
     """Free-text guidance captured for a single category within an assessment."""
 

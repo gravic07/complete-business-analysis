@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from factory import Faker, LazyAttribute, SubFactory
+from factory import Faker, LazyAttribute, LazyFunction, SubFactory
 from factory.django import DjangoModelFactory
 
 from complete_business_analysis_tool.assessments.models import (
@@ -9,9 +9,13 @@ from complete_business_analysis_tool.assessments.models import (
     AssessmentTemplate,
     Category,
     CategoryGuidance,
+    ClientAccessLink,
     Question,
     QuestionOption,
     TemplateQuestion,
+)
+from complete_business_analysis_tool.assessments.services import (
+    issue_client_access_token,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
 
@@ -87,3 +91,12 @@ class CategoryGuidanceFactory(DjangoModelFactory[CategoryGuidance]):
 
     class Meta:
         model = CategoryGuidance
+
+
+class ClientAccessLinkFactory(DjangoModelFactory[ClientAccessLink]):
+    assessment = SubFactory(AssessmentFactory)
+    link_type = ClientAccessLink.LinkType.GUIDANCE
+    token = LazyFunction(issue_client_access_token)
+
+    class Meta:
+        model = ClientAccessLink

@@ -60,6 +60,7 @@ class Client(BaseModel):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     title = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, default="")
     industry = models.CharField(
         max_length=50,
         choices=IndustryType,
