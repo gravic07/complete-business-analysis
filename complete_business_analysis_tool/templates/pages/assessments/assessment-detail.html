@@ -132,6 +132,8 @@
               </a>
             </div>
           </div>
+          <hr />
+          {% include "snippets/assessments/access-link-controls.html" with link_type=guidance_access.link_type access_link=guidance_access.access_link access_link_url=guidance_access.access_link_url client_has_email=guidance_access.client_has_email next=request.path %}
         </div>
         <div class="box mb-5">
           <div class="level is-mobile">
@@ -156,6 +158,8 @@
               </a>
             </div>
           </div>
+          <hr />
+          {% include "snippets/assessments/access-link-controls.html" with link_type=answer_access.link_type access_link=answer_access.access_link access_link_url=answer_access.access_link_url client_has_email=answer_access.client_has_email next=request.path %}
         </div>
         <div class="box mb-5">
           <h2 class="title is-5">Mark Complete</h2>

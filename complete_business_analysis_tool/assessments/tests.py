@@ -1043,3 +1043,504 @@ def test_is_client_access_link_valid_true_when_active_and_assessment_not_complet
     )
 
     assert is_client_access_link_valid(link.token) is True
+
+
+@pytest.mark.django_db
+def test_access_link_generate_requires_login():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = Client().post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+    assert not ClientAccessLink.objects.exists()
+
+
+@pytest.mark.django_db
+def test_access_link_revoke_requires_login():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+
+    url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = Client().post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+    link.refresh_from_db()
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_access_link_regenerate_requires_login():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+    original_token = link.token
+
+    url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = Client().post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert "/login/" in response.url or "accounts/login" in response.url
+    link.refresh_from_db()
+    assert link.token == original_token
+
+
+@pytest.mark.django_db
+def test_access_link_generate_creates_active_row_and_redirects_to_detail():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    link = ClientAccessLink.objects.get(assessment=assessment, link_type="guidance")
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_access_link_generate_redirects_to_next_when_provided():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    guidance_url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = http_client.post(url, {"next": guidance_url})
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == guidance_url
+
+
+@pytest.mark.django_db
+def test_access_link_generate_ignores_next_pointing_off_site():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = http_client.post(url, {"next": "https://evil.example.com/steal"})
+
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.url == reverse("assessments:detail", kwargs={"pk": assessment.pk})
+
+
+@pytest.mark.django_db
+def test_access_link_generate_rejected_when_client_has_no_email():
+    assessment = AssessmentFactory.create(client=ClientFactory.create(email=""))
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = http_client.post(url, follow=True)
+
+    assert not ClientAccessLink.objects.exists()
+    messages = [str(m) for m in response.context["messages"]]
+    assert any("email" in m.lower() for m in messages)
+
+
+@pytest.mark.django_db
+def test_access_link_generate_rejected_when_assessment_complete():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+        status=Assessment.Status.COMPLETE,
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    response = http_client.post(url, follow=True)
+
+    assert not ClientAccessLink.objects.exists()
+    messages = [str(m) for m in response.context["messages"]]
+    assert any("complete" in m.lower() for m in messages)
+
+
+@pytest.mark.django_db
+def test_access_link_revoke_marks_existing_link_revoked():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+    original_token = link.token
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    link.refresh_from_db()
+    assert link.status == ClientAccessLink.Status.REVOKED
+    assert link.token == original_token
+
+
+@pytest.mark.django_db
+def test_access_link_revoke_rejected_when_assessment_complete():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        assessment=AssessmentFactory.create(status=Assessment.Status.COMPLETE),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    http_client.post(url)
+
+    link.refresh_from_db()
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_access_link_regenerate_overwrites_token_and_stays_active():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
+    original_token = link.token
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.FOUND
+    link.refresh_from_db()
+    assert link.token != original_token
+    assert link.status == ClientAccessLink.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_access_link_regenerate_rejected_when_assessment_complete():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        assessment=AssessmentFactory.create(status=Assessment.Status.COMPLETE),
+    )
+    original_token = link.token
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    http_client.post(url)
+
+    link.refresh_from_db()
+    assert link.token == original_token
+
+
+@pytest.mark.django_db
+def test_access_link_regenerate_404s_on_revoked_link():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
+    original_token = link.token
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    link.refresh_from_db()
+    assert link.status == ClientAccessLink.Status.REVOKED
+    assert link.token == original_token
+
+
+@pytest.mark.django_db
+def test_access_link_revoke_404s_on_already_revoked_link():
+    link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_access_link_unknown_link_type_404s():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "bogus"},
+    )
+    response = http_client.post(url)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_detail_hub_shows_generate_button_for_client_with_email():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    generate_guidance_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    generate_answer_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "answer"},
+    )
+    assert generate_guidance_url in content
+    assert generate_answer_url in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_shows_client_edit_link_when_client_has_no_email():
+    assessment = AssessmentFactory.create(client=ClientFactory.create(email=""))
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    edit_url = reverse("clients:edit", kwargs={"pk": assessment.client.pk})
+    generate_guidance_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    expected_edit_link_count = 2
+    assert content.count(edit_url) == expected_edit_link_count
+    assert generate_guidance_url not in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_shows_copy_revoke_regenerate_for_active_link():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+        assessment=AssessmentFactory.create(
+            client=ClientFactory.create(email="c@example.com"),
+        ),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": link.assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    revoke_url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    regenerate_url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    assert link.token in content
+    assert revoke_url in content
+    assert regenerate_url in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_revoke_returns_control_to_generate_state():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+        assessment=AssessmentFactory.create(
+            client=ClientFactory.create(email="c@example.com"),
+        ),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    revoke_url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    http_client.post(revoke_url)
+
+    url = reverse("assessments:detail", kwargs={"pk": link.assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    generate_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    assert generate_url in content
+    assert link.token not in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_regenerate_reflects_new_url_immediately():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+        assessment=AssessmentFactory.create(
+            client=ClientFactory.create(email="c@example.com"),
+        ),
+    )
+    original_token = link.token
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    regenerate_url = reverse(
+        "assessments:access_link_regenerate",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    http_client.post(regenerate_url)
+
+    url = reverse("assessments:detail", kwargs={"pk": link.assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    link.refresh_from_db()
+    assert link.token in content
+    assert original_token not in content
+
+
+@pytest.mark.django_db
+def test_detail_hub_hides_access_link_controls_once_assessment_complete():
+    link = ClientAccessLinkFactory.create(
+        status=ClientAccessLink.Status.ACTIVE,
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+        assessment=AssessmentFactory.create(
+            client=ClientFactory.create(email="c@example.com"),
+            status=Assessment.Status.COMPLETE,
+        ),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:detail", kwargs={"pk": link.assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    generate_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    revoke_url = reverse(
+        "assessments:access_link_revoke",
+        kwargs={"pk": link.assessment.pk, "link_type": "guidance"},
+    )
+    assert generate_url not in content
+    assert revoke_url not in content
+    assert link.token not in content
+
+
+@pytest.mark.django_db
+def test_guidance_page_shows_only_guidance_access_link_controls():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:guidance", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    generate_guidance_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    generate_answer_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "answer"},
+    )
+    assert generate_guidance_url in content
+    assert generate_answer_url not in content
+
+
+@pytest.mark.django_db
+def test_answer_page_shows_only_answer_access_link_controls():
+    assessment = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    user = UserFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:answer", kwargs={"pk": assessment.pk})
+    response = http_client.get(url)
+    content = response.content.decode()
+
+    generate_guidance_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "guidance"},
+    )
+    generate_answer_url = reverse(
+        "assessments:access_link_generate",
+        kwargs={"pk": assessment.pk, "link_type": "answer"},
+    )
+    assert generate_answer_url in content
+    assert generate_guidance_url not in content

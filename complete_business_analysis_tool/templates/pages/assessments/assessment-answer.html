@@ -21,6 +21,9 @@
       </nav>
       <h1 class="title">{{ assessment.template.title }}</h1>
       {% if assessment.template.description %}<p class="subtitle">{{ assessment.template.description }}</p>{% endif %}
+      <div class="box mb-5">
+        {% include "snippets/assessments/access-link-controls.html" with link_type=answer_access.link_type access_link=answer_access.access_link access_link_url=answer_access.access_link_url client_has_email=answer_access.client_has_email next=request.path %}
+      </div>
       <form method="post" novalidate>
         {% csrf_token %}
         {% include "snippets/form-errors.html" with form=form %}

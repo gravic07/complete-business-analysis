@@ -8,6 +8,9 @@ from .views import (
     AssessmentStartView,
     AssessmentTemplateListView,
     CategoryGuidanceView,
+    ClientAccessLinkGenerateView,
+    ClientAccessLinkRegenerateView,
+    ClientAccessLinkRevokeView,
     MarkCompleteView,
 )
 
@@ -27,5 +30,20 @@ urlpatterns = [
         "<uuid:pk>/complete/",
         view=MarkCompleteView.as_view(),
         name="mark_complete",
+    ),
+    path(
+        "<uuid:pk>/access-link/<str:link_type>/generate/",
+        view=ClientAccessLinkGenerateView.as_view(),
+        name="access_link_generate",
+    ),
+    path(
+        "<uuid:pk>/access-link/<str:link_type>/revoke/",
+        view=ClientAccessLinkRevokeView.as_view(),
+        name="access_link_revoke",
+    ),
+    path(
+        "<uuid:pk>/access-link/<str:link_type>/regenerate/",
+        view=ClientAccessLinkRegenerateView.as_view(),
+        name="access_link_regenerate",
     ),
 ]

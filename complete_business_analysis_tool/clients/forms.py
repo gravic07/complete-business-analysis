@@ -11,6 +11,7 @@ class ClientForm(forms.ModelForm):
             "first_name",
             "last_name",
             "title",
+            "email",
             "industry",
             "company_size",
             "revenue",
@@ -20,6 +21,7 @@ class ClientForm(forms.ModelForm):
             "business_name": "Business Name",
             "first_name": "First Name",
             "last_name": "Last Name",
+            "email": "Email",
             "company_size": "Company Size (Employees)",
             "corporate_style": "Corporate Style",
         }
@@ -35,5 +37,8 @@ class ClientForm(forms.ModelForm):
             ),
             "title": forms.TextInput(
                 attrs={"class": "input", "placeholder": "Title at Company"},
+            ),
+            "email": forms.EmailInput(
+                attrs={"class": "input", "placeholder": "Email Address"},
             ),
         }

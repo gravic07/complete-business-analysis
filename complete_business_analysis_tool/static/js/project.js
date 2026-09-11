@@ -45,3 +45,28 @@ document.querySelectorAll("[data-ranked-radio]").forEach(function (container) {
     });
   });
 });
+
+// Client Access Link controls — copy the link URL to the clipboard
+document.querySelectorAll("[data-copy-target]").forEach(function (button) {
+  button.addEventListener("click", function () {
+    const input = document.getElementById(button.dataset.copyTarget);
+    if (!input || !navigator.clipboard) {
+      return;
+    }
+    const originalLabel = button.textContent;
+    navigator.clipboard
+      .writeText(input.value)
+      .then(function () {
+        button.textContent = "Copied!";
+        setTimeout(function () {
+          button.textContent = originalLabel;
+        }, 1500);
+      })
+      .catch(function () {
+        button.textContent = "Copy failed";
+        setTimeout(function () {
+          button.textContent = originalLabel;
+        }, 1500);
+      });
+  });
+});

@@ -21,6 +21,9 @@
       </nav>
       <h1 class="title">Category Guidance</h1>
       <p class="subtitle">Optional notes to steer AI generation for each category. Leave any field blank to skip it.</p>
+      <div class="box mb-5">
+        {% include "snippets/assessments/access-link-controls.html" with link_type=guidance_access.link_type access_link=guidance_access.access_link access_link_url=guidance_access.access_link_url client_has_email=guidance_access.client_has_email next=request.path %}
+      </div>
       <form method="post" novalidate>
         {% csrf_token %}
         {% include "snippets/form-errors.html" with form=form %}

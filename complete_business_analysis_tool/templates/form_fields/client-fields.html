@@ -13,4 +13,7 @@
   {% include 'snippets/input-text.html' with field=form.first_name icon="fa-user-hair" %}
   {% include 'snippets/input-text.html' with field=form.last_name icon="fa-user-hair" %}
 </div>
-<div class="columns">{% include 'snippets/input-text.html' with field=form.title icon="fa-id-card-clip" %}</div>
+<div class="columns">
+  {% include 'snippets/input-text.html' with field=form.title icon="fa-id-card-clip" %}
+  {% include 'snippets/input-text.html' with field=form.email icon="fa-envelope" %}
+</div>

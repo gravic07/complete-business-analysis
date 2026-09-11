@@ -1,0 +1,46 @@
+{% comment %}
+Expects: assessment, link_type, client_has_email, access_link, access_link_url, next
+{% endcomment %}
+<div class="access-link-controls">
+  <p class="label">Client Access Link</p>
+  {% if access_link %}
+    <div class="field has-addons">
+      <div class="control is-expanded">
+        <input class="input"
+               type="text"
+               id="access-link-url-{{ link_type }}"
+               value="{{ access_link_url }}"
+               readonly />
+      </div>
+      <div class="control">
+        <button type="button"
+                class="button"
+                data-copy-target="access-link-url-{{ link_type }}">Copy</button>
+      </div>
+    </div>
+    <div class="buttons">
+      <form method="post"
+            action="{% url 'assessments:access_link_regenerate' pk=assessment.pk link_type=link_type %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button type="submit" class="button is-light">Regenerate</button>
+      </form>
+      <form method="post"
+            action="{% url 'assessments:access_link_revoke' pk=assessment.pk link_type=link_type %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button type="submit" class="button is-light is-danger">Revoke</button>
+      </form>
+    </div>
+  {% elif client_has_email %}
+    <form method="post"
+          action="{% url 'assessments:access_link_generate' pk=assessment.pk link_type=link_type %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      <button type="submit" class="button is-link is-light">Generate</button>
+    </form>
+  {% else %}
+    <a href="{% url 'clients:edit' assessment.client.pk %}"
+       class="button is-light">Add Client Email</a>
+  {% endif %}
+</div>
