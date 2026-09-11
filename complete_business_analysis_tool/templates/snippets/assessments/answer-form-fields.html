@@ -1,0 +1,19 @@
+{% for category_name, bound_fields in form.get_grouped_fields %}
+  <div class="box mb-5">
+    <h2 class="title is-5 has-text-primary">
+      {% if category_name %}
+        {{ category_name }}
+      {% else %}
+        General
+      {% endif %}
+    </h2>
+    <hr />
+    {% for bound_field in bound_fields %}
+      <div class="field mb-5">
+        <label class="label">{{ bound_field.label }}</label>
+        {% for error in bound_field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+        <div class="control">{{ bound_field }}</div>
+      </div>
+    {% endfor %}
+  </div>
+{% endfor %}

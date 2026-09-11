@@ -17,3 +17,30 @@
     </div>
   </header>
 {% endblock navigation %}
+{% block inline_javascript %}
+  <script>
+    (function() {
+      var form = document.querySelector("main form");
+      if (!form) {
+        return;
+      }
+      var dirty = false;
+      form.addEventListener("input", function() {
+        dirty = true;
+      });
+      form.addEventListener("change", function() {
+        dirty = true;
+      });
+      form.addEventListener("submit", function() {
+        dirty = false;
+      });
+      window.addEventListener("beforeunload", function(event) {
+        if (!dirty) {
+          return;
+        }
+        event.preventDefault();
+        event.returnValue = "";
+      });
+    })();
+  </script>
+{% endblock inline_javascript %}
