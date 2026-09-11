@@ -7,6 +7,7 @@ from django.urls import reverse
 from complete_business_analysis_tool.assessments.factories import (
     AssessmentFactory,
     AssessmentTemplateFactory,
+    CategoryGuidanceFactory,
     ClientAccessLinkFactory,
     QuestionFactory,
     QuestionOptionFactory,
@@ -14,6 +15,7 @@ from complete_business_analysis_tool.assessments.factories import (
 )
 from complete_business_analysis_tool.assessments.models import (
     Assessment,
+    CategoryGuidance,
     ClientAccessLink,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
@@ -319,3 +321,221 @@ def test_portal_pages_include_beforeunload_unsaved_changes_guard():
 
     assert b"beforeunload" in response.content
     assert b"isn't valid" not in response.content
+
+
+def _make_guidance_link(client_email="client@example.com"):
+    """Build an ACTIVE Guidance-type link on a one-category template."""
+    template = AssessmentTemplateFactory.create()
+    question = QuestionFactory.create()
+    TemplateQuestionFactory.create(template=template, question=question)
+    assessment = AssessmentFactory.create(
+        template=template,
+        status=Assessment.Status.DRAFT,
+        client=ClientFactory.create(email=client_email),
+    )
+    link = ClientAccessLinkFactory.create(
+        link_type=ClientAccessLink.LinkType.GUIDANCE,
+        status=ClientAccessLink.Status.ACTIVE,
+        assessment=assessment,
+    )
+    return link, question.category
+
+
+@pytest.mark.django_db
+def test_fresh_get_on_active_guidance_link_always_renders_email_gate():
+    link, _ = _make_guidance_link()
+
+    response = Client().get(
+        reverse("client_portal:entry", kwargs={"token": link.token}),
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Enter your email to continue" in response.content
+
+
+@pytest.mark.django_db
+def test_reopening_guidance_link_after_verifying_email_returns_to_the_gate_again():
+    link, _ = _make_guidance_link(client_email="client@example.com")
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+    http_client = Client()
+    http_client.post(url, {"email": "client@example.com"})
+
+    response = http_client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Enter your email to continue" in response.content
+
+
+@pytest.mark.django_db
+def test_non_matching_email_on_guidance_link_returns_generic_denial():
+    link, _ = _make_guidance_link(client_email="client@example.com")
+    assessment = link.assessment
+    assessment.client.business_name = "Acme Co"
+    assessment.client.save()
+
+    response = Client().post(
+        reverse("client_portal:entry", kwargs={"token": link.token}),
+        {"email": "wrong@example.com"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"verify that email for this link" in response.content
+    assert b"Acme Co" not in response.content
+
+
+@pytest.mark.django_db
+def test_matching_email_renders_guidance_form_with_token_and_email_hidden():
+    link, category = _make_guidance_link(client_email="client@example.com")
+
+    response = Client().post(
+        reverse("client_portal:entry", kwargs={"token": link.token}),
+        {"email": "Client@Example.com"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert f'name="token" value="{link.token}"'.encode() in response.content
+    assert b'name="verified_email" value="Client@Example.com"' in response.content
+    assert f"category_{category.pk.hex}".encode() in response.content
+
+
+@pytest.mark.django_db
+def test_guidance_form_shows_concerns_priorities_and_goals_copy_not_category_guidance():
+    link, _ = _make_guidance_link(client_email="client@example.com")
+
+    response = Client().post(
+        reverse("client_portal:entry", kwargs={"token": link.token}),
+        {"email": "client@example.com"},
+    )
+
+    assert b"Concerns, Priorities and Goals" in response.content
+    assert b"Category Guidance" not in response.content
+
+
+@pytest.mark.django_db
+def test_saving_guidance_form_persists_category_guidance_and_advances_status():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+
+    response = Client().post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "client@example.com",
+            f"category_{category.pk.hex}": "Wants to grow revenue next year.",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    guidance = CategoryGuidance.objects.get(assessment=link.assessment, category=category)
+    assert guidance.text == "Wants to grow revenue next year."
+    link.assessment.refresh_from_db()
+    assert link.assessment.status == Assessment.Status.IN_PROGRESS
+    assert link.assessment.guidance_submitted_at is not None
+
+
+@pytest.mark.django_db
+def test_saving_blank_guidance_form_deletes_existing_guidance_but_still_advances_status():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    CategoryGuidanceFactory.create(
+        assessment=link.assessment,
+        category=category,
+        text="Old note",
+    )
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+
+    response = Client().post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "client@example.com",
+            f"category_{category.pk.hex}": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert not CategoryGuidance.objects.filter(
+        assessment=link.assessment,
+        category=category,
+    ).exists()
+    link.assessment.refresh_from_db()
+    assert link.assessment.guidance_submitted_at is not None
+
+
+@pytest.mark.django_db
+def test_saving_guidance_form_never_marks_assessment_complete():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    link.assessment.status = Assessment.Status.IN_PROGRESS
+    link.assessment.save(update_fields=["status"])
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+
+    Client().post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "client@example.com",
+            f"category_{category.pk.hex}": "Some notes.",
+        },
+    )
+
+    link.assessment.refresh_from_db()
+    assert link.assessment.status != Assessment.Status.COMPLETE
+
+
+@pytest.mark.django_db
+def test_saving_guidance_form_shows_confirmation_message():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+
+    response = Client().post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "client@example.com",
+            f"category_{category.pk.hex}": "Some notes.",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Concerns, Priorities and Goals have been saved" in response.content
+    assert b"return using the same link" in response.content
+
+
+@pytest.mark.django_db
+def test_verified_guidance_form_and_confirmation_show_client_header():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    link.assessment.client.business_name = "Acme Co"
+    link.assessment.client.save()
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+    http_client = Client()
+
+    form_response = http_client.post(url, {"email": "client@example.com"})
+    assert b"Acme Co" in form_response.content
+
+    save_response = http_client.post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "client@example.com",
+            f"category_{category.pk.hex}": "Some notes.",
+        },
+    )
+    assert b"Acme Co" in save_response.content
+
+
+@pytest.mark.django_db
+def test_guidance_submission_with_mismatched_verified_email_is_sent_back_to_gate():
+    link, category = _make_guidance_link(client_email="client@example.com")
+    url = reverse("client_portal:entry", kwargs={"token": link.token})
+
+    response = Client().post(
+        url,
+        {
+            "token": link.token,
+            "verified_email": "someone-else@example.com",
+            f"category_{category.pk.hex}": "Some notes.",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Enter your email to continue" in response.content
+    assert not CategoryGuidance.objects.filter(assessment=link.assessment).exists()

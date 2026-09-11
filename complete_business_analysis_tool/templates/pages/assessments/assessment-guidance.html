@@ -27,14 +27,7 @@
       <form method="post" novalidate>
         {% csrf_token %}
         {% include "snippets/form-errors.html" with form=form %}
-        {% for category, bound_field in form.get_category_fields %}
-          <div class="box mb-5">
-            <h2 class="title is-5 has-text-primary">{{ category.name }}</h2>
-            <hr />
-            {% for error in bound_field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
-            <div class="control">{{ bound_field }}</div>
-          </div>
-        {% endfor %}
+        {% include "snippets/assessments/guidance-form-fields.html" with form=form %}
         <div class="field">
           <div class="control">
             <button type="submit" class="button is-primary is-medium">Save Guidance</button>

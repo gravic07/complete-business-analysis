@@ -1,0 +1,25 @@
+{% extends "pages/client_portal/base.html" %}
+
+{% block title %}
+  {{ assessment.template.title }} — Concerns, Priorities and Goals
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <h1 class="title">Concerns, Priorities and Goals</h1>
+      <p class="subtitle">Optional notes for each category below. Leave any field blank if you have nothing to add.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token }}" />
+        <input type="hidden" name="verified_email" value="{{ verified_email }}" />
+        {% include "snippets/form-errors.html" with form=form %}
+        {% include "snippets/assessments/guidance-form-fields.html" with form=form %}
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary is-medium">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock content %}

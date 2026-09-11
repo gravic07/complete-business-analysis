@@ -4,14 +4,24 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from django.db import transaction
+from django.utils import timezone
 
 from complete_business_analysis_tool.assessments.models import (
     Assessment,
+    AssessmentTemplate,
+    Category,
+    CategoryGuidance,
     ClientAccessLink,
     TemplateQuestion,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.db.models import QuerySet
 
 
 def issue_client_access_token() -> str:
@@ -105,6 +115,56 @@ def client_access_link_grants_access(link: ClientAccessLink) -> bool:
     if link.status == ClientAccessLink.Status.REVOKED:
         return False
     return link.assessment.status != Assessment.Status.COMPLETE
+
+
+def categories_for_template(template: AssessmentTemplate) -> QuerySet[Category]:
+    """Categories in play for a template, via its questions.
+
+    Shared by the staff Category Guidance view and the Client-facing
+    Concerns, Priorities and Goals flow so both offer the same set of
+    category fields for a given Assessment.
+    """
+    return (
+        Category.objects.filter(questions__template_questions__template=template)
+        .distinct()
+        .order_by("name")
+    )
+
+
+@transaction.atomic
+def save_category_guidance(
+    assessment: Assessment,
+    categories: Iterable[Category],
+    cleaned_data: dict,
+) -> None:
+    """Persist one CategoryGuidance row per non-blank category field.
+
+    Deletes the row for a category whose field was left blank. Always stamps
+    guidance_submitted_at and advances a draft Assessment to in_progress,
+    never to complete. Shared between the staff Category Guidance view and
+    the Client-facing Concerns, Priorities and Goals flow so both write
+    identically.
+    """
+    for category in categories:
+        text = (cleaned_data.get(f"category_{category.pk.hex}") or "").strip()
+        if text:
+            CategoryGuidance.objects.update_or_create(
+                assessment=assessment,
+                category=category,
+                defaults={"text": text},
+            )
+        else:
+            CategoryGuidance.objects.filter(
+                assessment=assessment,
+                category=category,
+            ).delete()
+
+    assessment.guidance_submitted_at = timezone.now()
+    update_fields = ["guidance_submitted_at"]
+    if assessment.status == Assessment.Status.DRAFT:
+        assessment.status = Assessment.Status.IN_PROGRESS
+        update_fields.append("status")
+    assessment.save(update_fields=update_fields)
 
 
 def is_client_access_link_valid(token: str) -> bool:

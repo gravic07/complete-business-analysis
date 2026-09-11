@@ -8,13 +8,19 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import render
 from django.views import View
 
-from complete_business_analysis_tool.assessments.forms import AssessmentAnswerForm
+from complete_business_analysis_tool.assessments.forms import (
+    AssessmentAnswerForm,
+    CategoryGuidanceForm,
+)
 from complete_business_analysis_tool.assessments.models import (
     Assessment,
+    CategoryGuidance,
     ClientAccessLink,
 )
 from complete_business_analysis_tool.assessments.services import (
+    categories_for_template,
     client_access_link_grants_access,
+    save_category_guidance,
 )
 
 from .forms import ClientEmailGateForm
@@ -37,13 +43,13 @@ class ClientAccessLinkEntryView(View):
     """Single token-keyed entry point a Client's link resolves into.
 
     Resolves the three terminal states (unrecognized token, revoked link,
-    link on a completed Assessment), then the email gate and Answer
-    Questions flow for a still-valid Answer-type link. Guidance-type links
-    land in ticket 05.
+    link on a completed Assessment), then dispatches internally on the
+    link's type to either the Answer Questions flow or the Concerns,
+    Priorities and Goals (Guidance) flow.
 
     The email gate never consults a session or cookie: every GET renders a
     fresh gate, and the verified email is only carried forward as a hidden
-    field on the Answer form's own POST, re-checked against the live
+    field on the underlying form's own POST, re-checked against the live
     Client.email each time.
     """
 
@@ -60,9 +66,6 @@ class ClientAccessLinkEntryView(View):
         if terminal is not None or link is None:
             return terminal or HttpResponse(status=404)
 
-        if link.link_type != ClientAccessLink.LinkType.ANSWER:
-            return HttpResponse("This step isn't available here yet.")
-
         self.link = link
         return super().dispatch(request, token, *args, **kwargs)
 
@@ -70,9 +73,11 @@ class ClientAccessLinkEntryView(View):
         return self._render_gate(request)
 
     def post(self, request: HttpRequest, token: str) -> HttpResponse:
-        if "verified_email" in request.POST:
-            return self._handle_answer_submission(request)
-        return self._handle_email_check(request)
+        if "verified_email" not in request.POST:
+            return self._handle_email_check(request)
+        if self.link.link_type == ClientAccessLink.LinkType.GUIDANCE:
+            return self._handle_guidance_submission(request)
+        return self._handle_answer_submission(request)
 
     @staticmethod
     def _resolve_link(
@@ -100,14 +105,23 @@ class ClientAccessLinkEntryView(View):
 
         return link, None
 
+    @property
+    def categories(self):
+        return categories_for_template(self.link.assessment.template)
+
     def _render_gate(
         self,
         request: HttpRequest,
         gate_form: ClientEmailGateForm | None = None,
     ) -> HttpResponse:
+        template = (
+            "pages/client_portal/guidance-gate.html"
+            if self.link.link_type == ClientAccessLink.LinkType.GUIDANCE
+            else "pages/client_portal/answer-gate.html"
+        )
         return render(
             request,
-            "pages/client_portal/answer-gate.html",
+            template,
             {"gate_form": gate_form or ClientEmailGateForm()},
         )
 
@@ -121,6 +135,8 @@ class ClientAccessLinkEntryView(View):
             gate_form.add_error(None, EMAIL_DENIAL_MESSAGE)
             return self._render_gate(request, gate_form)
 
+        if self.link.link_type == ClientAccessLink.LinkType.GUIDANCE:
+            return self._render_guidance_form(request, verified_email=submitted_email)
         return self._render_answer_form(request, verified_email=submitted_email)
 
     def _handle_answer_submission(self, request: HttpRequest) -> HttpResponse:
@@ -168,6 +184,65 @@ class ClientAccessLinkEntryView(View):
             "pages/client_portal/answer-questions.html",
             {
                 "form": answer_form,
+                "assessment": assessment,
+                "client": assessment.client,
+                "token": self.link.token,
+                "verified_email": verified_email,
+            },
+        )
+
+    def _handle_guidance_submission(self, request: HttpRequest) -> HttpResponse:
+        verified_email = request.POST.get("verified_email", "")
+        if request.POST.get("token") != self.link.token or not _email_matches(
+            self.link.assessment.client,
+            verified_email,
+        ):
+            return self._render_gate(request)
+
+        assessment = self.link.assessment
+        categories = self.categories
+        guidance_form = CategoryGuidanceForm(request.POST, categories=categories)
+        if not guidance_form.is_valid():
+            return self._render_guidance_form(
+                request,
+                verified_email=verified_email,
+                guidance_form=guidance_form,
+            )
+
+        save_category_guidance(assessment, categories, guidance_form.cleaned_data)
+        return render(
+            request,
+            "pages/client_portal/guidance-saved.html",
+            {"assessment": assessment, "client": assessment.client},
+        )
+
+    def _render_guidance_form(
+        self,
+        request: HttpRequest,
+        verified_email: str,
+        guidance_form: CategoryGuidanceForm | None = None,
+    ) -> HttpResponse:
+        assessment: Assessment = self.link.assessment
+        if guidance_form is None:
+            categories = self.categories
+            existing_text = dict(
+                CategoryGuidance.objects.filter(assessment=assessment).values_list(
+                    "category_id",
+                    "text",
+                ),
+            )
+            initial = {
+                f"category_{category.pk.hex}": existing_text[category.pk]
+                for category in categories
+                if existing_text.get(category.pk)
+            }
+            guidance_form = CategoryGuidanceForm(categories=categories, initial=initial)
+
+        return render(
+            request,
+            "pages/client_portal/concerns-priorities-goals.html",
+            {
+                "form": guidance_form,
                 "assessment": assessment,
                 "client": assessment.client,
                 "token": self.link.token,

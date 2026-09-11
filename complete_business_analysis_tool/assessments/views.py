@@ -6,11 +6,9 @@ from typing import TYPE_CHECKING
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
@@ -19,16 +17,17 @@ from .forms import AssessmentAnswerForm, AssessmentStartForm, CategoryGuidanceFo
 from .models import (
     Assessment,
     AssessmentTemplate,
-    Category,
     CategoryGuidance,
     ClientAccessLink,
 )
 from .services import (
     assessment_completion_status,
+    categories_for_template,
     client_access_link_grants_access,
     generate_client_access_link,
     regenerate_client_access_link,
     revoke_client_access_link,
+    save_category_guidance,
 )
 
 if TYPE_CHECKING:
@@ -265,13 +264,7 @@ class CategoryGuidanceView(LoginRequiredMixin, FormView):
             Assessment.objects.select_related("client"),
             pk=kwargs["pk"],
         )
-        self.categories = (
-            Category.objects.filter(
-                questions__template_questions__template=self.assessment.template,
-            )
-            .distinct()
-            .order_by("name")
-        )
+        self.categories = categories_for_template(self.assessment.template)
 
     def _reject_if_complete(self):
         """Block access once the assessment is locked.
@@ -326,29 +319,8 @@ class CategoryGuidanceView(LoginRequiredMixin, FormView):
     def get_success_url(self):
         return reverse("assessments:detail", kwargs={"pk": self.assessment.pk})
 
-    @transaction.atomic
     def form_valid(self, form):
-        for category in self.categories:
-            text = (form.cleaned_data.get(f"category_{category.pk.hex}") or "").strip()
-            if text:
-                CategoryGuidance.objects.update_or_create(
-                    assessment=self.assessment,
-                    category=category,
-                    defaults={"text": text},
-                )
-            else:
-                CategoryGuidance.objects.filter(
-                    assessment=self.assessment,
-                    category=category,
-                ).delete()
-
-        self.assessment.guidance_submitted_at = timezone.now()
-        update_fields = ["guidance_submitted_at"]
-        if self.assessment.status == Assessment.Status.DRAFT:
-            self.assessment.status = Assessment.Status.IN_PROGRESS
-            update_fields.append("status")
-        self.assessment.save(update_fields=update_fields)
-
+        save_category_guidance(self.assessment, self.categories, form.cleaned_data)
         messages.success(self.request, "Guidance saved.")
         return super().form_valid(form)
 

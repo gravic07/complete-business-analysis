@@ -1,0 +1,31 @@
+{% extends "pages/client_portal/base.html" %}
+
+{% block title %}
+  Verify your email
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="box">
+        <h1 class="title is-4">Enter your email to continue</h1>
+        <p class="mb-4">
+          We use the email on file to confirm it's you before showing your Concerns, Priorities and
+          Goals.
+        </p>
+        {% include "snippets/form-errors.html" with form=gate_form %}
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="field">
+            <label class="label">{{ gate_form.email.label }}</label>
+            <div class="control">{{ gate_form.email }}</div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <button type="submit" class="button is-primary is-medium">Continue</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock content %}
