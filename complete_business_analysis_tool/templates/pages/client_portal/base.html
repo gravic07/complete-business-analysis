@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}
+  client-portal
+{% endblock bodyclass %}
+{% block navigation %}
+  <header class="hero is-light no-print">
+    <div class="hero-body">
+      <div class="container">
+        {% if client %}
+          <p class="title is-4">{{ client.business_name }}</p>
+          <p class="subtitle is-6">{{ client.first_name }} {{ client.last_name }}</p>
+        {% else %}
+          <p class="title is-4">Complete Business Analysis Tool</p>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+{% endblock navigation %}

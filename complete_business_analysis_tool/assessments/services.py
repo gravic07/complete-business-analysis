@@ -96,12 +96,21 @@ def regenerate_client_access_link(link: ClientAccessLink) -> ClientAccessLink:
     return link
 
 
+def client_access_link_grants_access(link: ClientAccessLink) -> bool:
+    """Whether an already-resolved link currently grants access.
+
+    Shared predicate so a caller that already holds the row (the
+    client_portal entry view) doesn't need a second lookup by token.
+    """
+    if link.status == ClientAccessLink.Status.REVOKED:
+        return False
+    return link.assessment.status != Assessment.Status.COMPLETE
+
+
 def is_client_access_link_valid(token: str) -> bool:
     """Report whether a token resolves to a link that currently grants access."""
     try:
         link = ClientAccessLink.objects.select_related("assessment").get(token=token)
     except ClientAccessLink.DoesNotExist:
         return False
-    if link.status == ClientAccessLink.Status.REVOKED:
-        return False
-    return link.assessment.status != Assessment.Status.COMPLETE
+    return client_access_link_grants_access(link)

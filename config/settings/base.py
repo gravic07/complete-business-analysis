@@ -98,6 +98,7 @@ LOCAL_APPS = [
     "complete_business_analysis_tool.clients",
     "complete_business_analysis_tool.analysis",
     "complete_business_analysis_tool.reports",
+    "complete_business_analysis_tool.client_portal",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

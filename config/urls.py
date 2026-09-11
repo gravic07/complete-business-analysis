@@ -46,6 +46,13 @@ urlpatterns = [
             namespace="reports",
         ),
     ),
+    path(
+        "client-access/",
+        include(
+            "complete_business_analysis_tool.client_portal.urls",
+            namespace="client_portal",
+        ),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

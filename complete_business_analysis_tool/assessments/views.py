@@ -25,6 +25,7 @@ from .models import (
 )
 from .services import (
     assessment_completion_status,
+    client_access_link_grants_access,
     generate_client_access_link,
     regenerate_client_access_link,
     revoke_client_access_link,
@@ -32,12 +33,6 @@ from .services import (
 
 if TYPE_CHECKING:
     import uuid
-
-
-# The client_portal app that will own this route (PRD tickets 03-05) doesn't
-# exist yet, so this can't be reverse()'d by name. Centralized here as the
-# one place to update once that app's URLconf lands.
-CLIENT_ACCESS_LINK_PATH_TEMPLATE = "/client-access/{token}/"
 
 
 def _access_link_state(
@@ -58,15 +53,15 @@ def _access_link_state(
         "access_link": None,
         "access_link_url": None,
     }
-    if (
-        link is not None
-        and link.status == ClientAccessLink.Status.ACTIVE
-        and assessment.status != Assessment.Status.COMPLETE
-    ):
-        context["access_link"] = link
-        context["access_link_url"] = request.build_absolute_uri(
-            CLIENT_ACCESS_LINK_PATH_TEMPLATE.format(token=link.token),
-        )
+    if link is not None:
+        # Reuse the caller's already-loaded assessment so the predicate's
+        # `link.assessment` access doesn't trigger an extra query.
+        link.assessment = assessment
+        if client_access_link_grants_access(link):
+            context["access_link"] = link
+            context["access_link_url"] = request.build_absolute_uri(
+                reverse("client_portal:entry", kwargs={"token": link.token}),
+            )
     return context
 
 
