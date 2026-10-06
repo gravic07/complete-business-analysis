@@ -1,6 +1,7 @@
 import json
 from json import dumps as json_dumps
 
+from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
@@ -175,6 +176,9 @@ class UpdateAssessmentNameView(LoginRequiredMixin, View):
         return response
 
 
+# Opted out of site-wide login: the PDF renderer fetches this page anonymously
+# with a short-lived signed token; dispatch() enforces token-or-login itself.
+@method_decorator(login_not_required, name="dispatch")
 class PDFTemplateView(DetailView):
     model = Assessment
     template_name = "pages/reports/report-pdf.html"

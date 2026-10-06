@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.decorators import login_not_required
 from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
+from django.views.static import serve
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
@@ -53,8 +55,12 @@ urlpatterns = [
             namespace="client_portal",
         ),
     ),
-    # Media files
-    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    # Media files (development only; exempt from site-wide login)
+    *static(
+        settings.MEDIA_URL,
+        view=login_not_required(serve),
+        document_root=settings.MEDIA_ROOT,
+    ),
 ]
 
 # API URLS

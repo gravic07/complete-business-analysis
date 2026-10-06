@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from django.contrib.auth.decorators import login_not_required
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views import View
 
 from complete_business_analysis_tool.assessments.forms import (
@@ -39,6 +41,9 @@ def _email_matches(client: Client, submitted_email: str) -> bool:
     return submitted_email.strip().lower() == client.email.strip().lower()
 
 
+# Opted out of site-wide login: Clients reach this page anonymously via their
+# ClientAccessLink token; access is governed by the link and the email gate.
+@method_decorator(login_not_required, name="dispatch")
 class ClientAccessLinkEntryView(View):
     """Single token-keyed entry point a Client's link resolves into.
 
