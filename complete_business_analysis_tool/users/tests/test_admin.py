@@ -8,7 +8,9 @@ from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
+from complete_business_analysis_tool.teams.factories import TeamFactory
 from complete_business_analysis_tool.users.models import User
+from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 class TestUserAdmin:
@@ -43,6 +45,45 @@ class TestUserAdmin:
         url = reverse("admin:users_user_change", kwargs={"object_id": user.pk})
         response = admin_client.get(url)
         assert response.status_code == HTTPStatus.OK
+
+    def test_changelist_filters_by_team(self, admin_client):
+        team = TeamFactory.create()
+        member = UserFactory.create(team=team)
+        outsider = UserFactory.create()
+        url = reverse("admin:users_user_changelist")
+
+        response = admin_client.get(url, data={"team__id__exact": str(team.pk)})
+
+        users = list(response.context["cl"].result_list)
+        assert member in users
+        assert outsider not in users
+
+    @pytest.mark.parametrize(
+        ("starts_in_team", "ends_in_team"),
+        [(False, True), (True, True), (True, False)],
+        ids=["assign", "move", "clear"],
+    )
+    def test_change_form_sets_team(self, admin_client, starts_in_team, ends_in_team):
+        original = TeamFactory.create() if starts_in_team else None
+        target = TeamFactory.create() if ends_in_team else None
+        user = UserFactory.create(team=original)
+        url = reverse("admin:users_user_change", kwargs={"object_id": user.pk})
+
+        response = admin_client.post(
+            url,
+            data={
+                "email": user.email,
+                "name": user.name,
+                "team": str(target.pk) if target else "",
+                "is_active": "on",
+                "date_joined_0": "2026-01-01",
+                "date_joined_1": "00:00:00",
+            },
+        )
+
+        assert response.status_code == HTTPStatus.FOUND
+        user.refresh_from_db()
+        assert user.team == target
 
     @pytest.fixture
     def _force_allauth(self, settings):

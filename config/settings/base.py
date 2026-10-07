@@ -94,6 +94,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "complete_business_analysis_tool.users",
     "complete_business_analysis_tool.core",
+    "complete_business_analysis_tool.teams",
     "complete_business_analysis_tool.assessments",
     "complete_business_analysis_tool.clients",
     "complete_business_analysis_tool.analysis",

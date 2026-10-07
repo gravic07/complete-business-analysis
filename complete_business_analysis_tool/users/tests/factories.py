@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from factory import Faker
-from factory import post_generation
+from factory import Faker, SubFactory, post_generation
 from factory.django import DjangoModelFactory
 
+from complete_business_analysis_tool.teams.factories import TeamFactory
 from complete_business_analysis_tool.users.models import User
 
 
 class UserFactory(DjangoModelFactory[User]):
+    """Produces a User with a Team; pass ``team=None`` for a User without one."""
+
     email = Faker("email")
     name = Faker("name")
+    team = SubFactory(TeamFactory)
 
     @post_generation
     def password(self: User, create: bool, extracted: str | None, **kwargs):  # noqa: FBT001
