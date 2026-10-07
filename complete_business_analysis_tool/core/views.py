@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from complete_business_analysis_tool.analysis.models import Analysis
@@ -7,6 +8,7 @@ from complete_business_analysis_tool.assessments.models import (
     AssessmentTemplate,
 )
 from complete_business_analysis_tool.clients.models import Client
+from complete_business_analysis_tool.core.middleware import team_not_required
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
@@ -21,3 +23,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
             status=Analysis.Status.COMPLETE,
         ).count()
         return context
+
+
+@method_decorator(team_not_required, name="dispatch")
+class NoTeamView(LoginRequiredMixin, TemplateView):
+    """Where `NoTeamGateMiddleware` sends a logged-in User who has no Team."""
+
+    template_name = "pages/no-team.html"

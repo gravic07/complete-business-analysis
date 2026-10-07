@@ -9,16 +9,17 @@ from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpRequest
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from complete_business_analysis_tool.users.forms import UserAdminChangeForm
 from complete_business_analysis_tool.users.tests.factories import UserFactory
-from complete_business_analysis_tool.users.views import UserRedirectView
-from complete_business_analysis_tool.users.views import UserUpdateView
-from complete_business_analysis_tool.users.views import user_detail_view
+from complete_business_analysis_tool.users.views import (
+    UserRedirectView,
+    UserUpdateView,
+    user_detail_view,
+)
 
 if TYPE_CHECKING:
     from django.test import RequestFactory
@@ -89,12 +90,19 @@ class TestUserRedirectView:
 
 
 class TestUserDetailView:
-    def test_authenticated(self, user: User, rf: RequestFactory):
+    def test_own_profile(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")
-        request.user = UserFactory.create()
+        request.user = user
         response = user_detail_view(request, pk=user.pk)
 
         assert response.status_code == HTTPStatus.OK
+
+    def test_other_users_profile_is_not_found(self, user: User, rf: RequestFactory):
+        request = rf.get("/fake-url/")
+        request.user = UserFactory.create()
+
+        with pytest.raises(Http404):
+            user_detail_view(request, pk=user.pk)
 
     def test_not_authenticated(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")

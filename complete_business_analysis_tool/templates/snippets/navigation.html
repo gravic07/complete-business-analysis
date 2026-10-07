@@ -28,8 +28,10 @@
         {% endif %}
       </div>
       <div class="navbar-end">
-        <a href="{% url 'clients:list' %}" class="navbar-item">Clients</a>
-        <a href="{% url 'assessments:list' %}" class="navbar-item">Assessments</a>
+        {% if request.user.team %}
+          <a href="{% url 'clients:list' %}" class="navbar-item">Clients</a>
+          <a href="{% url 'assessments:list' %}" class="navbar-item">Assessments</a>
+        {% endif %}
         {% if request.user.is_authenticated %}
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">Profile</a>

@@ -32,3 +32,13 @@ def _block_real_anthropic_api(monkeypatch) -> None:
 @pytest.fixture
 def user(db) -> User:
     return UserFactory.create()
+
+
+@pytest.fixture
+def admin_user(db) -> User:
+    """Override pytest-django's `admin_user` so it belongs to a Team."""
+    return UserFactory.create(
+        email="admin@example.com",
+        is_staff=True,
+        is_superuser=True,
+    )

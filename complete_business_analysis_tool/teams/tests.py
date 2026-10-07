@@ -27,8 +27,9 @@ def test_navbar_shows_no_team_for_user_without_team():
     http_client = Client()
     http_client.force_login(user)
 
-    response = http_client.get(reverse("home"))
+    response = http_client.get(reverse("no_team"))
 
+    assert response.status_code == HTTPStatus.OK
     assert 'data-testid="navbar-team"' not in response.content.decode()
 
 

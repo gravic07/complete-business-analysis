@@ -5,26 +5,34 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView
-from django.views.generic import RedirectView
-from django.views.generic import UpdateView
+from django.views.generic import DetailView, RedirectView, UpdateView
 
+from complete_business_analysis_tool.core.middleware import team_not_required
 from complete_business_analysis_tool.users.models import User
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
 
+@method_decorator(team_not_required, name="dispatch")
 class UserDetailView(LoginRequiredMixin, DetailView):
+    """A User's own profile; any other User's pk is a 404."""
+
     model = User
     slug_field = "id"
     slug_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[User]:
+        assert self.request.user.is_authenticated  # type guard
+        return User.objects.filter(pk=self.request.user.pk)
 
 
 user_detail_view = UserDetailView.as_view()
 
 
+@method_decorator(team_not_required, name="dispatch")
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
     fields = ["name"]
@@ -42,6 +50,7 @@ class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 user_update_view = UserUpdateView.as_view()
 
 
+@method_decorator(team_not_required, name="dispatch")
 class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 

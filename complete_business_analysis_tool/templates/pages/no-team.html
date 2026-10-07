@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}
+  No team
+{% endblock title %}
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="box">
+        <h1 class="title">No Team</h1>
+        <p class="mb-4">Your account isn't assigned to a team yet. Ask an administrator to add you.</p>
+        <p class="has-text-grey mb-4">
+          Signed in as <strong>{{ request.user.email }}</strong>
+        </p>
+        <form action="{% url 'account_logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="button">Sign Out</button>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock content %}

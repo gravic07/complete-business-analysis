@@ -9,10 +9,11 @@ from django.views.static import serve
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
-from complete_business_analysis_tool.core.views import HomeView
+from complete_business_analysis_tool.core.views import HomeView, NoTeamView
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("no-team/", NoTeamView.as_view(), name="no_team"),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),
