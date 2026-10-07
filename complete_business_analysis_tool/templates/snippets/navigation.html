@@ -21,15 +21,16 @@
       </a>
     </div>
     <div id="navbarBasicExample" class="navbar-menu">
-      <div class="navbar-start"></div>
+      <div class="navbar-start">
+        {% if request.user.team %}
+          <span class="navbar-item has-text-weight-semibold"
+                data-testid="navbar-team">{{ request.user.team.name }}</span>
+        {% endif %}
+      </div>
       <div class="navbar-end">
         <a href="{% url 'clients:list' %}" class="navbar-item">Clients</a>
         <a href="{% url 'assessments:list' %}" class="navbar-item">Assessments</a>
         {% if request.user.is_authenticated %}
-          {% if request.user.team %}
-            <span class="navbar-item has-text-weight-semibold"
-                  data-testid="navbar-team">{{ request.user.team.name }}</span>
-          {% endif %}
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">Profile</a>
             <div class="navbar-dropdown">
