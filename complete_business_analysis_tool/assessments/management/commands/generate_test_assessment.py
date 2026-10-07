@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 import sys
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from complete_business_analysis_tool.assessments.models import (
@@ -21,6 +21,7 @@ from complete_business_analysis_tool.clients.models import (
     IndustryType,
     RevenueRange,
 )
+from complete_business_analysis_tool.users.models import User
 
 
 def _pick_rank(rating: int, available_ranks: list[int]) -> int:
@@ -64,10 +65,41 @@ def _prompt_int(label: str, lo: int, hi: int) -> int:
         sys.stdout.write(f"  Please enter a whole number between {lo} and {hi}.\n")
 
 
+def _resolve_user(email: str | None) -> User:
+    """Return the User to record as Created By, defaulting to the earliest superuser."""
+    if email:
+        user = User.objects.filter(email=email).first()
+        if user is None:
+            msg = f"No User with email '{email}'."
+            raise CommandError(msg)
+    else:
+        superusers = User.objects.filter(is_superuser=True)
+        user = superusers.order_by("date_joined", "pk").first()
+        if user is None:
+            msg = "No superuser exists. Create one, or pass --user <email>."
+            raise CommandError(msg)
+    return user
+
+
 class Command(BaseCommand):
     help = "Interactively generate a test client and assessment for report testing."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--user",
+            help=(
+                "Email of the User recorded as Created By (and whose Team owns "
+                "the Client). Defaults to the earliest-created superuser."
+            ),
+        )
+
     def handle(self, *args, **options):
+        user = _resolve_user(options["user"])
+        team = user.team
+        if team is None:
+            msg = f"User '{user.email}' has no Team; assign one in Django admin first."
+            raise CommandError(msg)
+
         self.stdout.write("\n=== Generate Test Assessment ===\n")
 
         # --- Step 1: client info ---
@@ -105,8 +137,14 @@ class Command(BaseCommand):
                 company_size=company_size,
                 revenue=revenue,
                 corporate_style=corporate_style,
+                team=team,
+                created_by=user,
             )
-            assessment = Assessment.objects.create(template=template, client=client)
+            assessment = Assessment.objects.create(
+                template=template,
+                client=client,
+                created_by=user,
+            )
 
             # --- Step 4: per-category ratings → answers ---
             template_questions = (

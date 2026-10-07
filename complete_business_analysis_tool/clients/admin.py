@@ -11,9 +11,11 @@ class ClientAdmin(admin.ModelAdmin):
         "last_name",
         "title",
         "industry",
+        "team",
+        "created_by",
         "created_at",
     ]
-    list_filter = ["industry"]
+    list_filter = ["team", "industry"]
     search_fields = ["business_name", "first_name", "last_name"]
     readonly_fields = ["id", "created_at", "updated_at"]
     ordering = ["business_name"]

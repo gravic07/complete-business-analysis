@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from complete_business_analysis_tool.core.models import BaseModel
@@ -10,6 +11,11 @@ class Feedback(BaseModel):
         related_name="feedbacks",
     )
     report_feedback = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
 
 
 class CategoryFeedback(BaseModel):
@@ -100,6 +106,11 @@ class PDFExport(BaseModel):
         default=Status.PENDING,
     )
     file = models.FileField(upload_to="pdf_exports/", null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
 
 
 class CategoryRecommendations(BaseModel):

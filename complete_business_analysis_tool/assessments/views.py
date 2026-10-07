@@ -177,7 +177,7 @@ class AssessmentStartView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
-        assessment = form.save()
+        assessment = form.save(created_by=self.request.user)
         return redirect("assessments:detail", pk=assessment.pk)
 
 

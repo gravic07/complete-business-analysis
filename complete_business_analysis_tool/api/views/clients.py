@@ -14,7 +14,10 @@ class ClientCreateView(APIView):
     def post(self, request):
         form = ClientForm(request.data)
         if form.is_valid():
-            client = form.save()
+            client = form.save(commit=False)
+            client.team = request.user.team
+            client.created_by = request.user
+            client.save()
             return Response(
                 {"id": str(client.pk), "text": str(client)},
                 status=status.HTTP_201_CREATED,

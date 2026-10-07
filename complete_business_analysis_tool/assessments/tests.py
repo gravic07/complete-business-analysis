@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 import pytest
 from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 from django.test import Client
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -140,6 +141,48 @@ def test_start_view_creates_draft_assessment_and_redirects_to_detail():
     assert assessment.category_guidance.count() == 0
     assert response.status_code == HTTPStatus.FOUND
     assert response.url == reverse("assessments:detail", kwargs={"pk": assessment.pk})
+
+
+@pytest.mark.django_db
+def test_start_view_stamps_requesting_user_as_created_by():
+    template = AssessmentTemplateFactory.create()
+    user = UserFactory.create()
+    client_obj = ClientFactory.create(created_by=UserFactory.create(team=user.team))
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:start", kwargs={"pk": template.pk})
+    http_client.post(url, {"client": client_obj.pk})
+
+    assert Assessment.objects.get(client=client_obj).created_by == user
+
+
+@pytest.mark.django_db
+def test_deleting_user_who_created_an_assessment_is_refused():
+    user = UserFactory.create()
+    assessment = AssessmentFactory.create(created_by=user)
+    assessment.client.created_by = UserFactory.create(team=user.team)
+    assessment.client.save()
+
+    with pytest.raises(ProtectedError):
+        user.delete()
+
+
+@pytest.mark.django_db
+def test_assessment_factory_puts_client_in_creators_team():
+    user = UserFactory.create()
+
+    assert AssessmentFactory.create(created_by=user).client.team == user.team
+
+
+@pytest.mark.django_db
+def test_admin_assessment_changelist_shows_created_by(admin_client):
+    AssessmentFactory.create()
+
+    response = admin_client.get(reverse("admin:assessments_assessment_changelist"))
+
+    assert response.status_code == HTTPStatus.OK
+    assert "column-created_by" in response.content.decode()
 
 
 @pytest.mark.django_db

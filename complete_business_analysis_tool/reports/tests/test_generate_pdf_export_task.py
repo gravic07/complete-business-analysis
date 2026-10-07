@@ -10,6 +10,7 @@ from complete_business_analysis_tool.assessments.factories import (
     QuestionFactory,
     QuestionOptionFactory,
 )
+from complete_business_analysis_tool.reports.factories import PDFExportFactory
 from complete_business_analysis_tool.reports.models import PDFExport
 from complete_business_analysis_tool.reports.tasks import generate_pdf_export
 
@@ -30,7 +31,7 @@ class GeneratePdfExportTaskTest(TestCase):
     def _make_pdf_export(self, assessment=None):
         if assessment is None:
             assessment = _make_assessment()
-        return PDFExport.objects.create(assessment=assessment)
+        return PDFExportFactory.create(assessment=assessment)
 
     # --- Test 4: successful generation ---
 

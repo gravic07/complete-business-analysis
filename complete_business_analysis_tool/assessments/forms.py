@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django import forms
 from django.db import transaction
 
@@ -9,6 +11,9 @@ from complete_business_analysis_tool.clients.models import Client
 
 from .models import Answer, Assessment, AssessmentTemplate, Category, QuestionOption
 from .widgets import RankedRadioSelect
+
+if TYPE_CHECKING:
+    from complete_business_analysis_tool.users.models import User
 
 
 class AssessmentStartForm(forms.Form):
@@ -30,11 +35,12 @@ class AssessmentStartForm(forms.Form):
         self.template = template
         self.fields["client"].queryset = Client.objects.order_by("business_name")
 
-    def save(self) -> Assessment:
+    def save(self, *, created_by: User) -> Assessment:
         """Create and return a draft Assessment for the chosen client."""
         return Assessment.objects.create(
             template=self.template,
             client=self.cleaned_data["client"],
+            created_by=created_by,
         )
 
 

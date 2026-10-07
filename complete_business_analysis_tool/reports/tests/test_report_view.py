@@ -14,6 +14,7 @@ from complete_business_analysis_tool.assessments.factories import (
     QuestionFactory,
     QuestionOptionFactory,
 )
+from complete_business_analysis_tool.reports.factories import PDFExportFactory
 from complete_business_analysis_tool.reports.models import (
     CategorySection,
     PDFExport,
@@ -435,7 +436,7 @@ def test_report_view_context_has_complete_analysis_false_when_no_complete_analys
 @pytest.mark.django_db
 def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
     assessment = AssessmentFactory.create()
-    export = PDFExport.objects.create(
+    export = PDFExportFactory.create(
         assessment=assessment,
         status=PDFExport.Status.COMPLETE,
     )
@@ -449,7 +450,7 @@ def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
 @pytest.mark.django_db
 def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist():
     assessment = AssessmentFactory.create()
-    PDFExport.objects.create(assessment=assessment, status=PDFExport.Status.PENDING)
+    PDFExportFactory.create(assessment=assessment, status=PDFExport.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
     response = _authed_client().get(url)

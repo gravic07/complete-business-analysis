@@ -147,7 +147,10 @@ def test_second_run_overall_assembled_from_all_categories_including_prior_runs(
     cat_b_section = CategorySection.objects.get(analysis=analysis1, category=cat_b)
 
     # Second run: only cat_a in scope (category-only feedback)
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(
         feedback=feedback,
         category=cat_a,
@@ -402,6 +405,7 @@ def test_report_feedback_flows_to_ai_service_calls(monkeypatch):
     feedback = Feedback.objects.create(
         assessment=assessment,
         report_feedback="Global feedback text.",
+        created_by=assessment.created_by,
     )
     analysis = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis.pk)
@@ -616,7 +620,10 @@ def test_orchestrator_partial_reanalysis_creates_recommendations_only_for_in_sco
     rec_calls.clear()
 
     # Second run: only cat_a in scope
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(feedback=feedback, category=cat_a, text="Revise.")
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)

@@ -148,7 +148,10 @@ def test_reanalysis_with_category_feedback_only_creates_records_for_in_scope_cat
     run_analysis(analysis1.pk)
 
     # Feedback only on cat_a
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(
         feedback=feedback,
         category=cat_a,
@@ -196,6 +199,7 @@ def test_reanalysis_with_overall_feedback_creates_records_for_all_categories(
     feedback = Feedback.objects.create(
         assessment=assessment,
         report_feedback="Everything needs rethinking.",
+        created_by=assessment.created_by,
     )
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
@@ -234,7 +238,10 @@ def test_reanalysis_passes_prior_section_content_to_generate_category_section(
 
     cat_call_log.clear()
 
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(
         feedback=feedback,
         category=cat_a,
@@ -269,7 +276,10 @@ def test_category_only_feedback_always_creates_overall_section(monkeypatch):
     analysis1.status = Analysis.Status.COMPLETE
     analysis1.save(update_fields=["status"])
 
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(
         feedback=feedback,
         category=cat_a,
@@ -521,7 +531,11 @@ def test_second_analysis_run_creates_new_roadmap():
     analysis1.status = Analysis.Status.COMPLETE
     analysis1.save(update_fields=["status"])
 
-    feedback = Feedback.objects.create(assessment=assessment, report_feedback="Redo it.")
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        report_feedback="Redo it.",
+        created_by=assessment.created_by,
+    )
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)
 
@@ -540,7 +554,10 @@ def test_partial_reanalysis_creates_roadmap():
     analysis1.save(update_fields=["status"])
 
     # Feedback only on one category — partial re-analysis scope
-    feedback = Feedback.objects.create(assessment=assessment)
+    feedback = Feedback.objects.create(
+        assessment=assessment,
+        created_by=assessment.created_by,
+    )
     CategoryFeedback.objects.create(feedback=feedback, category=cat_a, text="Focus here.")
     analysis2 = Analysis.objects.create(assessment=assessment, feedback=feedback)
     run_analysis(analysis2.pk)

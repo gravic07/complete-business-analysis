@@ -83,9 +83,16 @@ class CategoryFeedbackInline(admin.TabularInline):
 
 @admin.register(PDFExport)
 class PDFExportAdmin(admin.ModelAdmin):
-    list_display = ("assessment", "status", "created_at")
+    list_display = ("assessment", "status", "created_by", "created_at")
     list_filter = ("status",)
-    readonly_fields = ("assessment", "status", "file", "created_at", "updated_at")
+    readonly_fields = (
+        "assessment",
+        "status",
+        "file",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
 
     def has_add_permission(self, request):
         return False
@@ -93,6 +100,12 @@ class PDFExportAdmin(admin.ModelAdmin):
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ("assessment", "report_feedback", "created_at")
-    readonly_fields = ("assessment", "report_feedback", "created_at", "updated_at")
+    list_display = ("assessment", "report_feedback", "created_by", "created_at")
+    readonly_fields = (
+        "assessment",
+        "report_feedback",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
     inlines = [CategoryFeedbackInline]

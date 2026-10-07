@@ -38,6 +38,22 @@ def test_trigger_pdf_export_creates_pending_export_and_returns_id():
 
 
 @pytest.mark.django_db
+def test_trigger_pdf_export_stamps_requesting_user_as_created_by():
+    assessment = AssessmentFactory.create()
+    user = UserFactory.create()
+    url = reverse("reports:export_pdf", kwargs={"pk": assessment.pk})
+
+    with patch(
+        "complete_business_analysis_tool.reports.views.generate_pdf_export",
+    ) as mock_task:
+        mock_task.delay.return_value = None
+        response = _authed_client(user).post(url)
+
+    export = PDFExport.objects.get(pk=json.loads(response.content)["pdf_export_id"])
+    assert export.created_by == user
+
+
+@pytest.mark.django_db
 def test_trigger_pdf_export_calls_celery_task_with_export_id():
     assessment = AssessmentFactory.create()
     url = reverse("reports:export_pdf", kwargs={"pk": assessment.pk})

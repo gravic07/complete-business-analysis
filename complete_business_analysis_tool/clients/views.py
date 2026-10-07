@@ -24,6 +24,12 @@ class ClientCreateView(CreateView):
     template_name = "pages/clients/client-form.html"
     success_url = reverse_lazy("clients:list")
 
+    def form_valid(self, form):
+        assert self.request.user.is_authenticated  # type guard
+        form.instance.team = self.request.user.team
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
 
 class ClientDetailView(DetailView):
     model = Client

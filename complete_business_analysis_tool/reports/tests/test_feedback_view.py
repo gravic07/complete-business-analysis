@@ -75,6 +75,20 @@ def test_post_overall_feedback_creates_feedback_and_redirects_to_autostart_analy
 
 
 @pytest.mark.django_db
+def test_post_feedback_stamps_requesting_user_as_created_by(monkeypatch):
+    _stub_task(monkeypatch)
+    assessment, _ = _make_assessment_with_category()
+    user = UserFactory.create()
+    client = Client()
+    client.force_login(user)
+
+    url = reverse("reports:submit_feedback", kwargs={"pk": assessment.pk})
+    client.post(url, {"report_feedback": "Needs more depth overall."})
+
+    assert Feedback.objects.get(assessment=assessment).created_by == user
+
+
+@pytest.mark.django_db
 def test_post_category_feedback_creates_category_feedback_record(monkeypatch):
     _stub_task(monkeypatch)
     assessment, category = _make_assessment_with_category()

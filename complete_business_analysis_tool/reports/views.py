@@ -137,10 +137,12 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
         return reverse("reports:report", kwargs={"pk": self.assessment.pk})
 
     def form_valid(self, form):
+        assert self.request.user.is_authenticated  # type guard
         report_feedback = (form.cleaned_data.get("report_feedback") or "").strip()
         feedback = Feedback.objects.create(
             assessment=self.assessment,
             report_feedback=report_feedback,
+            created_by=self.request.user,
         )
         for category in self.categories:
             text = (form.cleaned_data.get(f"category_{category.pk}") or "").strip()
@@ -278,7 +280,10 @@ def _compute_cba_total(scores) -> int | None:
 class TriggerPDFExportView(LoginRequiredMixin, View):
     def post(self, request, pk):
         assessment = get_object_or_404(Assessment, pk=pk)
-        export = PDFExport.objects.create(assessment=assessment)
+        export = PDFExport.objects.create(
+            assessment=assessment,
+            created_by=request.user,
+        )
         generate_pdf_export.delay(str(export.pk))
         return JsonResponse({"pdf_export_id": str(export.pk)})
 

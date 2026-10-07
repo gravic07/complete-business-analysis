@@ -6,7 +6,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 
-from complete_business_analysis_tool.assessments.factories import AssessmentFactory
+from complete_business_analysis_tool.reports.factories import PDFExportFactory
 from complete_business_analysis_tool.reports.models import PDFExport
 from complete_business_analysis_tool.users.tests.factories import UserFactory
 
@@ -18,8 +18,7 @@ def _authed_client(user=None):
 
 
 def _make_export(status=PDFExport.Status.PENDING, file=None):
-    assessment = AssessmentFactory.create()
-    return PDFExport.objects.create(assessment=assessment, status=status)
+    return PDFExportFactory.create(status=status)
 
 
 @pytest.mark.django_db

@@ -1,5 +1,6 @@
 """Django models for the assessments application."""
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Sum
 
@@ -113,6 +114,11 @@ class Assessment(BaseModel):
         default=Status.DRAFT,
     )
     guidance_submitted_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
 
     @property
     def total_score(self) -> int:

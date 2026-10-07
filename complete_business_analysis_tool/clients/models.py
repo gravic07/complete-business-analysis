@@ -1,5 +1,6 @@
 """Django models for the clients application."""
 
+from django.conf import settings
 from django.db import models
 
 from complete_business_analysis_tool.core.models import BaseModel
@@ -76,6 +77,16 @@ class Client(BaseModel):
     corporate_style = models.CharField(
         max_length=25,
         choices=CorporateStyle,
+    )
+    team = models.ForeignKey(
+        "teams.Team",
+        on_delete=models.PROTECT,
+        related_name="clients",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
 
     def __str__(self) -> str:

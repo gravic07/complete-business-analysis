@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from factory import Faker, LazyAttribute, LazyFunction, SubFactory
+from factory import Faker, LazyAttribute, LazyFunction, SelfAttribute, SubFactory
 from factory.django import DjangoModelFactory
 
 from complete_business_analysis_tool.assessments.models import (
@@ -18,6 +18,7 @@ from complete_business_analysis_tool.assessments.services import (
     issue_client_access_token,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
+from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 class CategoryFactory(DjangoModelFactory[Category]):
@@ -35,8 +36,11 @@ class AssessmentTemplateFactory(DjangoModelFactory[AssessmentTemplate]):
 
 
 class AssessmentFactory(DjangoModelFactory[Assessment]):
+    """Produces an Assessment whose Client is in its ``created_by`` User's Team."""
+
     template = SubFactory(AssessmentTemplateFactory)
-    client = SubFactory(ClientFactory)
+    created_by = SubFactory(UserFactory)
+    client = SubFactory(ClientFactory, created_by=SelfAttribute("..created_by"))
 
     class Meta:
         model = Assessment

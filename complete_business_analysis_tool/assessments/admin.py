@@ -98,6 +98,7 @@ class AssessmentAdmin(admin.ModelAdmin):
         "template",
         "status",
         "answer_count",
+        "created_by",
         "created_at",
     ]
     list_filter = ["status", "template", "client__industry"]
