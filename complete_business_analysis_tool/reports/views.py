@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from json import dumps as json_dumps
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_not_required
@@ -9,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db import transaction
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -319,8 +320,35 @@ class TriggerPDFExportView(LoginRequiredMixin, View):
 class PDFExportStatusView(LoginRequiredMixin, View):
     def get(self, request, pk):
         export = get_object_or_404(PDFExport.objects.for_team(_team(request)), pk=pk)
-        download_url = export.file.url if export.file else ""
+        download_url = (
+            reverse("reports:pdf_download", kwargs={"pk": export.pk})
+            if export.status == PDFExport.Status.COMPLETE and export.file
+            else ""
+        )
         return JsonResponse({"status": export.status, "download_url": download_url})
+
+
+class PDFDownloadView(LoginRequiredMixin, View):
+    """Stream a complete PDFExport to a member of its Team.
+
+    PDF exports are not served from the public media URL (nginx denies the
+    path), so this is the only way to fetch one.
+    """
+
+    def get(self, request, pk):
+        export = get_object_or_404(
+            PDFExport.objects.for_team(_team(request)),
+            pk=pk,
+            status=PDFExport.Status.COMPLETE,
+        )
+        if not export.file.name:
+            raise Http404
+        return FileResponse(
+            export.file.open("rb"),
+            as_attachment=True,
+            filename=Path(export.file.name).name,
+            content_type="application/pdf",
+        )
 
 
 @method_decorator(transaction.non_atomic_requests, name="dispatch")

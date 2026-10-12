@@ -37,7 +37,10 @@ def test_status_endpoint_returns_complete_status_and_download_url(settings, tmp_
     assert response.status_code == http.HTTPStatus.OK
     data = json.loads(response.content)
     assert data["status"] == PDFExport.Status.COMPLETE
-    assert data["download_url"] != ""
+    assert data["download_url"] == reverse(
+        "reports:pdf_download",
+        kwargs={"pk": export.pk},
+    )
 
 
 @pytest.mark.django_db

@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 import pytest
+from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.urls import reverse
 
@@ -33,3 +34,23 @@ def test_admin_pdf_export_changelist_shows_created_by(admin_client):
 
     assert response.status_code == HTTPStatus.OK
     assert "column-created_by" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_admin_pdf_export_change_page_shows_file_name_without_media_link(
+    admin_client,
+    settings,
+    tmp_path,
+):
+    settings.MEDIA_ROOT = str(tmp_path)
+    export = PDFExportFactory.create(status=PDFExport.Status.COMPLETE)
+    export.file.save("Acme_Report_20260101.pdf", ContentFile(b"%PDF-1.4"))
+
+    response = admin_client.get(
+        reverse("admin:reports_pdfexport_change", args=[export.pk]),
+    )
+
+    content = response.content.decode()
+    assert response.status_code == HTTPStatus.OK
+    assert "Acme_Report_20260101.pdf" in content
+    assert export.file.url not in content

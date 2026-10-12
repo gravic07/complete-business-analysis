@@ -85,10 +85,13 @@ class CategoryFeedbackInline(admin.TabularInline):
 class PDFExportAdmin(admin.ModelAdmin):
     list_display = ("assessment", "status", "created_by", "created_at")
     list_filter = ("status",)
+    # The file is shown by name only: PDF exports aren't served from the
+    # public media URL, so a link to it would be dead.
+    exclude = ("file",)
     readonly_fields = (
         "assessment",
         "status",
-        "file",
+        "file_name",
         "created_by",
         "created_at",
         "updated_at",
@@ -96,6 +99,10 @@ class PDFExportAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    @admin.display(description="File")
+    def file_name(self, obj):
+        return obj.file.name or "-"
 
 
 @admin.register(Feedback)

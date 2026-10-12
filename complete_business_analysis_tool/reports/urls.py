@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     AnalysisStatusView,
+    PDFDownloadView,
     PDFExportStatusView,
     PDFTemplateView,
     ReportView,
@@ -24,6 +25,11 @@ urlpatterns = [
         "pdf-export/<uuid:pk>/status/",
         PDFExportStatusView.as_view(),
         name="pdf_export_status",
+    ),
+    path(
+        "pdf-export/<uuid:pk>/download/",
+        PDFDownloadView.as_view(),
+        name="pdf_download",
     ),
     path(
         "analysis/<uuid:pk>/status/",

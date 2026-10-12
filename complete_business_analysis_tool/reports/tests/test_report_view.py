@@ -2,6 +2,7 @@ import http
 from decimal import Decimal
 
 import pytest
+from django.core.files.base import ContentFile
 from django.test import Client
 from django.urls import reverse
 
@@ -456,6 +457,28 @@ def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist(
     response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["latest_complete_pdf_export"] is None
+
+
+@pytest.mark.django_db
+def test_report_view_links_last_pdf_through_download_view_not_media_url(
+    settings,
+    tmp_path,
+):
+    settings.MEDIA_ROOT = str(tmp_path)
+    assessment = AssessmentFactory.create()
+    Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
+    export = PDFExportFactory.create(
+        assessment=assessment,
+        status=PDFExport.Status.COMPLETE,
+    )
+    export.file.save("Acme_Report_20260101.pdf", ContentFile(b"%PDF-1.4"))
+
+    url = reverse("reports:report", kwargs={"pk": assessment.pk})
+    content = _authed_client(assessment.created_by).get(url).content.decode()
+
+    download_url = reverse("reports:pdf_download", kwargs={"pk": export.pk})
+    assert f'href="{download_url}"' in content
+    assert export.file.url not in content
 
 
 @pytest.mark.django_db

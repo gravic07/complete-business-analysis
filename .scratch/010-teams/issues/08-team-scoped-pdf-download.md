@@ -13,3 +13,15 @@
 - [ ] In production, requesting a PDF by its old public media path no longer returns the file. The change made (web server config, storage location, etc.) is recorded under `## Comments` on this ticket.
 - [ ] Tests (Django test client) cover the owning Team download, other-Team 404, anonymous redirect, and incomplete export 404.
 - [ ] Full test suite passes.
+
+## Comments
+
+**How production served `MEDIA_URL` before this change:** Django never serves media in production (the `static()` media route in `config/urls.py` only applies when `DEBUG` is on). Nginx served all of `{{ media_url }}` (`/uploads/`) straight from `{{ media_root }}` (`/var/www/cba/mediafiles`) with public 30-day cache headers (`ansible/roles/nginx/templates/app.conf.j2`). PDF exports are stored by the default `FileSystemStorage` under `pdf_exports/`, so anyone who guessed `/uploads/pdf_exports/{Company}_{AssessmentName}_{YYYYMMDD}.pdf` could fetch it.
+
+**What changed:**
+
+- `ansible/roles/nginx/templates/app.conf.j2`: added `location ^~ {{ media_url }}pdf_exports/ { return 404; }`. It's a longer prefix than the general media location, and `^~` stops regex locations from overriding it, so nginx answers every request under `/uploads/pdf_exports/` with 404. Other media is still served as before. Storage location is unchanged, so existing files need no migration. The nginx role README documents the new rule.
+- The only way to fetch a PDF now is `reports:pdf_download` (`/reports/pdf-export/<pk>/download/`). It requires login and Team membership, returns 404 unless the export is complete and has a file, and streams the file as an attachment under its stored friendly filename.
+- The status endpoint's `download_url` and the Report page's "Re-download last PDF" link both point at the download view. The PDFExport admin page now shows the file name as text instead of linking to the dead media URL.
+
+**To deploy:** `deploy.yml` only runs the `app` role, so the nginx change needs a `site.yml` run (or `site.yml` limited to the nginx role). Then check that `curl -I https://<domain>/uploads/pdf_exports/<existing file>.pdf` returns 404. This wasn't verified against a live server: neither nginx nor the server was reachable from the dev machine.

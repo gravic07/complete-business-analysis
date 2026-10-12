@@ -17,6 +17,7 @@ Installs Nginx as a reverse proxy, configures SSL via Let's Encrypt, and enables
 - HTTPS (port 443) — main server block:
   - Static files (`{{ static_url }}`) — aliased from `{{ static_root }}/`, 30-day cache headers
   - Media files (`{{ media_url }}`) — aliased from `{{ media_root }}/`, 30-day cache headers
+  - PDF exports (`{{ media_url }}pdf_exports/`) — always 404; PDF Reports are downloaded only through the app's Team-scoped download view
   - `/favicon.ico` — served directly from `{{ static_root }}/favicon/`
   - `/api/` and `/` — proxied to the Gunicorn Unix socket with `no-store` cache headers
   - Maintenance mode — checked via `/etc/nginx/maintenance.flag`; `{{ maintenance_ip }}` always bypasses it

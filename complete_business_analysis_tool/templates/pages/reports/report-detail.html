@@ -44,7 +44,8 @@
                 <div id="pdf-export-status" class="is-hidden ml-2"></div>
                 {% if latest_complete_pdf_export and latest_complete_pdf_export.file %}
                   <div class="has-text-centered mt-1">
-                    <a class="is-size-7" href="{{ latest_complete_pdf_export.file.url }}">Re-download last PDF</a>
+                    <a class="is-size-7"
+                       href="{% url 'reports:pdf_download' latest_complete_pdf_export.pk %}">Re-download last PDF</a>
                   </div>
                 {% endif %}
               </div>

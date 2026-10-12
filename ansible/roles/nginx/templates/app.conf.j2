@@ -53,6 +53,12 @@ server {
         add_header Cache-Control "public, max-age=2592000" always;
     }
 
+    # PDF Reports are Team-private: they are downloaded only through the
+    # app's Team-scoped download view, never from the public media URL.
+    location ^~ {{ media_url }}pdf_exports/ {
+        return 404;
+    }
+
     location ~ /.well-known {
         allow all;
         root {{ app_src }};
