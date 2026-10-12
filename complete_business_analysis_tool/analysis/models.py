@@ -1,10 +1,25 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from complete_business_analysis_tool.core.models import BaseModel
 
+if TYPE_CHECKING:
+    from complete_business_analysis_tool.teams.models import Team
+
+
+class AnalysisQuerySet(models.QuerySet["Analysis"]):
+    def for_team(self, team: Team | None) -> AnalysisQuerySet:
+        """Analysis runs whose Assessment's Client is owned by ``team`` (ADR 0013)."""
+        return self.filter(assessment__client__team=team)
+
 
 class Analysis(BaseModel):
+    objects = AnalysisQuerySet.as_manager()
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         PROCESSING = "processing", "Processing"

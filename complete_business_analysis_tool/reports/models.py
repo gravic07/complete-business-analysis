@@ -1,10 +1,25 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 
 from complete_business_analysis_tool.core.models import BaseModel
 
+if TYPE_CHECKING:
+    from complete_business_analysis_tool.teams.models import Team
+
+
+class FeedbackQuerySet(models.QuerySet["Feedback"]):
+    def for_team(self, team: Team | None) -> FeedbackQuerySet:
+        """Feedback whose Assessment's Client is owned by ``team`` (ADR 0013)."""
+        return self.filter(assessment__client__team=team)
+
 
 class Feedback(BaseModel):
+    objects = FeedbackQuerySet.as_manager()
+
     assessment = models.ForeignKey(
         "assessments.Assessment",
         on_delete=models.CASCADE,
@@ -88,7 +103,19 @@ class Roadmap(BaseModel):
     closing_reflections = models.TextField()
 
 
+class PDFExportQuerySet(models.QuerySet["PDFExport"]):
+    def for_team(self, team: Team | None) -> PDFExportQuerySet:
+        """PDFExports whose Assessment's Client is owned by ``team`` (ADR 0013).
+
+        Advisor-side only: the background PDF task looks exports up by pk and
+        stays Team-agnostic.
+        """
+        return self.filter(assessment__client__team=team)
+
+
 class PDFExport(BaseModel):
+    objects = PDFExportQuerySet.as_manager()
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         PROCESSING = "processing", "Processing"

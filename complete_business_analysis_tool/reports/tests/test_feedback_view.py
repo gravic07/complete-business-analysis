@@ -49,7 +49,7 @@ def test_post_overall_feedback_creates_feedback_and_redirects_to_autostart_analy
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 
@@ -78,7 +78,7 @@ def test_post_overall_feedback_creates_feedback_and_redirects_to_autostart_analy
 def test_post_feedback_stamps_requesting_user_as_created_by(monkeypatch):
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 
@@ -93,7 +93,7 @@ def test_post_category_feedback_creates_category_feedback_record(monkeypatch):
     _stub_task(monkeypatch)
     assessment, category = _make_assessment_with_category()
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 
@@ -116,7 +116,7 @@ def test_post_empty_feedback_is_rejected(monkeypatch):
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 
@@ -135,7 +135,7 @@ def test_submit_feedback_view_context_has_executive_summary_and_category_section
     _stub_task(monkeypatch)
     assessment, _ = _make_assessment_with_category()
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 
@@ -159,7 +159,7 @@ def test_post_feedback_allowed_when_analysis_active_but_autostart_does_not_dupli
         status=Analysis.Status.PENDING,
     )
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     client = Client()
     client.force_login(user)
 

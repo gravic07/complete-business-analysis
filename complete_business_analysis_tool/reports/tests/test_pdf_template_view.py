@@ -94,7 +94,7 @@ def test_pdf_view_returns_200_for_authenticated_user(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.status_code == http.HTTPStatus.OK
 
@@ -150,7 +150,7 @@ def test_pdf_view_context_has_toc_page_numbers(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     toc = response.context["toc_page_numbers"]
     assert isinstance(toc, dict)
@@ -173,7 +173,7 @@ def test_pdf_view_cover_page_contains_client_name_assessment_name_and_date(monke
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert assessment.client.business_name in content
     assert "Q1 Review" in content
@@ -191,7 +191,7 @@ def test_pdf_view_toc_renders_section_names_and_page_numbers(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "CBA Score" in content
     assert "Visualizations" in content
@@ -211,7 +211,7 @@ def test_pdf_view_score_overview_renders_category_scores(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "Finance" in content
     assert "CBA Score" in content
@@ -226,7 +226,7 @@ def test_pdf_view_executive_summary_appears_before_category_analysis(monkeypatch
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     exec_pos = content.index("overall narrative")
     cat_pos = content.index("cat overview")
@@ -242,7 +242,7 @@ def test_pdf_view_recommendations_overview_appears_before_category_recs(monkeypa
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     overview_pos = content.index("recommendations overview narrative")
     rec_pos = content.index("r1")
@@ -258,7 +258,7 @@ def test_pdf_view_renders_all_12_roadmap_months(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     for n in range(1, 13):
         assert f"Month {n}" in content
@@ -276,7 +276,7 @@ def test_pdf_view_renders_closing_sections(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "Potential Challenges" in content
     assert "potential challenge 1" in content
@@ -295,7 +295,7 @@ def test_pdf_view_has_no_navigation_or_feedback_form(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:pdf", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "breadcrumb" not in content
     assert "<form" not in content

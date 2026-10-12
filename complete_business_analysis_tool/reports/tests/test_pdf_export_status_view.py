@@ -32,7 +32,7 @@ def test_status_endpoint_returns_complete_status_and_download_url(settings, tmp_
     export.save(update_fields=["file"])
 
     url = reverse("reports:pdf_export_status", kwargs={"pk": export.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(export.created_by).get(url)
 
     assert response.status_code == http.HTTPStatus.OK
     data = json.loads(response.content)
@@ -45,7 +45,7 @@ def test_status_endpoint_returns_failed_status_with_no_download_url():
     export = _make_export(status=PDFExport.Status.FAILED)
     url = reverse("reports:pdf_export_status", kwargs={"pk": export.pk})
 
-    response = _authed_client().get(url)
+    response = _authed_client(export.created_by).get(url)
 
     assert response.status_code == http.HTTPStatus.OK
     data = json.loads(response.content)
@@ -58,7 +58,7 @@ def test_status_endpoint_returns_pending_status_with_no_download_url():
     export = _make_export(status=PDFExport.Status.PENDING)
     url = reverse("reports:pdf_export_status", kwargs={"pk": export.pk})
 
-    response = _authed_client().get(url)
+    response = _authed_client(export.created_by).get(url)
 
     assert response.status_code == http.HTTPStatus.OK
     data = json.loads(response.content)

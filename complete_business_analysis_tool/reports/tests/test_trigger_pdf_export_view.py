@@ -26,7 +26,7 @@ def test_trigger_pdf_export_creates_pending_export_and_returns_id():
         "complete_business_analysis_tool.reports.views.generate_pdf_export",
     ) as mock_task:
         mock_task.delay.return_value = None
-        response = _authed_client().post(url)
+        response = _authed_client(assessment.created_by).post(url)
 
     assert response.status_code == http.HTTPStatus.OK
     data = json.loads(response.content)
@@ -40,7 +40,7 @@ def test_trigger_pdf_export_creates_pending_export_and_returns_id():
 @pytest.mark.django_db
 def test_trigger_pdf_export_stamps_requesting_user_as_created_by():
     assessment = AssessmentFactory.create()
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     url = reverse("reports:export_pdf", kwargs={"pk": assessment.pk})
 
     with patch(
@@ -62,7 +62,7 @@ def test_trigger_pdf_export_calls_celery_task_with_export_id():
         "complete_business_analysis_tool.reports.views.generate_pdf_export",
     ) as mock_task:
         mock_task.delay.return_value = None
-        _authed_client().post(url)
+        _authed_client(assessment.created_by).post(url)
 
     mock_task.delay.assert_called_once()
     called_id = mock_task.delay.call_args[0][0]
@@ -73,7 +73,7 @@ def test_trigger_pdf_export_calls_celery_task_with_export_id():
 def test_trigger_pdf_export_returns_405_for_non_post():
     assessment = AssessmentFactory.create()
     url = reverse("reports:export_pdf", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
     assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
 
 

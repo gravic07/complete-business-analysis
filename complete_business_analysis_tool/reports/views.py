@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 from json import dumps as json_dumps
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -39,6 +42,12 @@ from complete_business_analysis_tool.reports.utils.toc_calculator import (
     calculate_toc_page_numbers,
 )
 
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
+    from complete_business_analysis_tool.assessments.models import AssessmentQuerySet
+    from complete_business_analysis_tool.teams.models import Team
+
 _ROADMAP_OVERVIEW = (
     "This 12-month roadmap is designed to guide your business through a structured "
     "implementation of the key improvements identified in the assessment and "
@@ -61,10 +70,23 @@ _ROADMAP_OVERVIEW = (
 )
 
 
+def _team(request: HttpRequest) -> Team | None:
+    """The requesting User's Team, for scoping lookups (ADR 0013)."""
+    assert request.user.is_authenticated  # type guard
+    return request.user.team
+
+
+def _team_assessments(request: HttpRequest) -> AssessmentQuerySet:
+    """The requesting User's Team's Assessments, for looking one up by pk."""
+    return Assessment.objects.for_team(_team(request))
+
+
 class ReportView(LoginRequiredMixin, DetailView):
-    model = Assessment
     template_name = "pages/reports/report-detail.html"
     context_object_name = "assessment"
+
+    def get_queryset(self):
+        return _team_assessments(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -104,7 +126,7 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.assessment = get_object_or_404(Assessment, pk=kwargs["pk"])
+        self.assessment = get_object_or_404(_team_assessments(request), pk=kwargs["pk"])
         self.categories = _assessment_categories(self.assessment)
 
     def get_form_kwargs(self):
@@ -158,7 +180,7 @@ class SubmitFeedbackView(LoginRequiredMixin, FormView):
 
 class UpdateAssessmentNameView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        assessment = get_object_or_404(Assessment, pk=pk)
+        assessment = get_object_or_404(_team_assessments(request), pk=pk)
         name = request.POST.get("name", "").strip()
         if not name:
             return render(
@@ -182,9 +204,15 @@ class UpdateAssessmentNameView(LoginRequiredMixin, View):
 # with a short-lived signed token; dispatch() enforces token-or-login itself.
 @method_decorator(login_not_required, name="dispatch")
 class PDFTemplateView(DetailView):
-    model = Assessment
     template_name = "pages/reports/report-pdf.html"
     context_object_name = "assessment"
+
+    def get_queryset(self):
+        # Logged-in path is Team-scoped; the signed-token path stays
+        # Team-agnostic so the background renderer can fetch any Assessment.
+        if self.request.user.is_authenticated:
+            return _team_assessments(self.request)
+        return Assessment.objects.all()
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -279,7 +307,7 @@ def _compute_cba_total(scores) -> int | None:
 
 class TriggerPDFExportView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        assessment = get_object_or_404(Assessment, pk=pk)
+        assessment = get_object_or_404(_team_assessments(request), pk=pk)
         export = PDFExport.objects.create(
             assessment=assessment,
             created_by=request.user,
@@ -290,7 +318,7 @@ class TriggerPDFExportView(LoginRequiredMixin, View):
 
 class PDFExportStatusView(LoginRequiredMixin, View):
     def get(self, request, pk):
-        export = get_object_or_404(PDFExport, pk=pk)
+        export = get_object_or_404(PDFExport.objects.for_team(_team(request)), pk=pk)
         download_url = export.file.url if export.file else ""
         return JsonResponse({"status": export.status, "download_url": download_url})
 
@@ -298,12 +326,12 @@ class PDFExportStatusView(LoginRequiredMixin, View):
 @method_decorator(transaction.non_atomic_requests, name="dispatch")
 class TriggerAnalysisView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        assessment = get_object_or_404(Assessment, pk=pk)
+        assessment = get_object_or_404(_team_assessments(request), pk=pk)
 
         retry_analysis_id = request.POST.get("retry_analysis_id")
         if retry_analysis_id:
             analysis = get_object_or_404(
-                Analysis,
+                Analysis.objects.for_team(_team(request)),
                 pk=retry_analysis_id,
                 assessment=assessment,
             )
@@ -321,7 +349,11 @@ class TriggerAnalysisView(LoginRequiredMixin, View):
         feedback = None
         feedback_id = request.POST.get("feedback_id")
         if feedback_id:
-            feedback = get_object_or_404(Feedback, pk=feedback_id, assessment=assessment)
+            feedback = get_object_or_404(
+                Feedback.objects.for_team(_team(request)),
+                pk=feedback_id,
+                assessment=assessment,
+            )
         try:
             analysis = start_analysis(assessment, feedback=feedback)
         except ValidationError:
@@ -331,7 +363,7 @@ class TriggerAnalysisView(LoginRequiredMixin, View):
 
 class AnalysisStatusView(LoginRequiredMixin, View):
     def get(self, request, pk):
-        analysis = get_object_or_404(Analysis, pk=pk)
+        analysis = get_object_or_404(Analysis.objects.for_team(_team(request)), pk=pk)
         data = {"status": analysis.status}
         if analysis.status in (Analysis.Status.PENDING, Analysis.Status.PROCESSING):
             data["message"] = analysis_progress_message(analysis)

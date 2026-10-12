@@ -21,9 +21,11 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context["client_count"] = Client.objects.for_team(team).count()
         context["template_count"] = AssessmentTemplate.objects.count()
         context["assessment_count"] = Assessment.objects.for_team(team).count()
-        context["analysis_count"] = Analysis.objects.filter(
-            status=Analysis.Status.COMPLETE,
-        ).count()
+        context["analysis_count"] = (
+            Analysis.objects.for_team(team)
+            .filter(status=Analysis.Status.COMPLETE)
+            .count()
+        )
         return context
 
 

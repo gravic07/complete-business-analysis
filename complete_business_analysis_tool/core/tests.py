@@ -196,13 +196,14 @@ def test_pdf_template_signed_token_path_is_unaffected_by_team_gate():
 
 
 @pytest.mark.django_db
-def test_pdf_template_is_reachable_for_logged_in_user_without_team():
+def test_pdf_template_is_not_redirected_for_logged_in_user_without_team():
+    """The gate leaves the page alone; its Team scoping then finds nothing (ADR 0013)."""
     assessment = AssessmentFactory.create()
     http_client = _logged_in_client(UserFactory.create(team=None))
 
     response = http_client.get(reverse("reports:pdf", kwargs={"pk": assessment.pk}))
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db

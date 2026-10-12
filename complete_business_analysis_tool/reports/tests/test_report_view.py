@@ -103,7 +103,7 @@ def test_report_view_returns_200_for_authenticated_user(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
     assert response.status_code == http.HTTPStatus.OK
 
 
@@ -113,7 +113,7 @@ def test_report_view_context_has_executive_summary_and_category_sections(monkeyp
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert "executive_summary" in response.context
     assert "category_sections" in response.context
@@ -125,7 +125,7 @@ def test_report_view_executive_summary_none_when_no_analysis(monkeypatch):
     assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.status_code == http.HTTPStatus.OK
     assert response.context["executive_summary"] is None
@@ -138,7 +138,7 @@ def test_report_view_renders_executive_summary_first(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
     content = response.content.decode()
 
     exec_pos = content.index("overall narrative")
@@ -152,7 +152,7 @@ def test_report_view_renders_category_subheadings(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "Overview" in content
     assert "Impact" in content
@@ -193,7 +193,7 @@ def test_report_view_shows_latest_section_per_category(monkeypatch):
     run_analysis(analysis2.pk)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     latest = CategorySection.objects.get(analysis=analysis2, category=category)
     earliest = CategorySection.objects.get(analysis=analysis1, category=category)
@@ -207,7 +207,7 @@ def test_report_view_category_sections_include_recommendations(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     sections = response.context["category_sections"]
     assert len(sections) == 1
@@ -220,7 +220,7 @@ def test_report_view_context_has_recommendations_overview(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert "recommendations_overview" in response.context
     overview = response.context["recommendations_overview"]
@@ -233,7 +233,7 @@ def test_report_view_recommendations_overview_none_when_no_analysis():
     assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["recommendations_overview"] is None
 
@@ -244,7 +244,7 @@ def test_report_view_renders_recommendations_overview_before_category_lists(monk
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     overview_pos = content.index("recommendations overview narrative")
     rec_pos = content.index("r1")
@@ -278,7 +278,7 @@ def test_report_view_does_not_render_overview_content_when_overview_is_none(
     RecommendationsOverview.objects.filter(analysis=analysis).delete()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "overview text" not in content
 
@@ -289,7 +289,7 @@ def test_report_view_context_has_roadmap(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert "roadmap" in response.context
     assert isinstance(response.context["roadmap"], Roadmap)
@@ -300,7 +300,7 @@ def test_report_view_roadmap_none_when_no_analysis():
     assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["roadmap"] is None
 
@@ -311,7 +311,7 @@ def test_report_view_renders_roadmap_section_when_roadmap_exists(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "12-Month Roadmap" in content
 
@@ -321,7 +321,7 @@ def test_report_view_does_not_render_roadmap_section_when_no_roadmap():
     assessment = AssessmentFactory.create()
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "12-Month Roadmap" not in content
 
@@ -332,7 +332,7 @@ def test_report_view_renders_static_roadmap_overview(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "12-month roadmap is designed to guide" in content
 
@@ -343,7 +343,7 @@ def test_report_view_renders_twelve_monthly_plan_blocks(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     for n in range(1, 13):
         assert f"Month {n}" in content
@@ -355,7 +355,7 @@ def test_report_view_renders_goals_action_items_challenges_per_month(monkeypatch
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert content.count("Goals") == 12  # noqa: PLR2004
     assert content.count("Action Items") == 12  # noqa: PLR2004
@@ -368,7 +368,7 @@ def test_report_view_renders_roadmap_after_recommendations(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     rec_pos = content.index("Recommendations")
     roadmap_pos = content.index("12-Month Roadmap")
@@ -381,7 +381,7 @@ def test_report_view_renders_potential_challenges(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "<p>potential challenge 1</p>" in content
     assert "<p>potential challenge 2</p>" in content
@@ -393,7 +393,7 @@ def test_report_view_renders_post_implementation_outcomes(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "<p>outcome 1</p>" in content
     assert "<p>outcome 2</p>" in content
@@ -405,7 +405,7 @@ def test_report_view_renders_closing_reflections(monkeypatch):
     _make_report(assessment, monkeypatch)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "<p>reflection 1</p>" in content
     assert "<p>reflection 2</p>" in content
@@ -417,7 +417,7 @@ def test_report_view_context_has_complete_analysis_true_when_complete_analysis_e
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["has_complete_analysis"] is True
 
@@ -428,7 +428,7 @@ def test_report_view_context_has_complete_analysis_false_when_no_complete_analys
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["has_complete_analysis"] is False
 
@@ -442,7 +442,7 @@ def test_report_view_context_has_latest_complete_pdf_export_when_one_exists():
     )
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["latest_complete_pdf_export"] == export
 
@@ -453,7 +453,7 @@ def test_report_view_context_latest_complete_pdf_export_is_none_when_none_exist(
     PDFExportFactory.create(assessment=assessment, status=PDFExport.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    response = _authed_client().get(url)
+    response = _authed_client(assessment.created_by).get(url)
 
     assert response.context["latest_complete_pdf_export"] is None
 
@@ -464,7 +464,7 @@ def test_report_view_renders_generate_pdf_button_when_complete_analysis_exists()
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.COMPLETE)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "Generate PDF" in content
 
@@ -475,6 +475,6 @@ def test_report_view_omits_generate_pdf_button_when_no_complete_analysis():
     Analysis.objects.create(assessment=assessment, status=Analysis.Status.PENDING)
 
     url = reverse("reports:report", kwargs={"pk": assessment.pk})
-    content = _authed_client().get(url).content.decode()
+    content = _authed_client(assessment.created_by).get(url).content.decode()
 
     assert "Generate PDF" not in content
