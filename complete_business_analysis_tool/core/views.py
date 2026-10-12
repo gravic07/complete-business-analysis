@@ -16,7 +16,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["client_count"] = Client.objects.count()
+        assert self.request.user.is_authenticated  # type guard
+        context["client_count"] = Client.objects.for_team(self.request.user.team).count()
         context["template_count"] = AssessmentTemplate.objects.count()
         context["assessment_count"] = Assessment.objects.count()
         context["analysis_count"] = Analysis.objects.filter(

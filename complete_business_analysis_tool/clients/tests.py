@@ -53,8 +53,8 @@ def test_client_email_has_no_uniqueness_constraint():
 
 @pytest.mark.django_db
 def test_client_edit_form_renders_email_field():
-    client_obj = ClientFactory.create(email="")
     user = UserFactory.create()
+    client_obj = ClientFactory.create(email="", created_by=user)
     http_client = Client()
     http_client.force_login(user)
 
@@ -67,8 +67,8 @@ def test_client_edit_form_renders_email_field():
 
 @pytest.mark.django_db
 def test_client_edit_form_saves_email():
-    client_obj = ClientFactory.create(email="")
     user = UserFactory.create()
+    client_obj = ClientFactory.create(email="", created_by=user)
     http_client = Client()
     http_client.force_login(user)
 
@@ -94,10 +94,10 @@ def test_client_edit_form_saves_email():
 
 @pytest.mark.django_db
 def test_client_detail_includes_report_link_for_each_assessment():
-    client_obj = ClientFactory.create()
+    user = UserFactory.create()
+    client_obj = ClientFactory.create(created_by=user)
     assessment = AssessmentFactory.create(client=client_obj)
 
-    user = UserFactory.create()
     http_client = Client()
     http_client.force_login(user)
 
@@ -243,3 +243,68 @@ def test_admin_can_move_client_to_another_team(admin_client):
     assert response.status_code == HTTPStatus.FOUND
     client_obj.refresh_from_db()
     assert client_obj.team == target
+
+
+@pytest.mark.django_db
+def test_for_team_returns_only_that_teams_clients():
+    own = ClientFactory.create()
+    ClientFactory.create()
+
+    assert list(ClientModel.objects.for_team(own.team)) == [own]
+
+
+@pytest.mark.django_db
+def test_client_list_shows_only_requesting_users_team_clients():
+    user = UserFactory.create()
+    own = ClientFactory.create(created_by=user, business_name="Own Co")
+    other = ClientFactory.create(business_name="Other Co")
+    http_client = Client()
+    http_client.force_login(user)
+
+    response = http_client.get(reverse("clients:list"))
+
+    assert list(response.context["clients"]) == [own]
+    content = response.content.decode()
+    assert own.business_name in content
+    assert other.business_name not in content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_name", ["clients:detail", "clients:edit"])
+def test_client_pages_return_404_for_another_teams_client(url_name):
+    other = ClientFactory.create()
+    http_client = Client()
+    http_client.force_login(UserFactory.create())
+
+    response = http_client.get(reverse(url_name, kwargs={"pk": other.pk}))
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_name", ["clients:detail", "clients:edit"])
+def test_client_pages_work_for_owning_team(url_name):
+    user = UserFactory.create()
+    own = ClientFactory.create(created_by=UserFactory.create(team=user.team))
+    http_client = Client()
+    http_client.force_login(user)
+
+    response = http_client.get(reverse(url_name, kwargs={"pk": own.pk}))
+
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db
+def test_client_edit_post_for_another_teams_client_is_404_and_unchanged():
+    other = ClientFactory.create(business_name="Other Co")
+    http_client = Client()
+    http_client.force_login(UserFactory.create())
+
+    response = http_client.post(
+        reverse("clients:edit", kwargs={"pk": other.pk}),
+        _client_form_data(business_name="Hijacked Co"),
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    other.refresh_from_db()
+    assert other.business_name == "Other Co"

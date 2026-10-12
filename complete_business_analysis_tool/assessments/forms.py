@@ -13,6 +13,7 @@ from .models import Answer, Assessment, AssessmentTemplate, Category, QuestionOp
 from .widgets import RankedRadioSelect
 
 if TYPE_CHECKING:
+    from complete_business_analysis_tool.teams.models import Team
     from complete_business_analysis_tool.users.models import User
 
 
@@ -20,7 +21,8 @@ class AssessmentStartForm(forms.Form):
     """Minimal form for creating a draft Assessment from a client selection.
 
     The template is fixed at construction time (from the URL); this form only
-    collects the client.
+    collects the client, chosen from ``team``'s Clients — another Team's
+    Client id fails validation.
     """
 
     client = forms.ModelChoiceField(
@@ -30,10 +32,12 @@ class AssessmentStartForm(forms.Form):
         widget=forms.Select(attrs={"class": "input"}),
     )
 
-    def __init__(self, *args, template: AssessmentTemplate, **kwargs):
+    def __init__(self, *args, template: AssessmentTemplate, team: Team | None, **kwargs):
         super().__init__(*args, **kwargs)
         self.template = template
-        self.fields["client"].queryset = Client.objects.order_by("business_name")
+        self.fields["client"].queryset = Client.objects.for_team(team).order_by(
+            "business_name",
+        )
 
     def save(self, *, created_by: User) -> Assessment:
         """Create and return a draft Assessment for the chosen client."""

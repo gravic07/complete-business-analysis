@@ -125,8 +125,8 @@ def test_completion_status_eligible_when_guidance_submitted_and_all_questions_an
 @pytest.mark.django_db
 def test_start_view_creates_draft_assessment_and_redirects_to_detail():
     template = AssessmentTemplateFactory.create()
-    client_obj = ClientFactory.create()
     user = UserFactory.create()
+    client_obj = ClientFactory.create(created_by=user)
     http_client = Client()
     http_client.force_login(user)
 
@@ -203,8 +203,8 @@ def test_start_view_invalid_post_rerenders_form_without_creating_assessment():
 @pytest.mark.django_db
 def test_start_view_prefills_client_from_query_param():
     template = AssessmentTemplateFactory.create()
-    client_obj = ClientFactory.create()
     user = UserFactory.create()
+    client_obj = ClientFactory.create(created_by=user)
     http_client = Client()
     http_client.force_login(user)
 
@@ -213,6 +213,36 @@ def test_start_view_prefills_client_from_query_param():
 
     assert response.status_code == HTTPStatus.OK
     assert response.context["form"].initial["client"] == str(client_obj.pk)
+
+
+@pytest.mark.django_db
+def test_start_view_client_dropdown_lists_only_requesting_users_team_clients():
+    template = AssessmentTemplateFactory.create()
+    user = UserFactory.create()
+    own = ClientFactory.create(created_by=user)
+    ClientFactory.create()
+    http_client = Client()
+    http_client.force_login(user)
+
+    url = reverse("assessments:start", kwargs={"pk": template.pk})
+    response = http_client.get(url)
+
+    assert list(response.context["form"].fields["client"].queryset) == [own]
+
+
+@pytest.mark.django_db
+def test_start_view_rejects_another_teams_client_id():
+    template = AssessmentTemplateFactory.create()
+    other = ClientFactory.create()
+    http_client = Client()
+    http_client.force_login(UserFactory.create())
+
+    url = reverse("assessments:start", kwargs={"pk": template.pk})
+    response = http_client.post(url, {"client": other.pk})
+
+    assert response.status_code == HTTPStatus.OK
+    assert "client" in response.context["form"].errors
+    assert not Assessment.objects.exists()
 
 
 @pytest.mark.django_db

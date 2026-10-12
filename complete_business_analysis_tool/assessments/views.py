@@ -162,6 +162,8 @@ class AssessmentStartView(LoginRequiredMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["template"] = self.assessment_template
+        assert self.request.user.is_authenticated  # type guard
+        kwargs["team"] = self.request.user.team
         return kwargs
 
     def get_initial(self):

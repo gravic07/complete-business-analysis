@@ -1,9 +1,16 @@
 """Django models for the clients application."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 
 from complete_business_analysis_tool.core.models import BaseModel
+
+if TYPE_CHECKING:
+    from complete_business_analysis_tool.teams.models import Team
 
 
 class IndustryType(models.TextChoices):
@@ -54,8 +61,20 @@ class CorporateStyle(models.TextChoices):
     PARTNERSHIP = "partnership", "Partnership"
 
 
+class ClientQuerySet(models.QuerySet["Client"]):
+    def for_team(self, team: Team | None) -> ClientQuerySet:
+        """Clients owned by ``team`` — the root of all Team scoping (ADR 0013).
+
+        ``None`` (a User without a Team) matches nothing, since every Client
+        has a Team.
+        """
+        return self.filter(team=team)
+
+
 class Client(BaseModel):
     """A client business and their primary contact."""
+
+    objects = ClientQuerySet.as_manager()
 
     business_name = models.CharField(max_length=255)
     first_name = models.CharField(max_length=150)

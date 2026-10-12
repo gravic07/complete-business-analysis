@@ -301,3 +301,16 @@ def test_navbar_shows_team_links_for_team_member():
     assert "Summit Advisors" in content
     assert f'href="{reverse("clients:list")}"' in content
     assert f'href="{reverse("assessments:list")}"' in content
+
+
+@pytest.mark.django_db
+def test_home_client_count_reflects_only_requesting_users_team():
+    user = UserFactory.create()
+    ClientFactory.create(created_by=user)
+    ClientFactory.create(created_by=UserFactory.create(team=user.team))
+    ClientFactory.create()
+
+    response = _logged_in_client(user).get(reverse("home"))
+
+    expected_client_count = 2
+    assert response.context["client_count"] == expected_client_count

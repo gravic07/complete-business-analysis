@@ -12,10 +12,14 @@ class ClientListView(ListView):
     model = Client
     template_name = "pages/clients/client-list.html"
     context_object_name = "clients"
-    ordering = ["business_name"]
 
     def get_queryset(self):
-        return super().get_queryset().annotate(assessment_count=Count("assessments"))
+        assert self.request.user.is_authenticated  # type guard
+        return (
+            Client.objects.for_team(self.request.user.team)
+            .annotate(assessment_count=Count("assessments"))
+            .order_by("business_name")
+        )
 
 
 class ClientCreateView(CreateView):
@@ -35,6 +39,10 @@ class ClientDetailView(DetailView):
     model = Client
     template_name = "pages/clients/client-detail.html"
     context_object_name = "client"
+
+    def get_queryset(self):
+        assert self.request.user.is_authenticated  # type guard
+        return Client.objects.for_team(self.request.user.team)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -61,3 +69,7 @@ class ClientUpdateView(UpdateView):
     form_class = ClientForm
     template_name = "pages/clients/client-form.html"
     success_url = reverse_lazy("clients:list")
+
+    def get_queryset(self):
+        assert self.request.user.is_authenticated  # type guard
+        return Client.objects.for_team(self.request.user.team)
