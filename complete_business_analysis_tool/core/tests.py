@@ -314,3 +314,16 @@ def test_home_client_count_reflects_only_requesting_users_team():
 
     expected_client_count = 2
     assert response.context["client_count"] == expected_client_count
+
+
+@pytest.mark.django_db
+def test_home_assessment_count_reflects_only_requesting_users_team():
+    user = UserFactory.create()
+    AssessmentFactory.create(created_by=user)
+    AssessmentFactory.create(created_by=UserFactory.create(team=user.team))
+    AssessmentFactory.create()
+
+    response = _logged_in_client(user).get(reverse("home"))
+
+    expected_assessment_count = 2
+    assert response.context["assessment_count"] == expected_assessment_count

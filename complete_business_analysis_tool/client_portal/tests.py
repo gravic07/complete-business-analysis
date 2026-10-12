@@ -19,6 +19,7 @@ from complete_business_analysis_tool.assessments.models import (
     ClientAccessLink,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
+from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -145,6 +146,21 @@ def test_fresh_get_on_active_answer_link_always_renders_email_gate():
 
     assert response.status_code == HTTPStatus.OK
     assert b"Enter your email to continue" in response.content
+
+
+@pytest.mark.django_db
+def test_token_access_ignores_the_team_of_a_logged_in_advisor():
+    link, _, _ = _make_answer_link(client_email="client@example.com")
+    http_client = Client()
+    http_client.force_login(UserFactory.create())
+
+    response = http_client.post(
+        reverse("client_portal:entry", kwargs={"token": link.token}),
+        {"email": "client@example.com"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Submit Answers" in response.content
 
 
 @pytest.mark.django_db

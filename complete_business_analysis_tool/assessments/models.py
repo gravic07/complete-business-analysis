@@ -1,10 +1,17 @@
 """Django models for the assessments application."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
 
 from complete_business_analysis_tool.core.models import BaseModel
+
+if TYPE_CHECKING:
+    from complete_business_analysis_tool.teams.models import Team
 
 
 class Category(BaseModel):
@@ -89,8 +96,16 @@ class TemplateQuestion(BaseModel):
         return f"{self.template} — {self.question}"
 
 
+class AssessmentQuerySet(models.QuerySet["Assessment"]):
+    def for_team(self, team: Team | None) -> AssessmentQuerySet:
+        """Assessments whose Client is owned by ``team`` (ADR 0013)."""
+        return self.filter(client__team=team)
+
+
 class Assessment(BaseModel):
     """A completed or in-progress instance of an assessment template."""
+
+    objects = AssessmentQuerySet.as_manager()
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -171,8 +186,20 @@ class Answer(BaseModel):
         return f"{self.assessment} — {self.question_snapshot[:60]}"
 
 
+class ClientAccessLinkQuerySet(models.QuerySet["ClientAccessLink"]):
+    def for_team(self, team: Team | None) -> ClientAccessLinkQuerySet:
+        """Links whose Assessment's Client is owned by ``team`` (ADR 0013).
+
+        Advisor-side only: the client portal resolves links by token and stays
+        Team-agnostic.
+        """
+        return self.filter(assessment__client__team=team)
+
+
 class ClientAccessLink(BaseModel):
     """A token-gated, revocable link letting a Client fill in a step remotely."""
+
+    objects = ClientAccessLinkQuerySet.as_manager()
 
     class LinkType(models.TextChoices):
         GUIDANCE = "guidance", "Guidance"

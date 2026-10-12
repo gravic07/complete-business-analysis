@@ -34,6 +34,12 @@ from complete_business_analysis_tool.assessments.services import (
     revoke_client_access_link,
 )
 from complete_business_analysis_tool.clients.factories import ClientFactory
+from complete_business_analysis_tool.clients.models import (
+    CompanySize,
+    CorporateStyle,
+    RevenueRange,
+)
+from complete_business_analysis_tool.teams.factories import TeamFactory
 from complete_business_analysis_tool.users.tests.factories import UserFactory
 
 
@@ -55,7 +61,7 @@ def test_assessment_detail_lists_all_analysis_runs_with_status_and_timestamp():
         status=Analysis.Status.FAILED,
     )
 
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -259,7 +265,7 @@ def test_guidance_view_lists_template_categories_alphabetically_with_no_answers(
         question=QuestionFactory.create(category=category_a),
     )
     assessment = AssessmentFactory.create(template=template)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -307,7 +313,7 @@ def test_guidance_view_all_blank_submit_succeeds_and_stamps_submitted_at():
         status=Assessment.Status.DRAFT,
         guidance_submitted_at=None,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -335,7 +341,7 @@ def test_guidance_view_creates_rows_only_for_non_blank_fields():
         question=QuestionFactory.create(category=category_blank),
     )
     assessment = AssessmentFactory.create(template=template)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -369,7 +375,7 @@ def test_guidance_view_resubmit_updates_existing_row_not_duplicate():
         category=category,
         text="Original text.",
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -395,7 +401,7 @@ def test_guidance_view_clearing_field_deletes_existing_row():
         category=category,
         text="Existing text.",
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -417,7 +423,7 @@ def test_guidance_view_advances_draft_assessment_to_in_progress():
         template=template,
         status=Assessment.Status.DRAFT,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -440,7 +446,7 @@ def test_guidance_view_leaves_in_progress_assessment_in_progress():
         template=template,
         status=Assessment.Status.IN_PROGRESS,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -463,7 +469,7 @@ def test_guidance_view_complete_assessment_rejects_get_with_message_no_404():
         template=template,
         status=Assessment.Status.COMPLETE,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -490,7 +496,7 @@ def test_guidance_view_complete_assessment_rejects_post_and_persists_nothing():
         guidance_submitted_at=timezone.now(),
     )
     original_submitted_at = assessment.guidance_submitted_at
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -517,7 +523,7 @@ def test_guidance_view_prefills_fields_with_previously_entered_text():
         category=category,
         text="Previously entered guidance.",
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -540,7 +546,7 @@ def test_answer_view_renders_one_field_per_question_grouped_by_category():
     TemplateQuestionFactory.create(template=template, question=question_b, order=1)
     TemplateQuestionFactory.create(template=template, question=question_a, order=2)
     assessment = AssessmentFactory.create(template=template)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -567,7 +573,7 @@ def test_answer_view_full_submit_creates_answers_against_existing_assessment():
         template=template,
         status=Assessment.Status.DRAFT,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -598,7 +604,7 @@ def test_answer_view_partial_submit_fails_validation_no_answers_created():
     TemplateQuestionFactory.create(template=template, question=question1)
     TemplateQuestionFactory.create(template=template, question=question2)
     assessment = AssessmentFactory.create(template=template)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -623,7 +629,7 @@ def test_answer_view_resubmit_updates_existing_answer_not_duplicate():
         question=question,
         selected_option=option_low,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -645,7 +651,7 @@ def test_answer_view_advances_draft_assessment_to_in_progress():
         template=template,
         status=Assessment.Status.DRAFT,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -666,7 +672,7 @@ def test_answer_view_leaves_in_progress_assessment_in_progress():
         template=template,
         status=Assessment.Status.IN_PROGRESS,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -687,7 +693,7 @@ def test_answer_view_complete_assessment_rejects_get_with_message_no_404():
         template=template,
         status=Assessment.Status.COMPLETE,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -710,7 +716,7 @@ def test_answer_view_complete_assessment_rejects_post_and_persists_nothing():
         template=template,
         status=Assessment.Status.COMPLETE,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -730,7 +736,7 @@ def test_answer_view_prefills_previously_selected_answers():
     TemplateQuestionFactory.create(template=template, question=question)
     assessment = AssessmentFactory.create(template=template)
     AnswerFactory.create(assessment=assessment, question=question, selected_option=option)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -780,7 +786,7 @@ def test_detail_hub_shows_guidance_and_answer_links_with_done_indicators():
         guidance_submitted_at=timezone.now(),
     )
     AnswerFactory.create(assessment=assessment, question=question)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -804,7 +810,7 @@ def test_detail_hub_shows_not_done_indicators_when_guidance_and_answers_incomple
         status=Assessment.Status.DRAFT,
         guidance_submitted_at=None,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -822,7 +828,7 @@ def test_detail_hub_mark_complete_button_disabled_with_reason_when_ineligible():
         status=Assessment.Status.IN_PROGRESS,
         guidance_submitted_at=None,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -845,7 +851,7 @@ def test_detail_hub_mark_complete_button_enabled_when_eligible():
         guidance_submitted_at=timezone.now(),
     )
     AnswerFactory.create(assessment=assessment, question=question)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -863,7 +869,7 @@ def test_mark_complete_rejects_when_ineligible_no_status_change_no_analysis():
         status=Assessment.Status.IN_PROGRESS,
         guidance_submitted_at=None,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -888,7 +894,7 @@ def test_mark_complete_sets_status_and_redirects_to_report_autostart_when_eligib
         guidance_submitted_at=timezone.now(),
     )
     AnswerFactory.create(assessment=assessment, question=question)
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -908,7 +914,7 @@ def test_mark_complete_on_already_complete_assessment_does_not_retrigger_autosta
         status=Assessment.Status.COMPLETE,
         guidance_submitted_at=timezone.now(),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -947,7 +953,7 @@ def test_complete_detail_shows_category_guidance_alongside_answers():
         category=category_with_guidance,
         text="Focus on scaling the sales team.",
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -980,7 +986,7 @@ def test_complete_detail_keeps_same_named_categories_separate():
         category=category_2,
         text="Guidance for the second Sales category.",
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1173,7 +1179,7 @@ def test_access_link_generate_creates_active_row_and_redirects_to_detail():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1194,7 +1200,7 @@ def test_access_link_generate_redirects_to_next_when_provided():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1214,7 +1220,7 @@ def test_access_link_generate_ignores_next_pointing_off_site():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1231,7 +1237,7 @@ def test_access_link_generate_ignores_next_pointing_off_site():
 @pytest.mark.django_db
 def test_access_link_generate_rejected_when_client_has_no_email():
     assessment = AssessmentFactory.create(client=ClientFactory.create(email=""))
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1252,7 +1258,7 @@ def test_access_link_generate_rejected_when_assessment_complete():
         client=ClientFactory.create(email="c@example.com"),
         status=Assessment.Status.COMPLETE,
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1271,7 +1277,7 @@ def test_access_link_generate_rejected_when_assessment_complete():
 def test_access_link_revoke_marks_existing_link_revoked():
     link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
     original_token = link.token
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1293,7 +1299,7 @@ def test_access_link_revoke_rejected_when_assessment_complete():
         status=ClientAccessLink.Status.ACTIVE,
         assessment=AssessmentFactory.create(status=Assessment.Status.COMPLETE),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1311,7 +1317,7 @@ def test_access_link_revoke_rejected_when_assessment_complete():
 def test_access_link_regenerate_overwrites_token_and_stays_active():
     link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.ACTIVE)
     original_token = link.token
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1334,7 +1340,7 @@ def test_access_link_regenerate_rejected_when_assessment_complete():
         assessment=AssessmentFactory.create(status=Assessment.Status.COMPLETE),
     )
     original_token = link.token
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1352,7 +1358,7 @@ def test_access_link_regenerate_rejected_when_assessment_complete():
 def test_access_link_regenerate_404s_on_revoked_link():
     link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
     original_token = link.token
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1371,7 +1377,7 @@ def test_access_link_regenerate_404s_on_revoked_link():
 @pytest.mark.django_db
 def test_access_link_revoke_404s_on_already_revoked_link():
     link = ClientAccessLinkFactory.create(status=ClientAccessLink.Status.REVOKED)
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1389,7 +1395,7 @@ def test_access_link_unknown_link_type_404s():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1407,7 +1413,7 @@ def test_detail_hub_shows_generate_button_for_client_with_email():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1430,7 +1436,7 @@ def test_detail_hub_shows_generate_button_for_client_with_email():
 @pytest.mark.django_db
 def test_detail_hub_shows_client_edit_link_when_client_has_no_email():
     assessment = AssessmentFactory.create(client=ClientFactory.create(email=""))
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1457,7 +1463,7 @@ def test_detail_hub_shows_copy_revoke_regenerate_for_active_link():
             client=ClientFactory.create(email="c@example.com"),
         ),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1487,7 +1493,7 @@ def test_detail_hub_revoke_returns_control_to_generate_state():
             client=ClientFactory.create(email="c@example.com"),
         ),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1519,7 +1525,7 @@ def test_detail_hub_regenerate_reflects_new_url_immediately():
         ),
     )
     original_token = link.token
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1548,7 +1554,7 @@ def test_detail_hub_hides_access_link_controls_once_assessment_complete():
             status=Assessment.Status.COMPLETE,
         ),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=link.assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1574,7 +1580,7 @@ def test_guidance_page_shows_only_guidance_access_link_controls():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1599,7 +1605,7 @@ def test_answer_page_shows_only_answer_access_link_controls():
     assessment = AssessmentFactory.create(
         client=ClientFactory.create(email="c@example.com"),
     )
-    user = UserFactory.create()
+    user = UserFactory.create(team=assessment.client.team)
     http_client = Client()
     http_client.force_login(user)
 
@@ -1617,3 +1623,235 @@ def test_answer_page_shows_only_answer_access_link_controls():
     )
     assert generate_answer_url in content
     assert generate_guidance_url not in content
+
+
+def _logged_in_client(user):
+    http_client = Client()
+    http_client.force_login(user)
+    return http_client
+
+
+@pytest.mark.django_db
+def test_assessment_for_team_returns_only_assessments_of_that_teams_clients():
+    own = AssessmentFactory.create()
+    AssessmentFactory.create()
+
+    assert list(Assessment.objects.for_team(own.client.team)) == [own]
+
+
+@pytest.mark.django_db
+def test_client_access_link_for_team_returns_only_links_of_that_teams_clients():
+    own = ClientAccessLinkFactory.create()
+    ClientAccessLinkFactory.create()
+
+    assert list(ClientAccessLink.objects.for_team(own.assessment.client.team)) == [
+        own,
+    ]
+
+
+@pytest.mark.django_db
+def test_for_assessment_with_no_team_matches_nothing():
+    ClientAccessLinkFactory.create()
+
+    assert not Assessment.objects.for_team(None).exists()
+    assert not ClientAccessLink.objects.for_team(None).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name",
+    ["assessments:detail", "assessments:answer", "assessments:guidance"],
+)
+def test_assessment_pages_return_404_for_another_teams_assessment(url_name):
+    other = AssessmentFactory.create()
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.get(reverse(url_name, kwargs={"pk": other.pk}))
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name",
+    ["assessments:detail", "assessments:answer", "assessments:guidance"],
+)
+def test_assessment_pages_work_for_owning_teams_other_members(url_name):
+    assessment = AssessmentFactory.create()
+    teammate = UserFactory.create(team=assessment.client.team)
+
+    response = _logged_in_client(teammate).get(
+        reverse(url_name, kwargs={"pk": assessment.pk}),
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db
+def test_answer_post_for_another_teams_assessment_is_404_and_saves_nothing():
+    template_question = TemplateQuestionFactory.create()
+    option = QuestionOptionFactory.create(question=template_question.question)
+    other = AssessmentFactory.create(template=template_question.template)
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.post(
+        reverse("assessments:answer", kwargs={"pk": other.pk}),
+        {f"question_{template_question.question.pk.hex}": str(option.pk)},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert not other.answers.exists()
+    other.refresh_from_db()
+    assert other.status == Assessment.Status.DRAFT
+
+
+@pytest.mark.django_db
+def test_guidance_post_for_another_teams_assessment_is_404_and_saves_nothing():
+    category = CategoryFactory.create()
+    template_question = TemplateQuestionFactory.create(question__category=category)
+    other = AssessmentFactory.create(template=template_question.template)
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.post(
+        reverse("assessments:guidance", kwargs={"pk": other.pk}),
+        {f"category_{category.pk.hex}": "Hijacked guidance"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert not CategoryGuidance.objects.filter(assessment=other).exists()
+    other.refresh_from_db()
+    assert other.guidance_submitted_at is None
+    assert other.status == Assessment.Status.DRAFT
+
+
+@pytest.mark.django_db
+def test_mark_complete_for_another_teams_assessment_is_404_and_unchanged():
+    other = AssessmentFactory.create(
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=timezone.now(),
+    )
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.post(
+        reverse("assessments:mark_complete", kwargs={"pk": other.pk}),
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    other.refresh_from_db()
+    assert other.status == Assessment.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_mark_complete_works_for_owning_teams_other_members():
+    assessment = AssessmentFactory.create(
+        status=Assessment.Status.IN_PROGRESS,
+        guidance_submitted_at=timezone.now(),
+    )
+    teammate = UserFactory.create(team=assessment.client.team)
+
+    response = _logged_in_client(teammate).post(
+        reverse("assessments:mark_complete", kwargs={"pk": assessment.pk}),
+    )
+
+    assert response.status_code == HTTPStatus.FOUND
+    assessment.refresh_from_db()
+    assert assessment.status == Assessment.Status.COMPLETE
+
+
+@pytest.mark.django_db
+def test_access_link_generate_for_another_teams_assessment_is_404_and_creates_nothing():
+    other = AssessmentFactory.create(
+        client=ClientFactory.create(email="c@example.com"),
+    )
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.post(
+        reverse(
+            "assessments:access_link_generate",
+            kwargs={"pk": other.pk, "link_type": "guidance"},
+        ),
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert not ClientAccessLink.objects.filter(assessment=other).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name",
+    ["assessments:access_link_revoke", "assessments:access_link_regenerate"],
+)
+def test_access_link_actions_for_another_teams_assessment_are_404_and_unchanged(
+    url_name,
+):
+    link = ClientAccessLinkFactory.create()
+    original_token = link.token
+    http_client = _logged_in_client(UserFactory.create())
+
+    response = http_client.post(
+        reverse(
+            url_name,
+            kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+        ),
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    link.refresh_from_db()
+    assert link.status == ClientAccessLink.Status.ACTIVE
+    assert link.token == original_token
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "assessments:access_link_generate",
+        "assessments:access_link_revoke",
+        "assessments:access_link_regenerate",
+    ],
+)
+def test_access_link_actions_work_for_owning_teams_other_members(url_name):
+    link = ClientAccessLinkFactory.create(
+        assessment__client=ClientFactory.create(email="c@example.com"),
+    )
+    teammate = UserFactory.create(team=link.assessment.client.team)
+
+    response = _logged_in_client(teammate).post(
+        reverse(
+            url_name,
+            kwargs={"pk": link.assessment.pk, "link_type": link.link_type},
+        ),
+    )
+
+    assert response.status_code == HTTPStatus.FOUND
+
+
+@pytest.mark.django_db
+def test_moving_client_to_another_team_moves_its_assessments_with_it(admin_client):
+    assessment = AssessmentFactory.create()
+    client_obj = assessment.client
+    old_member = UserFactory.create(team=client_obj.team)
+    new_team = TeamFactory.create()
+    new_member = UserFactory.create(team=new_team)
+    url = reverse("assessments:detail", kwargs={"pk": assessment.pk})
+
+    response = admin_client.post(
+        reverse("admin:clients_client_change", kwargs={"object_id": client_obj.pk}),
+        {
+            "business_name": client_obj.business_name,
+            "first_name": client_obj.first_name,
+            "last_name": client_obj.last_name,
+            "title": client_obj.title,
+            "email": client_obj.email,
+            "industry": client_obj.industry,
+            "company_size": CompanySize.SMALL,
+            "revenue": RevenueRange.UNDER_1M,
+            "corporate_style": CorporateStyle.SOLE_PROPRIETORSHIP,
+            "team": str(new_team.pk),
+            "created_by": str(client_obj.created_by.pk),
+        },
+    )
+    assert response.status_code == HTTPStatus.FOUND
+
+    assert _logged_in_client(new_member).get(url).status_code == HTTPStatus.OK
+    assert _logged_in_client(old_member).get(url).status_code == HTTPStatus.NOT_FOUND

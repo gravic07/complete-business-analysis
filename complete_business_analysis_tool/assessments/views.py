@@ -33,6 +33,14 @@ from .services import (
 if TYPE_CHECKING:
     import uuid
 
+    from .models import AssessmentQuerySet
+
+
+def _team_assessments(request: HttpRequest) -> AssessmentQuerySet:
+    """The requesting User's Team's Assessments, for looking one up by pk (ADR 0013)."""
+    assert request.user.is_authenticated  # type guard
+    return Assessment.objects.for_team(request.user.team)
+
 
 def _access_link_state(
     request: HttpRequest,
@@ -85,6 +93,9 @@ class AssessmentDetailView(LoginRequiredMixin, DetailView):
     model = Assessment
     template_name = "pages/assessments/assessment-detail.html"
     context_object_name = "assessment"
+
+    def get_queryset(self):
+        return _team_assessments(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -190,7 +201,7 @@ class AssessmentAnswerView(LoginRequiredMixin, FormView):
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.assessment = get_object_or_404(
-            Assessment.objects.select_related("client"),
+            _team_assessments(request).select_related("client"),
             pk=kwargs["pk"],
         )
 
@@ -263,7 +274,7 @@ class CategoryGuidanceView(LoginRequiredMixin, FormView):
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.assessment = get_object_or_404(
-            Assessment.objects.select_related("client"),
+            _team_assessments(request).select_related("client"),
             pk=kwargs["pk"],
         )
         self.categories = categories_for_template(self.assessment.template)
@@ -329,7 +340,7 @@ class CategoryGuidanceView(LoginRequiredMixin, FormView):
 
 class MarkCompleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        assessment = get_object_or_404(Assessment, pk=pk)
+        assessment = get_object_or_404(_team_assessments(request), pk=pk)
 
         if assessment.status == Assessment.Status.COMPLETE:
             return redirect("reports:report", pk=assessment.pk)
@@ -361,7 +372,7 @@ class ClientAccessLinkActionView(LoginRequiredMixin, View):
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.assessment = get_object_or_404(
-            Assessment.objects.select_related("client"),
+            _team_assessments(request).select_related("client"),
             pk=kwargs["pk"],
         )
         link_type = kwargs["link_type"]
@@ -404,8 +415,9 @@ class ClientAccessLinkActionView(LoginRequiredMixin, View):
         a stale Regenerate request from reactivating an already-revoked link
         and bypassing Generate's Client-has-an-email check.
         """
+        assert self.request.user.is_authenticated  # type guard
         return get_object_or_404(
-            ClientAccessLink,
+            ClientAccessLink.objects.for_team(self.request.user.team),
             assessment=self.assessment,
             link_type=self.link_type,
             status=ClientAccessLink.Status.ACTIVE,
