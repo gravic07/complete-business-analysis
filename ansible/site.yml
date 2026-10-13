@@ -8,4 +8,5 @@
     - app
     - gunicorn
     - celery
-    - nginx
+    - role: nginx
+      tags: nginx

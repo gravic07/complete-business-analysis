@@ -57,6 +57,44 @@
   args:
     creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
 
+# The cert uses the standalone authenticator, so renewals need port 80 free.
+# certbot runs every script in these directories around each renewal attempt.
+- name: Ensure certbot renewal hook directories exist
+  file:
+    path: /etc/letsencrypt/renewal-hooks/{{ item }}
+    state: directory
+    mode: '0755'
+  loop: ['pre', 'post']
+
+- name: Install certbot pre-hook to stop nginx
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/pre/stop-nginx.sh
+    content: |
+      #!/bin/sh
+      systemctl stop nginx
+    mode: '0755'
+
+- name: Install certbot post-hook to start nginx
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/post/start-nginx.sh
+    content: |
+      #!/bin/sh
+      systemctl start nginx
+    mode: '0755'
+
+- name: Ensure certbot renewal timer is enabled
+  systemd:
+    name: certbot.timer
+    state: started
+    enabled: yes
+
+# No-op unless the cert is within 30 days of expiry (or already expired).
+# Without a TTY certbot sleeps up to 8 minutes before renewing; skip that here.
+- name: Renew Let's Encrypt cert if due
+  command: certbot renew --non-interactive --no-random-sleep-on-renew
+  register: certbot_renew
+  changed_when: "'No renewals were attempted' not in (certbot_renew.stdout + certbot_renew.stderr)"
+
 - name: Generate DH parameters for SSL
   command: openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
   args:

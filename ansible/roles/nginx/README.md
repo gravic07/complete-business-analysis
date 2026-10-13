@@ -10,6 +10,7 @@ Installs Nginx as a reverse proxy, configures SSL via Let's Encrypt, and enables
 4. Templates the app vhost to `/etc/nginx/sites-available/{{ project_name }}.conf` and symlinks it to `sites-enabled/`
 5. Ensures Nginx is running and enabled
 6. Obtains a Let's Encrypt certificate (skipped if cert already exists)
+7. Installs certbot renewal hooks that stop nginx before and start it after each renewal, enables `certbot.timer`, and runs `certbot renew` (a no-op unless the cert is due)
 
 ## Vhost behaviour
 
@@ -43,5 +44,7 @@ Nginx checks for the flag file on every request. The `maintenance-on` / `mainten
 ## Notes
 
 - DNS must point at the server before the first run or the Let's Encrypt ACME challenge will fail.
-- The certbot task uses `creates:` so it only runs once; subsequent deploys skip it (cert renewal is handled by certbot's own systemd timer).
+- The certbot task uses `creates:` so it only runs once; subsequent runs skip it. Renewal is handled by certbot's own systemd timer (`certbot.timer`, twice daily).
+- The cert uses certbot's standalone authenticator, which needs port 80. Without the hooks in `/etc/letsencrypt/renewal-hooks/{pre,post}/` nginx holds port 80 and every renewal fails silently until the cert expires. Renewal causes a few seconds of downtime roughly every 60 days.
+- To apply only this role to an existing server: `ansible-playbook -i inventory/production.ini site.yml --tags nginx`
 - SSL hardening (cipher suites, HSTS, OCSP stapling) lives in `ssl-params.conf.j2` and is included via `snippets/ssl-params.conf`.
